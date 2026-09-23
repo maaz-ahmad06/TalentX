@@ -18,6 +18,9 @@ export const Navbar = ({
   onToggleRole, 
   onOpenPostJob,
   onOpenAIMatcher,
+  onOpenAuth,
+  currentUser = null,
+  onLogout,
   unreadCount = 2
 }) => {
   return (
@@ -82,11 +85,10 @@ export const Navbar = ({
           </button>
         </nav>
 
-        {/* Right Actions: Role Switcher & CTA */}
+        {/* Right Actions: Auth, Role Switcher & CTA */}
         <div className="nav-right-actions">
           {/* Role Mode Toggle Switcher */}
           <div className="role-switcher-wrap" title="Switch between Business & Freelancer view">
-            <div className="role-label-text">Mode:</div>
             <div className="role-toggle-pill" onClick={onToggleRole}>
               <button 
                 type="button"
@@ -102,6 +104,25 @@ export const Navbar = ({
               </button>
             </div>
           </div>
+
+          {/* User Auth Info or Sign In Button */}
+          {currentUser ? (
+            <div className="user-profile-nav-pill glass-panel">
+              <img src={currentUser.avatar} alt={currentUser.name} className="nav-user-avatar" />
+              <div className="nav-user-text">
+                <span className="nav-user-name">{currentUser.name}</span>
+                <span className="nav-user-role">{currentUser.role === 'client' ? 'Client' : 'Pro'}</span>
+              </div>
+              <button className="nav-logout-btn" onClick={onLogout} title="Log Out">
+                ✕
+              </button>
+            </div>
+          ) : (
+            <button className="btn btn-secondary btn-sm" onClick={onOpenAuth}>
+              <User size={15} />
+              <span>Log In</span>
+            </button>
+          )}
 
           {/* Action CTA */}
           {currentRole === 'client' ? (

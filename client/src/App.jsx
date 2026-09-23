@@ -31,14 +31,26 @@ import { ChatDrawer } from './components/ChatDrawer';
 import { DashboardView } from './components/DashboardView';
 import { Toast } from './components/Toast';
 import { Preloader } from './components/Preloader';
+import { AuthModal } from './components/AuthModal';
 
 function App() {
   // Preloader State
   const [isLoading, setIsLoading] = useState(true);
 
+  // Auth & Session State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('talentx_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   // Global Navigation & Role State
   const [activeTab, setActiveTab] = useState('talents'); // 'talents' | 'jobs' | 'dashboard' | 'messages'
-  const [currentRole, setRole] = useState(getCurrentRole()); // 'client' | 'talent'
+  const [currentRole, setRole] = useState(currentUser?.role || getCurrentRole()); // 'client' | 'talent'
 
   // Data Collections
   const [talents, setTalents] = useState([]);
@@ -141,6 +153,29 @@ function App() {
     setIsAIMatcherOpen(true);
   };
 
+  // Auth Success Handler
+  const handleAuthSuccess = (userData) => {
+    setCurrentUser(userData);
+    localStorage.setItem('talentx_auth_user', JSON.stringify(userData));
+    setRole(userData.role);
+    setCurrentRole(userData.role);
+
+    // If talent, append to local talent list
+    if (userData.role === 'talent') {
+      const updatedTalents = [userData, ...talents];
+      setTalents(updatedTalents);
+    }
+
+    showToast(`🎉 Welcome, ${userData.name}! Logged in as ${userData.role === 'client' ? '🏢 Client' : '🧑‍💻 Talent'}.`, 'ai');
+  };
+
+  // Logout Handler
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('talentx_auth_user');
+    showToast('Logged out successfully', 'success');
+  };
+
   // Direct Hire Action
   const handleStartHire = (talent) => {
     setHiringTalent(talent);
@@ -168,6 +203,9 @@ function App() {
           setAiTargetJob(null);
           setIsAIMatcherOpen(true);
         }}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        currentUser={currentUser}
+        onLogout={handleLogout}
         unreadCount={messages.length > 0 ? 1 : 0}
       />
 
@@ -238,6 +276,13 @@ function App() {
       </main>
 
       {/* Modals & Dialogs */}
+      {isAuthModalOpen && (
+        <AuthModal 
+          onClose={() => setIsAuthModalOpen(false)}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      )}
+
       {selectedTalentModal && (
         <TalentModal 
           talent={selectedTalentModal}
