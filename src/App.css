@@ -2327,3 +2327,250 @@
     max-height: 200px;
   }
 }
+
+/* ==========================================================================
+   TalentX — Premium Preloader Styles
+   ========================================================================== */
+.talentx-preloader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #060911;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.preloader-fade-out {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+/* Ambient Glowing Orbs in Preloader */
+.preloader-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.orb-1 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+  top: 15%;
+  left: 20%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+  bottom: 20%;
+  right: 25%;
+  animation: float 7s ease-in-out infinite reverse;
+}
+
+.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
+  top: 40%;
+  right: 15%;
+}
+
+.preloader-content-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  max-width: 420px;
+  padding: 0 20px;
+}
+
+/* Emblem Wrap & Orbiting Rings */
+.preloader-emblem-wrap {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.preloader-orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.ring-1 {
+  inset: -6px;
+  border: 2px dashed rgba(99, 102, 241, 0.45);
+  animation: spin-slow 8s linear infinite;
+}
+
+.ring-2 {
+  inset: -16px;
+  border: 2px solid rgba(168, 85, 247, 0.25);
+  border-top-color: var(--accent-purple);
+  border-bottom-color: var(--accent-cyan);
+  animation: spin-reverse 5s linear infinite;
+}
+
+.preloader-center-logo {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  background: var(--gradient-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 35px rgba(99, 102, 241, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.3);
+  animation: pulse-emblem 2.5s ease-in-out infinite;
+}
+
+.preloader-logo-x {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 40px;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.preloader-logo-glow {
+  position: absolute;
+  inset: -4px;
+  background: var(--gradient-brand);
+  filter: blur(14px);
+  opacity: 0.7;
+  border-radius: 26px;
+  z-index: -1;
+}
+
+.preloader-sparkle-dot {
+  position: absolute;
+  color: #c084fc;
+  animation: float 2s ease-in-out infinite;
+}
+.sparkle-top {
+  top: -10px;
+  right: 10px;
+}
+.sparkle-bottom {
+  bottom: -5px;
+  left: 10px;
+  color: #38bdf8;
+}
+
+/* Brand Title in Preloader */
+.preloader-brand-title {
+  margin-bottom: 24px;
+}
+
+.preloader-brand-title h1 {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.preloader-country-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #818cf8;
+}
+
+/* Progress Track & Bar */
+.preloader-progress-track {
+  width: 100%;
+  max-width: 320px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.preloader-progress-bar {
+  height: 100%;
+  background: var(--gradient-brand);
+  border-radius: 9999px;
+  transition: width 0.2s ease-out;
+  position: relative;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.8);
+}
+
+.progress-shimmer-light {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: shimmer 1.2s infinite;
+}
+
+/* Status Message Row */
+.preloader-status-row {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.preloader-status-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.status-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  box-shadow: 0 0 6px var(--accent-emerald);
+  animation: pulse-glow 1.5s infinite;
+}
+
+.preloader-percent-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #c7d2fe;
+}
+
+/* Extra Keyframes for Preloader */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes pulse-emblem {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 50px rgba(168, 85, 247, 0.8);
+  }
+}
+

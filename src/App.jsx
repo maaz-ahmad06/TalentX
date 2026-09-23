@@ -30,8 +30,12 @@ import { HiringModal } from './components/HiringModal';
 import { ChatDrawer } from './components/ChatDrawer';
 import { DashboardView } from './components/DashboardView';
 import { Toast } from './components/Toast';
+import { Preloader } from './components/Preloader';
 
 function App() {
+  // Preloader State
+  const [isLoading, setIsLoading] = useState(true);
+
   // Global Navigation & Role State
   const [activeTab, setActiveTab] = useState('talents'); // 'talents' | 'jobs' | 'dashboard' | 'messages'
   const [currentRole, setRole] = useState(getCurrentRole()); // 'client' | 'talent'
@@ -150,6 +154,9 @@ function App() {
 
   return (
     <div className="talentx-app">
+      {/* Animated Brand Preloader */}
+      {isLoading && <Preloader onFinish={() => setIsLoading(false)} />}
+
       {/* Top Sticky Navigation */}
       <Navbar 
         activeTab={activeTab}
