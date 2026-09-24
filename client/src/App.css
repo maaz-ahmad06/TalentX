@@ -1428,7 +1428,7 @@
 }
 
 /* ==========================================================================
-   AI Match Studio (/ai-match)
+   AI Match Studio (/ai-match) — Sleek Neural UI
    ========================================================================== */
 .ai-match-page {
   padding: 30px 0 60px;
@@ -1437,26 +1437,35 @@
 .ai-studio-header-banner {
   padding: 40px 30px;
   margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border-color: rgba(168, 85, 247, 0.3);
 }
 
 .ai-studio-title {
   font-family: var(--font-display);
-  font-size: 2.4rem;
+  font-size: 2.5rem;
   font-weight: 800;
-  margin: 12px 0 8px;
+  margin: 14px 0 8px;
   color: #ffffff;
 }
 
 .ai-studio-subtitle {
   font-size: 1rem;
   color: var(--text-secondary);
-  max-width: 700px;
+  max-width: 720px;
   margin: 0 auto;
+  line-height: 1.6;
 }
 
 .ai-controls-card {
   padding: 24px;
   margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: rgba(15, 23, 42, 0.75);
 }
 
 .ai-control-row {
@@ -1468,6 +1477,7 @@
 .ai-job-select-group {
   flex: 1;
 }
+
 .ai-job-select-group label {
   display: flex;
   align-items: center;
@@ -1478,87 +1488,264 @@
   margin-bottom: 8px;
 }
 
-.ai-custom-prompt-group {
-  flex: 1.5;
+.custom-prompt-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
-.ai-custom-prompt-group label {
+
+.prompt-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.ai-scanning-state {
+  padding: 60px 30px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.radar-circle-wrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.12);
+  border: 2px dashed rgba(168, 85, 247, 0.4);
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
+  justify-content: center;
+  margin: 0 auto 24px;
+  animation: rotate 6s linear infinite;
+}
+
+.radar-center-icon {
+  color: #c084fc;
+}
+
+.ai-scanning-state h3 {
+  font-size: 1.3rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: #ffffff;
   margin-bottom: 8px;
 }
 
-.ai-custom-input-box {
+.ai-scanning-state p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* AI Studio Results Grid */
+.ai-studio-results-grid {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.ai-ranked-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 24px;
-}
-
-.ai-ranked-card {
+.ai-candidate-card {
   position: relative;
   padding: 24px;
   border-radius: 20px;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  background: radial-gradient(circle at 10% 10%, rgba(168, 85, 247, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.ai-candidate-card:hover {
+  border-color: rgba(168, 85, 247, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(168, 85, 247, 0.15);
+}
+
+.top-match-card {
+  border-color: rgba(168, 85, 247, 0.4);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(15, 23, 42, 0.9) 100%);
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.12);
+}
+
+.top-match-ribbon {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--gradient-ai);
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+}
+
+.ai-card-content-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1.35fr auto;
+  gap: 24px;
+  align-items: center;
+}
+
+.ai-card-left {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.ai-avatar-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.ai-avatar-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 2px solid rgba(168, 85, 247, 0.35);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .ai-rank-badge {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  bottom: -4px;
+  right: -4px;
   background: var(--gradient-ai);
   color: #ffffff;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 0.72rem;
   font-weight: 800;
+  border: 2px solid #0f172a;
 }
 
-.ai-score-pill {
+.ai-talent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.ai-name-row h4 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.ai-headline {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ai-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.ai-meta-row span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  background: rgba(168, 85, 247, 0.15);
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #e9d5ff;
-  margin: 12px 0;
+  gap: 4px;
+}
+
+/* AI Score & Reasoning Center */
+.ai-score-center {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px 20px;
+  border-radius: 16px;
+}
+
+.ai-score-badge-box {
+  flex-shrink: 0;
+}
+
+.score-percentage-ring {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 3px solid #a855f7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35);
+}
+
+.score-number {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #c084fc;
+  margin-top: 2px;
+}
+
+.ai-reasoning-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-reasoning-text {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin-bottom: 10px;
 }
 
 .ai-breakdown-bars {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 16px 0;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 12px;
+  gap: 6px;
 }
 
-.ai-bar-row {
+.breakdown-bar-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.76rem;
 }
 
-.ai-bar-label {
-  width: 90px;
+.bar-label {
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--text-muted);
+  width: 95px;
+  flex-shrink: 0;
 }
 
-.ai-bar-track {
+.bar-track {
   flex: 1;
   height: 6px;
   background: rgba(255, 255, 255, 0.08);
@@ -1566,15 +1753,31 @@
   overflow: hidden;
 }
 
-.ai-bar-fill {
+.bar-fill {
   height: 100%;
   background: var(--gradient-ai);
   border-radius: 9999px;
+  transition: width 0.6s ease;
+}
+
+.bar-fill.fill-cyan {
+  background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 100%);
+}
+
+.ai-actions-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
    Talent Profile Page
    ========================================================================== */
+.talent-profile-page {
+  padding-bottom: 60px;
+}
+
 .profile-nav-breadcrumb {
   margin: 20px 0 16px;
 }
@@ -1595,6 +1798,7 @@
 .profile-hero-card {
   overflow: hidden;
   margin-bottom: 30px;
+  border-radius: 20px;
 }
 
 .profile-cover-wrap {
@@ -1636,13 +1840,14 @@
   border-radius: 24px;
   object-fit: cover;
   border: 4px solid #0f172a;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 .profile-verified-dot {
   position: absolute;
   bottom: -4px;
   right: -4px;
-  background: var(--primary);
+  background: var(--accent-emerald);
   color: #ffffff;
   width: 30px;
   height: 30px;
@@ -1655,6 +1860,7 @@
 
 .profile-meta-info {
   flex: 1;
+  min-width: 0;
 }
 
 .profile-name-row {
@@ -1683,11 +1889,29 @@
   margin-top: 10px;
 }
 
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.meta-pill.rating-pill {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  font-weight: 700;
+}
+
 .profile-cta-block {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .profile-rate-badge {
@@ -1725,6 +1949,7 @@
 .profile-card {
   padding: 24px;
   margin-bottom: 24px;
+  border-radius: 18px;
 }
 
 .profile-card-title {
@@ -1762,6 +1987,46 @@
   color: var(--accent-emerald);
 }
 
+.profile-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-review-card {
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.review-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.reviewer-name-box strong {
+  font-size: 0.88rem;
+  color: #ffffff;
+}
+
+.review-date-tag {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+.review-stars-row {
+  display: flex;
+  gap: 2px;
+}
+
+.review-comment-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
 .portfolio-items-vertical-list {
   display: flex;
   flex-direction: column;
@@ -1770,6 +2035,7 @@
 
 .portfolio-item-card {
   overflow: hidden;
+  border-radius: 16px;
 }
 
 .portfolio-item-image-box {
@@ -2007,17 +2273,41 @@
   gap: 20px;
 }
 
-/* Contracts Cards */
-.contract-card {
-  padding: 24px;
-  margin-bottom: 18px;
+/* Contracts & Escrow Progression */
+.contracts-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.contract-header {
+.contract-card {
+  padding: 24px;
+  border-radius: 18px;
+}
+
+.contract-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  gap: 16px;
+}
+
+.contract-status-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.status-completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+.status-progress {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
 }
 
 .contract-title {
@@ -2025,42 +2315,180 @@
   font-size: 1.25rem;
   font-weight: 700;
   color: #ffffff;
+  margin-bottom: 4px;
 }
 
-.contract-amount-badge {
+.contract-parties {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+}
+
+.contract-parties strong {
+  color: var(--text-primary);
+}
+
+.contract-total-badge {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.badge-amt {
   font-family: var(--font-display);
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 800;
   color: #34d399;
 }
 
-.milestones-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 14px;
+.badge-deadline {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
-.milestone-item {
+.milestones-progression-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.milestones-box-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.3);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.m-count {
+  color: #818cf8;
+}
+
+.milestones-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.milestone-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.milestone-name {
+.m-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.m-step-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.m-step-badge.paid {
+  background: #10b981;
+  color: #ffffff;
+}
+.m-step-badge.pending {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+.m-name {
+  font-size: 0.88rem;
   font-weight: 600;
-  font-size: 0.9rem;
   color: #ffffff;
 }
 
-.milestone-amount {
-  font-size: 0.85rem;
+.m-val {
+  font-size: 0.78rem;
   color: #818cf8;
   font-weight: 700;
+}
+
+.m-paid-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #34d399;
+}
+
+.m-pending-tag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+/* Proposals Cards */
+.proposals-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.proposal-card {
+  padding: 20px 24px;
+  border-radius: 16px;
+}
+
+.prop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.prop-job-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.prop-talent-name {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.prop-bid-box {
+  text-align: right;
+}
+
+.prop-bid-amt {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #34d399;
+}
+
+.prop-days {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.prop-letter {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  font-style: italic;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 12px 16px;
+  border-radius: 10px;
 }
 
 /* Admin Status Indicator & Data Table */
@@ -2555,6 +2983,8 @@
   .comparison-grid { grid-template-columns: 1fr; }
   .dashboard-stats-grid { grid-template-columns: 1fr 1fr; }
   .chat-interface-layout { grid-template-columns: 260px 1fr; }
+  .ai-card-content-grid { grid-template-columns: 1fr 1fr; }
+  .ai-actions-col { grid-column: span 2; flex-direction: row; }
 }
 
 @media (max-width: 768px) {
@@ -2574,4 +3004,7 @@
   .chat-sidebar { max-height: 250px; }
   .job-card { flex-direction: column; align-items: flex-start; }
   .job-card-actions-strip { width: 100%; flex-direction: row; }
+  .ai-card-content-grid { grid-template-columns: 1fr; }
+  .ai-actions-col { grid-column: span 1; flex-direction: column; }
+  .ai-score-center { flex-direction: column; align-items: flex-start; }
 }
