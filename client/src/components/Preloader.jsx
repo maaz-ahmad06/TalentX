@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
 
 export const Preloader = ({ onFinish }) => {
   const [progress, setProgress] = useState(0);
   const [statusIndex, setStatusIndex] = useState(0);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const finishedRef = useRef(false);
 
   const statusMessages = [
     'Initializing TalentX Ecosystem...',
@@ -14,30 +15,46 @@ export const Preloader = ({ onFinish }) => {
     'Welcome to TalentX!'
   ];
 
+  const handleComplete = () => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    setIsFadingOut(true);
+    setTimeout(() => {
+      if (onFinish) onFinish();
+    }, 500);
+  };
+
   useEffect(() => {
     // Progress counter timer
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(() => {
-            setIsFadingOut(true);
-            setTimeout(() => {
-              onFinish();
-            }, 600); // fade out duration
-          }, 300);
+          handleComplete();
           return 100;
         }
-        // Random incremental jumps for realistic feel
-        const increment = Math.floor(Math.random() * 15) + 10;
-        return Math.min(100, prev + increment);
+        const increment = Math.floor(Math.random() * 20) + 15;
+        const next = Math.min(100, prev + increment);
+        if (next >= 100) {
+          clearInterval(interval);
+          handleComplete();
+        }
+        return next;
       });
-    }, 180);
+    }, 150);
 
-    return () => clearInterval(interval);
-  }, [onFinish]);
+    // Absolute fallback: Auto-dismiss after 2.5s
+    const fallbackTimer = setTimeout(() => {
+      handleComplete();
+    }, 2500);
 
-  // Rotate status message according to progress
+    return () => {
+      clearInterval(interval);
+      clearTimeout(fallbackTimer);
+    };
+  }, []);
+
+  // Update status message
   useEffect(() => {
     if (progress < 25) setStatusIndex(0);
     else if (progress < 50) setStatusIndex(1);
