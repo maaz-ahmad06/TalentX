@@ -3,6 +3,7 @@ import {
   Sparkles, 
   Briefcase, 
   Users, 
+  User,
   MessageSquare, 
   LayoutDashboard, 
   PlusCircle, 
