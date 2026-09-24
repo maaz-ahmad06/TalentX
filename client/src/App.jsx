@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 
 // Storage & Data helpers
@@ -12,26 +13,32 @@ import {
   saveContracts,
   addContract,
   getMessages,
-  addMessage,
-  getCurrentRole,
-  setCurrentRole
+  addMessage
 } from './utils/storage';
 
-// Components
+// Global Layout Components
 import { Navbar } from './components/Navbar';
-import { HeroSection } from './components/HeroSection';
-import { TalentGrid } from './components/TalentGrid';
-import { TalentModal } from './components/TalentModal';
-import { JobBoard } from './components/JobBoard';
-import { PostJobModal } from './components/PostJobModal';
-import { ProposalModal } from './components/ProposalModal';
-import { AIMatcherModal } from './components/AIMatcherModal';
-import { HiringModal } from './components/HiringModal';
-import { ChatDrawer } from './components/ChatDrawer';
-import { DashboardView } from './components/DashboardView';
+import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { Preloader } from './components/Preloader';
+
+// Modals
 import { AuthModal } from './components/AuthModal';
+import { HiringModal } from './components/HiringModal';
+import { ProposalModal } from './components/ProposalModal';
+import { TalentModal } from './components/TalentModal';
+
+// Dedicated Multi-Pages
+import { HomePage } from './pages/HomePage';
+import { TalentsPage } from './pages/TalentsPage';
+import { TalentProfilePage } from './pages/TalentProfilePage';
+import { JobsPage } from './pages/JobsPage';
+import { AIMatchPage } from './pages/AIMatchPage';
+import { PostJobPage } from './pages/PostJobPage';
+import { ClientDashboardPage } from './pages/ClientDashboardPage';
+import { FreelancerDashboardPage } from './pages/FreelancerDashboardPage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { MessagesPage } from './pages/MessagesPage';
 
 function App() {
   // Preloader State
@@ -48,10 +55,6 @@ function App() {
   });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Global Navigation & Role State
-  const [activeTab, setActiveTab] = useState('talents'); // 'talents' | 'jobs' | 'dashboard' | 'messages'
-  const [currentRole, setRole] = useState(currentUser?.role || getCurrentRole()); // 'client' | 'talent'
-
   // Data Collections
   const [talents, setTalents] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -59,21 +62,13 @@ function App() {
   const [contracts, setContracts] = useState([]);
   const [messages, setMessages] = useState([]);
 
-  // Search & Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity, setSelectedCity] = useState('All Cities');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
-  // Modals State
+  // Active Modals
   const [selectedTalentModal, setSelectedTalentModal] = useState(null);
-  const [isPostJobOpen, setIsPostJobOpen] = useState(false);
   const [applyingJob, setApplyingJob] = useState(null);
-  const [isAIMatcherOpen, setIsAIMatcherOpen] = useState(false);
-  const [aiTargetJob, setAiTargetJob] = useState(null);
   const [hiringTalent, setHiringTalent] = useState(null);
-  const [chatTargetTalent, setChatTargetTalent] = useState(null);
+  const [aiTargetJob, setAiTargetJob] = useState(null);
 
-  // Toast Notification State
+  // Toast Notification
   const [toast, setToast] = useState(null);
 
   // Initialize data from LocalStorage
@@ -85,20 +80,27 @@ function App() {
     setMessages(getMessages());
   }, []);
 
-  // Toggle Role Mode
-  const handleToggleRole = () => {
-    const nextRole = currentRole === 'client' ? 'talent' : 'client';
-    setRole(nextRole);
-    setCurrentRole(nextRole);
-    setToast({
-      message: `Switched to ${nextRole === 'client' ? '🏢 Client / Business Mode' : '🧑‍💻 Talent / Freelancer Mode'}`,
-      type: 'ai'
-    });
-  };
-
-  // Trigger Toast helper
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
+  };
+
+  // Auth Handlers
+  const handleAuthSuccess = (userData) => {
+    setCurrentUser(userData);
+    localStorage.setItem('talentx_auth_user', JSON.stringify(userData));
+
+    if (userData.role === 'talent') {
+      const updatedTalents = [userData, ...talents];
+      setTalents(updatedTalents);
+    }
+
+    showToast(`🎉 Welcome, ${userData.name}! Logged in as ${userData.role === 'client' ? '🏢 Client' : '🧑‍💻 Talent'}.`, 'ai');
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('talentx_auth_user');
+    showToast('Logged out successfully', 'success');
   };
 
   // Job Creation Handler
@@ -121,7 +123,6 @@ function App() {
     const created = addContract(contractData);
     setContracts(getContracts());
     
-    // Auto-generate notification message in chat
     addMessage({
       senderId: 'system',
       senderName: 'TalentX Escrow Bot',
@@ -134,7 +135,7 @@ function App() {
     showToast(`🌟 Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
   };
 
-  // Milestone updates in Dashboard
+  // Milestone updates
   const handleUpdateContracts = (updatedContracts) => {
     saveContracts(updatedContracts);
     setContracts(updatedContracts);
@@ -147,209 +148,190 @@ function App() {
     setMessages(getMessages());
   };
 
-  // Open AI Matcher for a specific job
-  const handleOpenAIMatcherForJob = (job) => {
-    setAiTargetJob(job);
-    setIsAIMatcherOpen(true);
-  };
-
-  // Auth Success Handler
-  const handleAuthSuccess = (userData) => {
-    setCurrentUser(userData);
-    localStorage.setItem('talentx_auth_user', JSON.stringify(userData));
-    setRole(userData.role);
-    setCurrentRole(userData.role);
-
-    // If talent, append to local talent list
-    if (userData.role === 'talent') {
-      const updatedTalents = [userData, ...talents];
-      setTalents(updatedTalents);
-    }
-
-    showToast(`🎉 Welcome, ${userData.name}! Logged in as ${userData.role === 'client' ? '🏢 Client' : '🧑‍💻 Talent'}.`, 'ai');
-  };
-
-  // Logout Handler
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('talentx_auth_user');
-    showToast('Logged out successfully', 'success');
-  };
-
-  // Direct Hire Action
-  const handleStartHire = (talent) => {
-    setHiringTalent(talent);
-  };
-
-  // Open Chat with specific talent
-  const handleStartChat = (talent) => {
-    setChatTargetTalent(talent);
-    setActiveTab('messages');
-  };
-
   return (
-    <div className="talentx-app">
-      {/* Animated Brand Preloader */}
-      {isLoading && <Preloader onFinish={() => setIsLoading(false)} />}
+    <Router>
+      <div className="talentx-app">
+        {/* Animated 3D Preloader */}
+        {isLoading && <Preloader onFinish={() => setIsLoading(false)} />}
 
-      {/* Top Sticky Navigation */}
-      <Navbar 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        currentRole={currentRole}
-        onToggleRole={handleToggleRole}
-        onOpenPostJob={() => setIsPostJobOpen(true)}
-        onOpenAIMatcher={() => {
-          setAiTargetJob(null);
-          setIsAIMatcherOpen(true);
-        }}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        unreadCount={messages.length > 0 ? 1 : 0}
-      />
+        {/* Global Sticky Navigation */}
+        <Navbar 
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+          unreadCount={messages.length > 0 ? 1 : 0}
+        />
 
-      {/* Main Tab Views */}
-      <main className="app-main-content">
-        {activeTab === 'talents' && (
-          <>
-            {/* Hero Banner with Search */}
-            <HeroSection 
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedCity={selectedCity}
-              setSelectedCity={setSelectedCity}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              onOpenAIMatcher={() => {
-                setAiTargetJob(null);
-                setIsAIMatcherOpen(true);
-              }}
+        {/* Multi-Page Routes */}
+        <div className="app-main-view">
+          <Routes>
+            <Route 
+              path="/" 
+              element={
+                <HomePage 
+                  talents={talents} 
+                  jobs={jobs} 
+                  onOpenAuth={() => setIsAuthModalOpen(true)} 
+                />
+              } 
             />
 
-            {/* Local Talents Grid with Portfolio Previews */}
-            <TalentGrid 
-              talents={talents}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              selectedCity={selectedCity}
-              setSelectedCity={setSelectedCity}
-              searchQuery={searchQuery}
-              onSelectTalent={(talent) => setSelectedTalentModal(talent)}
-              onHireTalent={handleStartHire}
-              onChatWithTalent={handleStartChat}
+            <Route 
+              path="/talents" 
+              element={
+                <TalentsPage 
+                  talents={talents}
+                  onSelectTalent={(talent) => setSelectedTalentModal(talent)}
+                  onHireTalent={(talent) => setHiringTalent(talent)}
+                  onChatWithTalent={(talent) => window.location.href = '/messages'}
+                />
+              } 
             />
-          </>
-        )}
 
-        {activeTab === 'jobs' && (
-          <JobBoard 
-            jobs={jobs}
-            currentRole={currentRole}
-            onPostJob={() => setIsPostJobOpen(true)}
-            onApplyJob={(job) => setApplyingJob(job)}
-            onMatchJob={handleOpenAIMatcherForJob}
+            <Route 
+              path="/profile/:id" 
+              element={
+                <TalentProfilePage 
+                  talents={talents}
+                  onHireTalent={(talent) => setHiringTalent(talent)}
+                  onChatWithTalent={(talent) => window.location.href = '/messages'}
+                />
+              } 
+            />
+
+            <Route 
+              path="/jobs" 
+              element={
+                <JobsPage 
+                  jobs={jobs}
+                  onApplyJob={(job) => setApplyingJob(job)}
+                  onMatchJob={(job) => {
+                    setAiTargetJob(job);
+                    window.location.href = `/ai-match?jobId=${job.id}`;
+                  }}
+                />
+              } 
+            />
+
+            <Route 
+              path="/ai-match" 
+              element={
+                <AIMatchPage 
+                  jobs={jobs}
+                  talents={talents}
+                  onHireTalent={(talent) => setHiringTalent(talent)}
+                  onChatWithTalent={(talent) => window.location.href = '/messages'}
+                />
+              } 
+            />
+
+            <Route 
+              path="/post-job" 
+              element={
+                <PostJobPage 
+                  onJobCreated={handleCreateJob}
+                  currentUser={currentUser}
+                />
+              } 
+            />
+
+            <Route 
+              path="/dashboard/client" 
+              element={
+                <ClientDashboardPage 
+                  jobs={jobs}
+                  contracts={contracts}
+                  proposals={proposals}
+                  onUpdateContracts={handleUpdateContracts}
+                />
+              } 
+            />
+
+            <Route 
+              path="/dashboard/freelancer" 
+              element={
+                <FreelancerDashboardPage 
+                  contracts={contracts}
+                  proposals={proposals}
+                  talents={talents}
+                  currentUser={currentUser}
+                />
+              } 
+            />
+
+            <Route 
+              path="/admin" 
+              element={
+                <AdminDashboardPage 
+                  talents={talents}
+                  jobs={jobs}
+                  contracts={contracts}
+                />
+              } 
+            />
+
+            <Route 
+              path="/messages" 
+              element={
+                <MessagesPage 
+                  messages={messages}
+                  talents={talents}
+                  onSendMessage={handleSendMessage}
+                  onHireTalent={(talent) => setHiringTalent(talent)}
+                />
+              } 
+            />
+          </Routes>
+        </div>
+
+        {/* Global Footer */}
+        <Footer />
+
+        {/* Global Modals & Dialogs */}
+        {isAuthModalOpen && (
+          <AuthModal 
+            onClose={() => setIsAuthModalOpen(false)}
+            onAuthSuccess={handleAuthSuccess}
           />
         )}
 
-        {activeTab === 'dashboard' && (
-          <DashboardView 
-            currentRole={currentRole}
-            contracts={contracts}
-            jobs={jobs}
-            proposals={proposals}
-            onPostJob={() => setIsPostJobOpen(true)}
-            onUpdateContracts={handleUpdateContracts}
-            onOpenAIMatcher={() => setIsAIMatcherOpen(true)}
+        {selectedTalentModal && (
+          <TalentModal 
+            talent={selectedTalentModal}
+            onClose={() => setSelectedTalentModal(null)}
+            onHire={(talent) => setHiringTalent(talent)}
+            onChat={(talent) => window.location.href = '/messages'}
           />
         )}
 
-        {activeTab === 'messages' && (
-          <ChatDrawer 
-            messages={messages}
+        {applyingJob && (
+          <ProposalModal 
+            job={applyingJob}
             talents={talents}
-            activeTalent={chatTargetTalent}
-            onSendMessage={handleSendMessage}
-            onHireTalent={handleStartHire}
+            onClose={() => setApplyingJob(null)}
+            onProposalSubmitted={handleProposalSubmit}
           />
         )}
-      </main>
 
-      {/* Modals & Dialogs */}
-      {isAuthModalOpen && (
-        <AuthModal 
-          onClose={() => setIsAuthModalOpen(false)}
-          onAuthSuccess={handleAuthSuccess}
-        />
-      )}
+        {hiringTalent && (
+          <HiringModal 
+            talent={hiringTalent}
+            job={aiTargetJob}
+            onClose={() => setHiringTalent(null)}
+            onContractCreated={handleContractCreate}
+          />
+        )}
 
-      {selectedTalentModal && (
-        <TalentModal 
-          talent={selectedTalentModal}
-          onClose={() => setSelectedTalentModal(null)}
-          onHire={handleStartHire}
-          onChat={handleStartChat}
-        />
-      )}
-
-      {isPostJobOpen && (
-        <PostJobModal 
-          onClose={() => setIsPostJobOpen(false)}
-          onJobCreated={handleCreateJob}
-        />
-      )}
-
-      {applyingJob && (
-        <ProposalModal 
-          job={applyingJob}
-          talents={talents}
-          onClose={() => setApplyingJob(null)}
-          onProposalSubmitted={handleProposalSubmit}
-        />
-      )}
-
-      {isAIMatcherOpen && (
-        <AIMatcherModal 
-          jobs={jobs}
-          talents={talents}
-          initialJob={aiTargetJob}
-          onClose={() => {
-            setIsAIMatcherOpen(false);
-            setAiTargetJob(null);
-          }}
-          onSelectTalent={(talent) => {
-            setIsAIMatcherOpen(false);
-            setSelectedTalentModal(talent);
-          }}
-          onHireTalent={(talent) => {
-            setIsAIMatcherOpen(false);
-            handleStartHire(talent);
-          }}
-          onChatWithTalent={(talent) => {
-            setIsAIMatcherOpen(false);
-            handleStartChat(talent);
-          }}
-        />
-      )}
-
-      {hiringTalent && (
-        <HiringModal 
-          talent={hiringTalent}
-          job={aiTargetJob}
-          onClose={() => setHiringTalent(null)}
-          onContractCreated={handleContractCreate}
-        />
-      )}
-
-      {/* Floating Notifications */}
-      {toast && (
-        <Toast 
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-    </div>
+        {/* Floating Toast Notification */}
+        {toast && (
+          <Toast 
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </div>
+    </Router>
   );
 }
 

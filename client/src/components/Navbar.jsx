@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
   Briefcase, 
@@ -9,26 +10,27 @@ import {
   PlusCircle, 
   Search,
   CheckCircle2,
-  Bell
+  ShieldAlert,
+  ChevronDown,
+  Building2,
+  Sliders,
+  LogOut
 } from 'lucide-react';
 
 export const Navbar = ({ 
-  activeTab, 
-  setActiveTab, 
-  currentRole, 
-  onToggleRole, 
-  onOpenPostJob,
-  onOpenAIMatcher,
+  currentUser = null, 
+  onLogout, 
   onOpenAuth,
-  currentUser = null,
-  onLogout,
-  unreadCount = 2
+  unreadCount = 1 
 }) => {
+  const [isDashboardDropdownOpen, setIsDashboardDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+
   return (
     <header className="sticky-nav">
       <div className="container nav-content">
         {/* Brand Logo */}
-        <div className="brand-logo" onClick={() => setActiveTab('talents')}>
+        <Link to="/" className="brand-logo">
           <div className="logo-icon-wrap">
             <span className="logo-x">X</span>
             <div className="logo-glow"></div>
@@ -37,104 +39,126 @@ export const Navbar = ({
             <span className="brand-title">Talent<span className="text-gradient">X</span></span>
             <span className="brand-tag">PAKISTAN LOCAL</span>
           </div>
-        </div>
+        </Link>
 
         {/* Navigation Links */}
         <nav className="nav-links">
-          <button 
-            className={`nav-link-btn ${activeTab === 'talents' ? 'active' : ''}`}
-            onClick={() => setActiveTab('talents')}
+          <NavLink 
+            to="/talents" 
+            className={({ isActive }) => `nav-link-btn ${isActive ? 'active' : ''}`}
           >
-            <Users size={18} />
+            <Users size={17} />
             <span>Find Talent</span>
-          </button>
+          </NavLink>
 
-          <button 
-            className={`nav-link-btn ${activeTab === 'jobs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('jobs')}
+          <NavLink 
+            to="/jobs" 
+            className={({ isActive }) => `nav-link-btn ${isActive ? 'active' : ''}`}
           >
-            <Briefcase size={18} />
-            <span>Local Jobs</span>
-          </button>
+            <Briefcase size={17} />
+            <span>Browse Jobs</span>
+          </NavLink>
 
-          <button 
-            className={`nav-link-btn ai-nav-btn ${activeTab === 'ai-match' ? 'active' : ''}`}
-            onClick={onOpenAIMatcher}
+          <NavLink 
+            to="/ai-match" 
+            className={({ isActive }) => `nav-link-btn ai-nav-btn ${isActive ? 'active' : ''}`}
           >
-            <Sparkles size={18} className="ai-icon-spin" />
+            <Sparkles size={17} className="ai-icon-spin" />
             <span>AI Matcher</span>
             <span className="badge-ai-tiny">AI</span>
-          </button>
+          </NavLink>
 
-          <button 
-            className={`nav-link-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <LayoutDashboard size={18} />
-            <span>Dashboard</span>
-          </button>
+          {/* Dedicated Dashboards Dropdown */}
+          <div className="nav-dropdown-wrap" onMouseLeave={() => setIsDashboardDropdownOpen(false)}>
+            <button 
+              className="nav-link-btn dropdown-trigger-btn"
+              onClick={() => setIsDashboardDropdownOpen(!isDashboardDropdownOpen)}
+              onMouseEnter={() => setIsDashboardDropdownOpen(true)}
+            >
+              <LayoutDashboard size={17} />
+              <span>Dashboards</span>
+              <ChevronDown size={14} className={`dropdown-chevron ${isDashboardDropdownOpen ? 'rotate' : ''}`} />
+            </button>
 
-          <button 
-            className={`nav-link-btn ${activeTab === 'messages' ? 'active' : ''}`}
-            onClick={() => setActiveTab('messages')}
-          >
-            <div className="relative-wrap">
-              <MessageSquare size={18} />
-              {unreadCount > 0 && <span className="nav-unread-dot"></span>}
-            </div>
-            <span>Chat</span>
-          </button>
-        </nav>
+            {isDashboardDropdownOpen && (
+              <div className="nav-dropdown-menu glass-panel animate-slide-up">
+                <Link 
+                  to="/dashboard/client" 
+                  className="dropdown-item"
+                  onClick={() => setIsDashboardDropdownOpen(false)}
+                >
+                  <Building2 size={16} className="text-indigo" />
+                  <div>
+                    <div className="dropdown-item-title">Client / Business Portal</div>
+                    <div className="dropdown-item-desc">Post jobs, hire talent & manage escrow</div>
+                  </div>
+                </Link>
 
-        {/* Right Actions: Auth, Role Switcher & CTA */}
-        <div className="nav-right-actions">
-          {/* Role Mode Toggle Switcher */}
-          <div className="role-switcher-wrap" title="Switch between Business & Freelancer view">
-            <div className="role-toggle-pill" onClick={onToggleRole}>
-              <button 
-                type="button"
-                className={`role-btn ${currentRole === 'client' ? 'role-active' : ''}`}
-              >
-                🏢 Client
-              </button>
-              <button 
-                type="button"
-                className={`role-btn ${currentRole === 'talent' ? 'role-active' : ''}`}
-              >
-                🧑‍💻 Talent
-              </button>
-            </div>
+                <Link 
+                  to="/dashboard/freelancer" 
+                  className="dropdown-item"
+                  onClick={() => setIsDashboardDropdownOpen(false)}
+                >
+                  <Users size={16} className="text-purple" />
+                  <div>
+                    <div className="dropdown-item-title">Freelancer Career Hub</div>
+                    <div className="dropdown-item-desc">Proposals, portfolio & earnings</div>
+                  </div>
+                </Link>
+
+                <div className="dropdown-divider"></div>
+
+                <Link 
+                  to="/admin" 
+                  className="dropdown-item admin-dropdown-item"
+                  onClick={() => setIsDashboardDropdownOpen(false)}
+                >
+                  <ShieldAlert size={16} className="text-amber" />
+                  <div>
+                    <div className="dropdown-item-title">🛡️ Admin Command Center</div>
+                    <div className="dropdown-item-desc">Platform analytics & user verification</div>
+                  </div>
+                </Link>
+              </div>
+            )}
           </div>
 
-          {/* User Auth Info or Sign In Button */}
+          <NavLink 
+            to="/messages" 
+            className={({ isActive }) => `nav-link-btn ${isActive ? 'active' : ''}`}
+          >
+            <div className="relative-wrap">
+              <MessageSquare size={17} />
+              {unreadCount > 0 && <span className="nav-unread-dot"></span>}
+            </div>
+            <span>Messages</span>
+          </NavLink>
+        </nav>
+
+        {/* Right Actions: Post Job CTA & User Auth */}
+        <div className="nav-right-actions">
+          {/* Post a Job Button */}
+          <Link to="/post-job" className="btn btn-primary btn-sm">
+            <PlusCircle size={16} />
+            <span>Post a Job</span>
+          </Link>
+
+          {/* User Auth / Profile Pill */}
           {currentUser ? (
             <div className="user-profile-nav-pill glass-panel">
               <img src={currentUser.avatar} alt={currentUser.name} className="nav-user-avatar" />
               <div className="nav-user-text">
                 <span className="nav-user-name">{currentUser.name}</span>
-                <span className="nav-user-role">{currentUser.role === 'client' ? 'Client' : 'Pro'}</span>
+                <span className="nav-user-role">{currentUser.role === 'client' ? 'Business' : 'Freelancer'}</span>
               </div>
               <button className="nav-logout-btn" onClick={onLogout} title="Log Out">
-                ✕
+                <LogOut size={14} />
               </button>
             </div>
           ) : (
             <button className="btn btn-secondary btn-sm" onClick={onOpenAuth}>
               <User size={15} />
-              <span>Log In</span>
-            </button>
-          )}
-
-          {/* Action CTA */}
-          {currentRole === 'client' ? (
-            <button className="btn btn-primary btn-sm" onClick={onOpenPostJob}>
-              <PlusCircle size={16} />
-              <span>Post a Job</span>
-            </button>
-          ) : (
-            <button className="btn btn-ai btn-sm" onClick={() => setActiveTab('jobs')}>
-              <Briefcase size={16} />
-              <span>Apply to Gigs</span>
+              <span>Log In / Sign Up</span>
             </button>
           )}
         </div>
