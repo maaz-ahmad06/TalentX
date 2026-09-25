@@ -68,60 +68,64 @@ export const Navbar = ({
             <span className="badge-ai-tiny">AI</span>
           </NavLink>
 
-          {/* Dedicated Dashboards Dropdown */}
-          <div className="nav-dropdown-wrap" onMouseLeave={() => setIsDashboardDropdownOpen(false)}>
-            <button 
-              className="nav-link-btn dropdown-trigger-btn"
-              onClick={() => setIsDashboardDropdownOpen(!isDashboardDropdownOpen)}
-              onMouseEnter={() => setIsDashboardDropdownOpen(true)}
-            >
-              <LayoutDashboard size={17} />
-              <span>Dashboards</span>
-              <ChevronDown size={14} className={`dropdown-chevron ${isDashboardDropdownOpen ? 'rotate' : ''}`} />
-            </button>
+          {/* Dedicated Dashboards Dropdown — Only shown when user is Logged In */}
+          {currentUser && (
+            <div className="nav-dropdown-wrap" onMouseLeave={() => setIsDashboardDropdownOpen(false)}>
+              <button 
+                className="nav-link-btn dropdown-trigger-btn"
+                onClick={() => setIsDashboardDropdownOpen(!isDashboardDropdownOpen)}
+                onMouseEnter={() => setIsDashboardDropdownOpen(true)}
+              >
+                <LayoutDashboard size={17} />
+                <span>Dashboard</span>
+                <ChevronDown size={14} className={`dropdown-chevron ${isDashboardDropdownOpen ? 'rotate' : ''}`} />
+              </button>
 
-            {isDashboardDropdownOpen && (
-              <div className="nav-dropdown-menu glass-panel animate-slide-up">
-                <Link 
-                  to="/dashboard/client" 
-                  className="dropdown-item"
-                  onClick={() => setIsDashboardDropdownOpen(false)}
-                >
-                  <Building2 size={16} className="text-indigo" />
-                  <div>
-                    <div className="dropdown-item-title">Client / Business Portal</div>
-                    <div className="dropdown-item-desc">Post jobs, hire talent & manage escrow</div>
-                  </div>
-                </Link>
+              {isDashboardDropdownOpen && (
+                <div className="nav-dropdown-menu glass-panel animate-slide-up">
+                  {currentUser.role === 'client' ? (
+                    <Link 
+                      to="/dashboard/client" 
+                      className="dropdown-item"
+                      onClick={() => setIsDashboardDropdownOpen(false)}
+                    >
+                      <Building2 size={16} className="text-indigo" />
+                      <div>
+                        <div className="dropdown-item-title">Client / Business Workspace</div>
+                        <div className="dropdown-item-desc">Manage job postings, bids & escrow funds</div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <Link 
+                      to="/dashboard/freelancer" 
+                      className="dropdown-item"
+                      onClick={() => setIsDashboardDropdownOpen(false)}
+                    >
+                      <Users size={16} className="text-purple" />
+                      <div>
+                        <div className="dropdown-item-title">Freelancer Career Hub</div>
+                        <div className="dropdown-item-desc">View active contracts, bids & earnings</div>
+                      </div>
+                    </Link>
+                  )}
 
-                <Link 
-                  to="/dashboard/freelancer" 
-                  className="dropdown-item"
-                  onClick={() => setIsDashboardDropdownOpen(false)}
-                >
-                  <Users size={16} className="text-purple" />
-                  <div>
-                    <div className="dropdown-item-title">Freelancer Career Hub</div>
-                    <div className="dropdown-item-desc">Proposals, portfolio & earnings</div>
-                  </div>
-                </Link>
+                  <div className="dropdown-divider"></div>
 
-                <div className="dropdown-divider"></div>
-
-                <Link 
-                  to="/admin" 
-                  className="dropdown-item admin-dropdown-item"
-                  onClick={() => setIsDashboardDropdownOpen(false)}
-                >
-                  <ShieldAlert size={16} className="text-amber" />
-                  <div>
-                    <div className="dropdown-item-title">🛡️ Admin Command Center</div>
-                    <div className="dropdown-item-desc">Platform analytics & user verification</div>
-                  </div>
-                </Link>
-              </div>
-            )}
-          </div>
+                  <Link 
+                    to="/admin" 
+                    className="dropdown-item admin-dropdown-item"
+                    onClick={() => setIsDashboardDropdownOpen(false)}
+                  >
+                    <ShieldAlert size={16} className="text-amber" />
+                    <div>
+                      <div className="dropdown-item-title">🛡️ Admin Command Center</div>
+                      <div className="dropdown-item-desc">Platform analytics & system monitor</div>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
 
           <NavLink 
             to="/messages" 

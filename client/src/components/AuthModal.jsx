@@ -52,19 +52,21 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
       name: isLoginMode ? (formData.email.split('@')[0]) : formData.name,
       email: formData.email,
       role: selectedRole,
-      city: formData.city,
-      category: formData.category,
-      headline: formData.headline || (selectedRole === 'client' ? 'Business Client' : `Pro ${formData.category} Specialist`),
-      hourlyRate: Number(formData.hourlyRate),
-      dailyRate: Number(formData.hourlyRate) * 7,
+      city: 'Lahore',
+      area: 'Gulberg / DHA',
+      category: selectedRole === 'client' ? 'Business / Client' : 'Web Development',
+      headline: selectedRole === 'client' ? 'Business Client & Project Manager' : 'Verified Professional Freelancer',
+      hourlyRate: 3500,
+      dailyRate: 24500,
       rating: 5.0,
       reviewCount: 0,
-      badge: 'New Verified Pro',
+      badge: 'Verified Pro',
       avatar: selectedRole === 'client' 
         ? 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80'
         : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
       coverImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=1200&q=80',
-      skills: [formData.category, 'Communication', 'Client Delivery'],
+      skills: ['MERN Stack', 'React', 'Problem Solving', 'Client Communication'],
+      bio: 'Professional delivering verified services on TalentX Pakistan. Ready to collaborate on exciting projects.',
       portfolio: [],
       reviews: []
     };
@@ -199,89 +201,6 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
               </button>
             </div>
           </div>
-
-          {!isLoginMode && (
-            <>
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label>City (Pakistan)</label>
-                  <div className="input-with-icon">
-                    <MapPin size={18} className="field-icon" />
-                    <select 
-                      className="input-field select-field"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    >
-                      {CITIES.filter(c => c !== 'All Cities').map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {selectedRole === 'talent' ? (
-                  <div className="form-group">
-                    <label>Primary Skill</label>
-                    <div className="input-with-icon">
-                      <Briefcase size={18} className="field-icon" />
-                      <select 
-                        className="input-field select-field"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      >
-                        {CATEGORIES.filter(c => c.id !== 'all').map(c => (
-                          <option key={c.id} value={c.label}>{c.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="form-group">
-                    <label>Phone Number</label>
-                    <div className="input-with-icon">
-                      <Phone size={18} className="field-icon" />
-                      <input 
-                        type="text"
-                        className="input-field"
-                        placeholder="0300-1234567"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {selectedRole === 'talent' && (
-                <div className="form-grid-2">
-                  <div className="form-group">
-                    <label>Professional Headline</label>
-                    <input 
-                      type="text"
-                      className="input-field"
-                      placeholder="e.g. Commercial & Drone Photographer"
-                      value={formData.headline}
-                      onChange={(e) => setFormData({ ...formData, headline: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Hourly Rate (PKR)</label>
-                    <div className="input-with-icon">
-                      <DollarSign size={18} className="field-icon" />
-                      <input 
-                        type="number"
-                        className="input-field"
-                        placeholder="3500"
-                        value={formData.hourlyRate}
-                        onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
 
           {/* Submit Actions */}
           <div className="modal-form-actions">
