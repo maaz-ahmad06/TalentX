@@ -50,12 +50,6 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Route check: Hide public Navbar & Footer on all dashboard routes
-  const isDashboardRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard');
-
-  // Preloader State
-  const [isLoading, setIsLoading] = useState(true);
-
   // Auth & Session State
   const [currentUser, setCurrentUser] = useState(() => {
     try {
@@ -65,6 +59,12 @@ function AppContent() {
       return null;
     }
   });
+
+  // Route check: Hide public Navbar & Footer on all dashboard routes and logged-in messages workspace
+  const isDashboardRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard') || (Boolean(currentUser) && location.pathname === '/messages');
+
+  // Preloader State
+  const [isLoading, setIsLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Data Collections
@@ -84,6 +84,16 @@ function AppContent() {
   // Toast Notification
   const [toast, setToast] = useState(null);
   const [isAnnouncementBannerVisible, setIsAnnouncementBannerVisible] = useState(true);
+
+  // Auto-dismiss top announcement banner after 7 seconds
+  useEffect(() => {
+    if (isAnnouncementBannerVisible && platformSettings?.isAnnouncementActive) {
+      const timer = setTimeout(() => {
+        setIsAnnouncementBannerVisible(false);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAnnouncementBannerVisible, platformSettings]);
 
   // Initialize data from LocalStorage
   useEffect(() => {
@@ -111,6 +121,15 @@ function AppContent() {
     }
 
     showToast(`🎉 Welcome, ${userData.name}! Logged in as ${userData.role === 'client' ? '🏢 Client' : userData.role === 'admin' ? '🛡️ Admin' : '🧑‍💻 Talent'}.`, 'ai');
+
+    // Automatically navigate to user's personalized dashboard
+    if (userData.role === 'client') {
+      navigate('/dashboard/client');
+    } else if (userData.role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard/freelancer');
+    }
   };
 
   const handleLogout = () => {
@@ -358,6 +377,11 @@ function AppContent() {
               <MessagesPage 
                 messages={messages}
                 talents={talents}
+                contracts={contracts}
+                proposals={proposals}
+                jobs={jobs}
+                currentUser={currentUser}
+                onLogout={handleLogout}
                 onSendMessage={handleSendMessage}
                 onHireTalent={(talent) => setHiringTalent(talent)}
               />
