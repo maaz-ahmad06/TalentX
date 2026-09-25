@@ -127,25 +127,30 @@ export const Navbar = ({
             </div>
           )}
 
-          <NavLink 
-            to="/messages" 
-            className={({ isActive }) => `nav-link-btn ${isActive ? 'active' : ''}`}
-          >
-            <div className="relative-wrap">
-              <MessageSquare size={17} />
-              {unreadCount > 0 && <span className="nav-unread-dot"></span>}
-            </div>
-            <span>Messages</span>
-          </NavLink>
+          {/* Messages Link — Only visible when logged in */}
+          {currentUser && (
+            <NavLink 
+              to="/messages" 
+              className={({ isActive }) => `nav-link-btn ${isActive ? 'active' : ''}`}
+            >
+              <div className="relative-wrap">
+                <MessageSquare size={17} />
+                {unreadCount > 0 && <span className="nav-unread-dot"></span>}
+              </div>
+              <span>Messages</span>
+            </NavLink>
+          )}
         </nav>
 
         {/* Right Actions: Post Job CTA & User Auth */}
         <div className="nav-right-actions">
-          {/* Post a Job Button */}
-          <Link to="/post-job" className="btn btn-primary btn-sm">
-            <PlusCircle size={16} />
-            <span>Post a Job</span>
-          </Link>
+          {/* Post a Job Button — ONLY visible when logged in as a Client/Employer */}
+          {currentUser?.role === 'client' && (
+            <Link to="/post-job" className="btn btn-primary btn-sm">
+              <PlusCircle size={16} />
+              <span>Post a Job</span>
+            </Link>
+          )}
 
           {/* User Auth / Profile Pill */}
           {currentUser ? (
@@ -160,7 +165,7 @@ export const Navbar = ({
               </button>
             </div>
           ) : (
-            <button className="btn btn-secondary btn-sm" onClick={onOpenAuth}>
+            <button className="btn btn-primary btn-sm" onClick={onOpenAuth}>
               <User size={15} />
               <span>Log In / Sign Up</span>
             </button>

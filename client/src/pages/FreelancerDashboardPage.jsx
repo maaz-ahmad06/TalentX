@@ -22,7 +22,8 @@ import {
   Edit,
   Save,
   Tag,
-  FileText
+  FileText,
+  MessageSquare
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
@@ -190,6 +191,14 @@ export const FreelancerDashboardPage = ({
             <User size={18} />
             <span>Profile & Skills</span>
           </button>
+
+          <Link 
+            to="/messages" 
+            className="sidebar-nav-item"
+          >
+            <MessageSquare size={18} />
+            <span>Messages & Chat</span>
+          </Link>
         </nav>
 
         {/* Sidebar Footer Controls */}

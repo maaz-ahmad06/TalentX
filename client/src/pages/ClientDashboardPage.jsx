@@ -169,6 +169,14 @@ export const ClientDashboardPage = ({
             <User size={18} />
             <span>Company Settings</span>
           </button>
+
+          <Link 
+            to="/messages" 
+            className="sidebar-nav-item"
+          >
+            <MessageSquare size={18} />
+            <span>Messages & Chat</span>
+          </Link>
         </nav>
 
         {/* Sidebar Footer Controls */}
