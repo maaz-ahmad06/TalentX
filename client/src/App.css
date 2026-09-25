@@ -15,6 +15,255 @@
 }
 
 /* ==========================================================================
+   TalentX Preloader (Futuristic 3D Orbiting Loader)
+   ========================================================================== */
+.talentx-preloader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #060911;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.talentx-preloader-overlay.preloader-fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Background Ambient Orbs */
+.preloader-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  opacity: 0.35;
+  animation: float 6s ease-in-out infinite alternate;
+}
+
+.preloader-bg-orb.orb-1 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, transparent 70%);
+  top: 15%;
+  left: 20%;
+}
+
+.preloader-bg-orb.orb-2 {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.5) 0%, transparent 70%);
+  bottom: 20%;
+  right: 25%;
+  animation-delay: -3s;
+}
+
+.preloader-bg-orb.orb-3 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, transparent 70%);
+  top: 45%;
+  right: 40%;
+  animation-delay: -1.5s;
+}
+
+/* Preloader Content Box */
+.preloader-content-box {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 90%;
+  max-width: 440px;
+  padding: 40px 24px;
+}
+
+/* Animated 3D Emblem with Orbiting Rings */
+.preloader-emblem-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.preloader-orbit-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.preloader-orbit-ring.ring-1 {
+  border: 2px dashed rgba(99, 102, 241, 0.5);
+  animation: rotate 8s linear infinite;
+}
+
+.preloader-orbit-ring.ring-2 {
+  inset: -12px;
+  border: 1.5px solid rgba(168, 85, 247, 0.25);
+  border-top-color: #ec4899;
+  border-bottom-color: #6366f1;
+  animation: rotate 4s linear infinite reverse;
+}
+
+.preloader-center-logo {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: var(--gradient-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
+  animation: pulse-glow 3s infinite;
+}
+
+.preloader-logo-x {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.preloader-logo-glow {
+  position: absolute;
+  inset: -4px;
+  background: var(--gradient-brand);
+  filter: blur(14px);
+  opacity: 0.6;
+  z-index: -1;
+  border-radius: 22px;
+}
+
+.preloader-sparkle-dot {
+  position: absolute;
+  color: #fbbf24;
+  animation: pulse 1.8s infinite;
+}
+
+.preloader-sparkle-dot.sparkle-top {
+  top: -8px;
+  right: -8px;
+}
+
+.preloader-sparkle-dot.sparkle-bottom {
+  bottom: -6px;
+  left: -6px;
+  animation-delay: 0.9s;
+}
+
+/* Brand Title */
+.preloader-brand-title {
+  margin-bottom: 28px;
+}
+
+.preloader-brand-title h1 {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.preloader-country-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Progress Bar */
+.preloader-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.preloader-progress-bar {
+  position: relative;
+  height: 100%;
+  background: var(--gradient-brand);
+  border-radius: 9999px;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.7);
+}
+
+.progress-shimmer-light {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+  animation: shimmer 1.5s infinite;
+}
+
+/* Status Row */
+.preloader-status-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.825rem;
+}
+
+.preloader-status-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.status-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  flex-shrink: 0;
+  animation: pulse 1.5s infinite;
+}
+
+.preloader-percent-number {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+
+
+/* ==========================================================================
    Navbar & Navigation
    ========================================================================== */
 .sticky-nav {
