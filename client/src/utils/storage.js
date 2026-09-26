@@ -109,6 +109,17 @@ export const registerUser = (user) => {
   return { success: true, user: newUser };
 };
 
+export const updateRegisteredUser = (userData) => {
+  if (!userData) return;
+  const users = getRegisteredUsers();
+  const normalizedEmail = (userData.email || '').trim().toLowerCase();
+  const index = users.findIndex(u => (userData.id && u.id === userData.id) || (u.email && u.email.toLowerCase() === normalizedEmail));
+  if (index !== -1) {
+    users[index] = { ...users[index], ...userData };
+    saveRegisteredUsers(users);
+  }
+};
+
 export const loginUser = (email, password) => {
   const users = getRegisteredUsers();
   const normalizedEmail = (email || '').trim().toLowerCase();

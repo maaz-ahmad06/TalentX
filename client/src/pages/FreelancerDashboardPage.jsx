@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Briefcase, 
@@ -28,7 +28,10 @@ import {
   Image as ImageIcon,
   ExternalLink,
   Wand2,
-  X
+  X,
+  Upload,
+  Camera,
+  Link2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
@@ -72,41 +75,179 @@ export const FreelancerDashboardPage = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('contracts');
 
-  // Find active talent profile or fallback to currentUser or talents[0]
-  const myTalentProfile = talents.find(t => t.id === currentUser?.id || t.name === currentUser?.name) || talents[0] || {};
+  // Find active talent profile or fallback to currentUser
+  const myTalentProfile = talents.find(t => 
+    (currentUser?.id && t.id === currentUser.id) || 
+    (currentUser?.email && t.email && t.email.toLowerCase() === currentUser.email.toLowerCase()) || 
+    (currentUser?.name && t.name === currentUser.name)
+  ) || currentUser || {};
+
   const totalEarnings = contracts.reduce((sum, c) => sum + (c.amount || 0), 0);
 
   // Portfolio projects list
   const currentPortfolio = Array.isArray(myTalentProfile?.portfolio) && myTalentProfile.portfolio.length > 0
     ? myTalentProfile.portfolio
-    : [];
+    : (Array.isArray(currentUser?.portfolio) && currentUser.portfolio.length > 0 ? currentUser.portfolio : []);
 
   // Add Portfolio Modal State
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [newProjectForm, setNewProjectForm] = useState({
     title: '',
-    category: myTalentProfile?.category || 'Web Development',
+    category: myTalentProfile?.category || currentUser?.category || 'Web Development',
     image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
     description: '',
     tags: 'React, Node.js, Next.js'
   });
 
-  // Profile Edit State
-  const [profileForm, setProfileForm] = useState({
-    name: currentUser?.name || myTalentProfile?.name || 'Talent User',
-    headline: myTalentProfile?.headline || 'Professional Freelancer & Specialist',
-    category: myTalentProfile?.category || 'Web Development',
-    city: myTalentProfile?.city || 'Lahore',
-    area: myTalentProfile?.area || 'Gulberg III & DHA',
-    hourlyRate: myTalentProfile?.hourlyRate || 3500,
-    dailyRate: myTalentProfile?.dailyRate || 24500,
-    experience: myTalentProfile?.experience || '4+ Years',
-    skills: Array.isArray(myTalentProfile?.skills) ? myTalentProfile.skills : ['React', 'Node.js', 'Tailwind CSS'],
-    bio: myTalentProfile?.bio || 'Experienced specialist delivering high-impact solutions for Pakistani and international clients.',
-    avatar: currentUser?.avatar || myTalentProfile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
+  // Profile Edit State - Initialized accurately from persistent currentUser / myTalentProfile
+  const [profileForm, setProfileForm] = useState(() => {
+    const src = { ...myTalentProfile, ...currentUser };
+    return {
+      name: src.name || '',
+      headline: src.headline || 'Professional Freelancer & Specialist',
+      category: src.category || 'Web Development',
+      city: src.city || 'Lahore',
+      area: src.area || 'Gulberg III & DHA',
+      hourlyRate: src.hourlyRate || 3500,
+      dailyRate: src.dailyRate || 24500,
+      experience: src.experience || '3+ Years',
+      skills: Array.isArray(src.skills) && src.skills.length > 0 ? src.skills : ['React', 'Node.js', 'Tailwind CSS'],
+      bio: src.bio || 'Dedicated professional ready to build modern digital projects.',
+      avatar: src.avatar || ''
+    };
   });
 
+  // Keep form in sync when currentUser or talents update
+  useEffect(() => {
+    const src = { ...myTalentProfile, ...currentUser };
+    if (src.name || src.email || src.id) {
+      setProfileForm({
+        name: src.name || '',
+        headline: src.headline || 'Professional Freelancer & Specialist',
+        category: src.category || 'Web Development',
+        city: src.city || 'Lahore',
+        area: src.area || 'Gulberg III & DHA',
+        hourlyRate: src.hourlyRate || 3500,
+        dailyRate: src.dailyRate || (src.hourlyRate ? Number(src.hourlyRate) * 7 : 24500),
+        experience: src.experience || '3+ Years',
+        skills: Array.isArray(src.skills) && src.skills.length > 0 ? src.skills : ['React', 'Node.js', 'Tailwind CSS'],
+        bio: src.bio || 'Dedicated professional ready to build modern digital projects.',
+        avatar: src.avatar || ''
+      });
+    }
+  }, [
+    currentUser?.id, 
+    currentUser?.email, 
+    currentUser?.name, 
+    currentUser?.avatar, 
+    currentUser?.headline, 
+    currentUser?.category, 
+    currentUser?.hourlyRate, 
+    currentUser?.dailyRate, 
+    currentUser?.city, 
+    currentUser?.area, 
+    currentUser?.bio, 
+    currentUser?.skills, 
+    myTalentProfile?.id, 
+    myTalentProfile?.avatar, 
+    myTalentProfile?.headline, 
+    myTalentProfile?.hourlyRate, 
+    myTalentProfile?.skills
+  ]);
+
   const [newSkillInput, setNewSkillInput] = useState('');
+  const [showAvatarUrlInput, setShowAvatarUrlInput] = useState(false);
+  const [showProjectImageUrlInput, setShowProjectImageUrlInput] = useState(false);
+  const avatarFileInputRef = useRef(null);
+  const projectImageFileInputRef = useRef(null);
+
+  // Real Image Upload Handler with Canvas Optimization for Avatars
+  const handleAvatarFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      if (showToast) showToast('Please select a valid image file (JPG, PNG, WEBP).', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 480;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round((height * MAX_SIZE) / width);
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width = Math.round((width * MAX_SIZE) / height);
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.88);
+        setProfileForm(prev => ({ ...prev, avatar: optimizedBase64 }));
+        if (showToast) showToast('📸 Profile photo uploaded! Click "Save Profile" to publish.', 'success');
+      };
+      img.src = uploadEvent.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    setProfileForm(prev => ({ ...prev, avatar: '' }));
+    if (showToast) showToast('Profile avatar cleared.', 'info');
+  };
+
+  // Real Project Image Upload Handler for Portfolio
+  const handleProjectImageFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      if (showToast) showToast('Please select a valid image file.', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 900;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        setNewProjectForm(prev => ({ ...prev, image: optimizedBase64 }));
+        if (showToast) showToast('🖼️ Project image loaded successfully!', 'success');
+      };
+      img.src = uploadEvent.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleAddSkill = (e) => {
     e.preventDefault();
@@ -133,8 +274,11 @@ export const FreelancerDashboardPage = ({
     e.preventDefault();
 
     const updatedUser = {
-      ...currentUser,
       ...myTalentProfile,
+      ...currentUser,
+      id: currentUser?.id || myTalentProfile?.id || `talent_${Date.now()}`,
+      email: currentUser?.email || myTalentProfile?.email || '',
+      role: 'talent',
       name: profileForm.name,
       headline: profileForm.headline,
       category: profileForm.category,
@@ -145,7 +289,8 @@ export const FreelancerDashboardPage = ({
       experience: profileForm.experience,
       skills: profileForm.skills,
       bio: profileForm.bio,
-      avatar: profileForm.avatar
+      avatar: profileForm.avatar,
+      portfolio: myTalentProfile?.portfolio || currentUser?.portfolio || []
     };
 
     if (onUpdateCurrentUser) {
@@ -153,13 +298,19 @@ export const FreelancerDashboardPage = ({
     }
 
     if (onUpdateTalents) {
+      let matched = false;
       const updatedTalents = talents.map(t => {
-        if (t.id === myTalentProfile.id || t.id === currentUser?.id) {
+        if ((currentUser?.id && t.id === currentUser.id) || 
+            (currentUser?.email && t.email && t.email.toLowerCase() === currentUser.email.toLowerCase()) || 
+            (myTalentProfile?.id && t.id === myTalentProfile.id)) {
+          matched = true;
           return { ...t, ...updatedUser };
         }
         return t;
       });
-      onUpdateTalents(updatedTalents);
+
+      const finalTalents = matched ? updatedTalents : [updatedUser, ...talents];
+      onUpdateTalents(finalTalents);
     }
 
     confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
@@ -814,16 +965,107 @@ export const FreelancerDashboardPage = ({
                   </div>
                 </div>
 
-                {/* Avatar Photo URL */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Profile Avatar Image URL</label>
-                  <input 
-                    type="url" 
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-sm outline-none transition-all"
-                    placeholder="https://images.unsplash.com/..."
-                    value={profileForm.avatar}
-                    onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
-                  />
+                {/* Profile Photo & Avatar Uploader Card */}
+                <div className="p-5 rounded-2xl bg-slate-950/70 border border-white/10 space-y-4 shadow-inner">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                        Profile Photo & Avatar
+                      </label>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Upload a real picture from your computer/mobile or choose an avatar.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 cursor-pointer"
+                      onClick={() => setShowAvatarUrlInput(!showAvatarUrlInput)}
+                    >
+                      <Link2 size={13} />
+                      <span>{showAvatarUrlInput ? 'Hide URL Box' : 'Or Paste Web URL'}</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-5">
+                    {/* Live Image Preview with Hover/Camera Badge */}
+                    <div className="relative group shrink-0">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden ring-4 ring-indigo-500/30 shadow-xl bg-slate-900 flex items-center justify-center border border-white/10">
+                        {profileForm.avatar ? (
+                          <img 
+                            src={profileForm.avatar} 
+                            alt="Profile Avatar Preview" 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-500">
+                            <User size={36} />
+                            <span className="text-[10px] mt-1 font-semibold">No Photo</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Camera Button Overlay */}
+                      <button
+                        type="button"
+                        onClick={() => avatarFileInputRef.current?.click()}
+                        className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 rounded-2xl flex flex-col items-center justify-center text-white text-xs font-semibold gap-1 transition-opacity cursor-pointer backdrop-blur-xs"
+                        title="Upload real photo"
+                      >
+                        <Camera size={22} className="text-indigo-400" />
+                        <span>Change</span>
+                      </button>
+                    </div>
+
+                    {/* Action Buttons & Hidden File Input */}
+                    <div className="flex-1 space-y-2.5 w-full">
+                      <input 
+                        ref={avatarFileInputRef}
+                        type="file" 
+                        accept="image/png, image/jpeg, image/jpg, image/webp" 
+                        className="hidden" 
+                        onChange={handleAvatarFileSelect}
+                      />
+
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => avatarFileInputRef.current?.click()}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 active:scale-[0.99] transition-all cursor-pointer"
+                        >
+                          <Upload size={15} />
+                          <span>Upload Real Photo</span>
+                        </button>
+
+                        {profileForm.avatar && (
+                          <button
+                            type="button"
+                            onClick={handleRemoveAvatar}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/20 text-xs font-semibold transition-all cursor-pointer"
+                          >
+                            <Trash2 size={13} />
+                            <span>Remove Photo</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-slate-400">
+                        Supports JPG, PNG, WEBP from your device. Scaled and optimized automatically for fast loading.
+                      </p>
+
+                      {/* Optional Web URL Input fallback */}
+                      {showAvatarUrlInput && (
+                        <div className="pt-2 animate-fadeIn">
+                          <input 
+                            type="url" 
+                            className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-white/15 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-xs outline-none transition-all"
+                            placeholder="https://images.unsplash.com/... or web image URL"
+                            value={profileForm.avatar}
+                            onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Skills Tags Manager */}
@@ -946,15 +1188,57 @@ export const FreelancerDashboardPage = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Project Image / Banner URL *</label>
-                <input 
-                  type="url" 
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
-                  placeholder="https://images.unsplash.com/..."
-                  value={newProjectForm.image}
-                  onChange={(e) => setNewProjectForm({ ...newProjectForm, image: e.target.value })}
-                  required
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Project Image / Banner *</label>
+                  <button
+                    type="button"
+                    className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
+                    onClick={() => setShowProjectImageUrlInput(!showProjectImageUrlInput)}
+                  >
+                    {showProjectImageUrlInput ? 'Upload Image File' : 'Paste Image URL'}
+                  </button>
+                </div>
+
+                {!showProjectImageUrlInput ? (
+                  <div className="space-y-2">
+                    <input 
+                      ref={projectImageFileInputRef}
+                      type="file" 
+                      accept="image/png, image/jpeg, image/jpg, image/webp" 
+                      className="hidden" 
+                      onChange={handleProjectImageFileSelect}
+                    />
+                    <div className="flex items-center gap-3 p-3 bg-slate-950/80 border border-white/10 rounded-2xl">
+                      {newProjectForm.image && (
+                        <img 
+                          src={newProjectForm.image} 
+                          alt="Project Preview" 
+                          className="w-14 h-14 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => projectImageFileInputRef.current?.click()}
+                          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
+                        >
+                          <Upload size={14} />
+                          <span>Choose Project Photo</span>
+                        </button>
+                        <span className="text-[11px] text-slate-400">JPG, PNG, WEBP</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <input 
+                    type="url" 
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
+                    placeholder="https://images.unsplash.com/..."
+                    value={newProjectForm.image}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, image: e.target.value })}
+                    required
+                  />
+                )}
               </div>
 
               <div>

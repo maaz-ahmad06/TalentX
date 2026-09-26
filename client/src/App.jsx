@@ -11,6 +11,7 @@ import {
   addJob,
   getProposals,
   addProposal,
+  saveProposals,
   getContracts,
   saveContracts,
   addContract,
@@ -18,8 +19,20 @@ import {
   addMessage,
   getPlatformSettings,
   savePlatformSettings,
-  resetStorageToDefault
+  resetStorageToDefault,
+  updateRegisteredUser
 } from './utils/storage';
+
+// Full-Stack MongoDB API Services
+import {
+  apiGetTalents,
+  apiGetJobs,
+  apiCreateJob,
+  apiGetContracts,
+  apiCreateContract,
+  apiSubmitProposal,
+  apiUpdateProfile
+} from './services/api';
 
 // Global Layout Components
 import { Navbar } from './components/Navbar';
@@ -69,12 +82,12 @@ function AppContent() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Data Collections
-  const [talents, setTalents] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [proposals, setProposals] = useState([]);
-  const [contracts, setContracts] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [platformSettings, setPlatformSettings] = useState(getPlatformSettings());
+  const [talents, setTalents] = useState(() => getTalents());
+  const [jobs, setJobs] = useState(() => getJobs());
+  const [proposals, setProposals] = useState(() => getProposals());
+  const [contracts, setContracts] = useState(() => getContracts());
+  const [messages, setMessages] = useState(() => getMessages());
+  const [platformSettings, setPlatformSettings] = useState(() => getPlatformSettings());
 
   // Active Modals
   const [selectedTalentModal, setSelectedTalentModal] = useState(null);
@@ -95,14 +108,37 @@ function AppContent() {
     }
   }, [isAnnouncementBannerVisible, platformSettings]);
 
-  // Initialize data from LocalStorage
+  // Initialize data from LocalStorage & live MongoDB Atlas Backend
   useEffect(() => {
+    // 1. Instant Local Cache Hydration
     setTalents(getTalents());
     setJobs(getJobs());
     setProposals(getProposals());
     setContracts(getContracts());
     setMessages(getMessages());
     setPlatformSettings(getPlatformSettings());
+
+    // 2. Fetch Live Records from MongoDB Atlas Backend
+    apiGetTalents().then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        setTalents(data);
+        saveTalents(data);
+      }
+    }).catch(err => console.log('Atlas talents fetch notice:', err.message));
+
+    apiGetJobs().then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        setJobs(data);
+        saveJobs(data);
+      }
+    }).catch(err => console.log('Atlas jobs fetch notice:', err.message));
+
+    apiGetContracts().then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        setContracts(data);
+        saveContracts(data);
+      }
+    }).catch(err => console.log('Atlas contracts fetch notice:', err.message));
   }, []);
 
   const showToast = (message, type = 'success') => {
@@ -147,6 +183,7 @@ function AppContent() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('talentx_auth_user');
+    localStorage.removeItem('talentx_jwt_token');
     showToast('Logged out successfully', 'success');
     navigate('/');
   };
@@ -182,23 +219,40 @@ function AppContent() {
     setPlatformSettings(fresh.settings);
   };
 
-  // Job Creation Handler
-  const handleCreateJob = (newJobData) => {
+  // Job Creation Handler (MongoDB Atlas Synced)
+  const handleCreateJob = async (newJobData) => {
     const created = addJob(newJobData);
     setJobs(getJobs());
     showToast(`🎉 "${created.title}" published! AI Matcher found top candidates.`, 'ai');
+
+    try {
+      const liveJob = await apiCreateJob(newJobData);
+      if (liveJob) {
+        const updated = getJobs().map(j => j.id === created.id ? { ...j, _id: liveJob._id } : j);
+        saveJobs(updated);
+        setJobs(updated);
+      }
+    } catch (err) {
+      console.warn('MongoDB Job Creation sync notice:', err.message);
+    }
   };
 
-  // Proposal Submission Handler
-  const handleProposalSubmit = (proposalData) => {
+  // Proposal Submission Handler (MongoDB Atlas Synced)
+  const handleProposalSubmit = async (proposalData) => {
     const created = addProposal(proposalData);
     setProposals(getProposals());
     setJobs(getJobs());
     showToast(`🚀 Proposal sent to ${proposalData.clientName || 'client'}!`, 'success');
+
+    try {
+      await apiSubmitProposal(proposalData);
+    } catch (err) {
+      console.warn('MongoDB Proposal sync notice:', err.message);
+    }
   };
 
-  // Contract Creation Handler
-  const handleContractCreate = (contractData) => {
+  // Contract Creation Handler (MongoDB Atlas Synced)
+  const handleContractCreate = async (contractData) => {
     const created = addContract(contractData);
     setContracts(getContracts());
     
@@ -212,6 +266,12 @@ function AppContent() {
     setMessages(getMessages());
 
     showToast(`🌟 Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
+
+    try {
+      await apiCreateContract(contractData);
+    } catch (err) {
+      console.warn('MongoDB Contract sync notice:', err.message);
+    }
   };
 
   // Send Message Handler
@@ -220,9 +280,16 @@ function AppContent() {
     setMessages(getMessages());
   };
 
-  const handleUpdateCurrentUser = (userData) => {
+  const handleUpdateCurrentUser = async (userData) => {
     setCurrentUser(userData);
     localStorage.setItem('talentx_auth_user', JSON.stringify(userData));
+    updateRegisteredUser(userData);
+
+    try {
+      await apiUpdateProfile(userData);
+    } catch (err) {
+      console.warn('MongoDB User Profile sync notice:', err.message);
+    }
   };
 
   return (

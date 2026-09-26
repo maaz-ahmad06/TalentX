@@ -13,6 +13,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { registerUser, loginUser, addTalent } from '../utils/storage';
+import { apiRegister, apiLogin } from '../services/api';
 import { toast } from 'react-toastify';
 
 export const AuthModal = ({ onClose, onAuthSuccess }) => {
@@ -26,7 +27,7 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
     password: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
@@ -35,18 +36,30 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
     }
 
     if (isLoginMode) {
-      // Login flow
+      // 1. Try Backend MongoDB Atlas Login
+      let backendUser = null;
+      try {
+        const apiRes = await apiLogin(formData.email.trim(), formData.password);
+        if (apiRes.success && apiRes.user) {
+          backendUser = apiRes.user;
+        }
+      } catch (apiErr) {
+        console.warn('Backend Atlas Login:', apiErr.message);
+      }
+
+      // 2. Local Fallback & Verification
       const res = loginUser(formData.email, formData.password);
-      if (res.success) {
-        const role = res.user.role || (['admin@talentx.pk', 'admin@gmail.com'].includes(formData.email.toLowerCase().trim()) ? 'admin' : selectedRole);
+      if (res.success || backendUser) {
+        const baseUser = backendUser || res.user;
+        const role = baseUser.role || (['admin@talentx.pk', 'admin@gmail.com'].includes(formData.email.toLowerCase().trim()) ? 'admin' : selectedRole);
         const userData = {
-          ...res.user,
+          ...baseUser,
           role
         };
         onAuthSuccess(userData);
         onClose();
       } else {
-        toast.error(res.message || 'Login failed. Please check your credentials.');
+        toast.error(res.message || 'Invalid email or password. Please check your credentials and try again.');
       }
       return;
     }
@@ -57,7 +70,25 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
       return;
     }
 
-    // Attempt registration to check for existing accounts
+    // 1. Register on MongoDB Atlas Database
+    try {
+      await apiRegister({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        role: selectedRole,
+        city: 'Lahore'
+      });
+    } catch (apiErr) {
+      console.warn('Backend Atlas Register notice:', apiErr.message);
+      if (apiErr.message && apiErr.message.toLowerCase().includes('already exists')) {
+        toast.warning('⚠️ An account with this email already exists! Please log in instead.');
+        setIsLoginMode(true);
+        return;
+      }
+    }
+
+    // 2. Register in Local Cache
     const regRes = registerUser({
       name: formData.name.trim(),
       email: formData.email.trim(),

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Briefcase, 
@@ -22,7 +22,10 @@ import {
   Save,
   Trash2,
   Check,
-  Award
+  Award,
+  Upload,
+  Camera,
+  Link2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES } from '../data/mockData';
@@ -41,16 +44,91 @@ export const ClientDashboardPage = ({
   showToast
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('contracts');
+  const [showLogoUrlInput, setShowLogoUrlInput] = useState(false);
+  const logoFileInputRef = useRef(null);
 
   // Client Company Form State
-  const [companyForm, setCompanyForm] = useState({
+  const [companyForm, setCompanyForm] = useState(() => ({
     name: currentUser?.name || 'Business Client',
-    companyName: currentUser?.companyName || 'Al-Karam Studio Retailers',
+    companyName: currentUser?.companyName || currentUser?.name || 'Al-Karam Studio Retailers',
     email: currentUser?.email || 'contact@alkaram.com',
     city: currentUser?.city || 'Lahore',
     phone: currentUser?.phone || '0300-9876543',
-    about: currentUser?.bio || 'We are leading retail apparel brand hiring top photography, design and tech talent across Pakistan.'
-  });
+    about: currentUser?.bio || 'We are leading retail apparel brand hiring top photography, design and tech talent across Pakistan.',
+    avatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80'
+  }));
+
+  useEffect(() => {
+    if (currentUser) {
+      setCompanyForm({
+        name: currentUser.name || '',
+        companyName: currentUser.companyName || currentUser.name || '',
+        email: currentUser.email || '',
+        city: currentUser.city || 'Lahore',
+        phone: currentUser.phone || '',
+        about: currentUser.bio || '',
+        avatar: currentUser.avatar || ''
+      });
+    }
+  }, [
+    currentUser?.id, 
+    currentUser?.email, 
+    currentUser?.name, 
+    currentUser?.companyName, 
+    currentUser?.city, 
+    currentUser?.phone, 
+    currentUser?.bio, 
+    currentUser?.avatar
+  ]);
+
+  const handleLogoFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      if (showToast) showToast('Please select a valid image file (JPG, PNG, WEBP).', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 480;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round((height * MAX_SIZE) / width);
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width = Math.round((width * MAX_SIZE) / height);
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.88);
+        setCompanyForm(prev => ({ ...prev, avatar: optimizedBase64 }));
+        if (showToast) showToast('📸 Company logo selected! Click "Save Company Information" to apply.', 'success');
+      };
+      img.src = uploadEvent.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setCompanyForm(prev => ({ ...prev, avatar: '' }));
+    if (showToast) showToast('Company logo cleared.', 'info');
+  };
 
   const handleReleaseMilestone = (contractId, milestoneId) => {
     const updated = contracts.map(c => {
@@ -134,7 +212,8 @@ export const ClientDashboardPage = ({
       companyName: companyForm.companyName,
       city: companyForm.city,
       phone: companyForm.phone,
-      bio: companyForm.about
+      bio: companyForm.about,
+      avatar: companyForm.avatar
     };
 
     if (onUpdateCurrentUser) {
