@@ -10,6 +10,7 @@ import {
   Wand2 
 } from 'lucide-react';
 import { generateAIProposal } from '../utils/aiMatcher';
+import { toast } from 'react-toastify';
 
 export const ProposalModal = ({ 
   job, 
@@ -35,13 +36,14 @@ export const ProposalModal = ({
       const generatedPitch = generateAIProposal(job, activeTalent);
       setCoverLetter(generatedPitch);
       setIsGenerating(false);
+      toast.info('✨ AI Generated proposal pitch tailored to job requirements!', { icon: '✨' });
     }, 500);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!coverLetter.trim()) {
-      alert('Please include a cover letter or use the AI generator.');
+      toast.warning('⚠️ Please include a cover letter or use the AI pitch generator.');
       return;
     }
 
@@ -63,34 +65,44 @@ export const ProposalModal = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content proposal-modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn" onClick={onClose}>
+      <div 
+        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-2xl relative max-h-[90vh] overflow-y-auto" 
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Close Button */}
-        <button className="modal-close-btn" onClick={onClose}>
-          <X size={20} />
+        <button 
+          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" 
+          onClick={onClose}
+        >
+          <X size={18} />
         </button>
 
         {/* Modal Header */}
-        <div className="modal-form-header">
-          <div className="badge badge-ai">
-            <Sparkles size={14} /> Proposal Submission
+        <div className="space-y-1 mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold border border-indigo-500/20">
+            <Sparkles size={13} /> Proposal Submission
           </div>
-          <h2>Submit Proposal for "{job.title}"</h2>
-          <p>Client: <strong>{job.clientName}</strong> &bull; Location: <strong>{job.city} ({job.locationType})</strong> &bull; Client Budget: <strong>PKR {job.budget?.toLocaleString()}</strong></p>
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            Submit Proposal for "{job.title}"
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Client: <strong className="text-slate-200">{job.clientName}</strong> &bull; Location: <strong className="text-slate-200">{job.city} ({job.locationType})</strong> &bull; Budget: <strong className="text-emerald-400">PKR {job.budget?.toLocaleString()}</strong>
+          </p>
         </div>
 
         {/* AI Pitch Generator Box */}
-        <div className="ai-assistant-banner glass-panel">
-          <div className="ai-banner-text">
-            <div className="ai-banner-title">
-              <Wand2 size={16} className="text-gradient-ai" />
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-800/40 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2 text-sm font-bold text-purple-300">
+              <Wand2 size={16} />
               <span>AI Smart Proposal Assistant</span>
             </div>
-            <p>Generate a tailored, professional pitch based on this job requirements in 1 click.</p>
+            <p className="text-xs text-slate-400">Generate a tailored, professional pitch based on this job in 1 click.</p>
           </div>
           <button 
             type="button" 
-            className="btn btn-ai btn-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 text-white text-xs font-bold shadow-md shadow-purple-600/20 shrink-0 cursor-pointer disabled:opacity-50 transition-all"
             onClick={handleAIPitch}
             disabled={isGenerating}
           >
@@ -100,12 +112,12 @@ export const ProposalModal = ({
         </div>
 
         {/* Proposal Form */}
-        <form onSubmit={handleSubmit} className="proposal-form">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Active Applicant Selector */}
-          <div className="form-group">
-            <label>Applying as Talent Profile:</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">Applying as Talent Profile:</label>
             <select 
-              className="input-field"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
               value={selectedTalentId}
               onChange={(e) => setSelectedTalentId(e.target.value)}
             >
@@ -115,23 +127,23 @@ export const ProposalModal = ({
             </select>
           </div>
 
-          <div className="form-grid-2">
-            <div className="form-group">
-              <label>Your Bid / Quote (PKR)</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">Your Bid / Quote (PKR)</label>
               <input 
                 type="number"
-                className="input-field"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
                 required
               />
             </div>
 
-            <div className="form-group">
-              <label>Estimated Delivery (Days)</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">Estimated Delivery (Days)</label>
               <input 
                 type="number"
-                className="input-field"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                 value={deliveryDays}
                 onChange={(e) => setDeliveryDays(e.target.value)}
                 min="1"
@@ -141,10 +153,10 @@ export const ProposalModal = ({
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Cover Letter & Pitch</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">Cover Letter & Pitch</label>
             <textarea 
-              className="input-field textarea-field"
+              className="w-full p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
               rows="6"
               placeholder="Introduce yourself, highlight relevant past work, explain how you will execute this project..."
               value={coverLetter}
@@ -154,11 +166,18 @@ export const ProposalModal = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="modal-form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+            <button 
+              type="button" 
+              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer" 
+              onClick={onClose}
+            >
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button 
+              type="submit" 
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            >
               <Send size={16} />
               <span>Send Proposal</span>
             </button>

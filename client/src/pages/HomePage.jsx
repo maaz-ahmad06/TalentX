@@ -8,18 +8,14 @@ import {
   Star, 
   Zap, 
   TrendingUp, 
-  ArrowRight,
-  CheckCircle2,
-  Users,
-  Briefcase,
-  Layers,
-  Award,
-  DollarSign,
-  Camera,
-  Code,
-  Palette,
-  Smartphone,
-  Check
+  ArrowRight, 
+  CheckCircle2, 
+  Users, 
+  Briefcase, 
+  Layers, 
+  Award, 
+  DollarSign, 
+  Check 
 } from 'lucide-react';
 import { CATEGORIES, CITIES } from '../data/mockData';
 
@@ -41,101 +37,115 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
   ];
 
   return (
-    <div className="home-page-view">
+    <div className="bg-slate-950 text-slate-100 min-h-screen">
       {/* 1. HERO SECTION */}
-      <section className="hero-section">
-        <div className="hero-glow-1"></div>
-        <div className="hero-glow-2"></div>
+      <section className="relative pt-28 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden bg-slate-950">
+        {/* Ambient Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-10" />
+        <div className="absolute top-1/3 right-1/4 w-[400px] h-[300px] bg-purple-600/15 rounded-full blur-3xl pointer-events-none -z-10" />
 
-        <div className="container hero-container">
-          <div className="hero-badge animate-fade">
-            <span className="badge-pulse-dot"></span>
-            <span className="hero-badge-text">🇵🇰 Pakistan's #1 AI-Powered Local Marketplace</span>
-            <span className="badge-live-tag">VERIFIED</span>
+        <div className="max-w-6xl mx-auto flex flex-col items-center text-center space-y-8">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/80 backdrop-blur-xl shadow-lg">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span className="text-xs font-semibold text-slate-200">🇵🇰 Pakistan's #1 AI-Powered Local Marketplace</span>
+            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              VERIFIED
+            </span>
           </div>
 
-          <h1 className="hero-heading animate-slide-up">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight max-w-4xl">
             Connect with Verified Local Talent <br />
-            <span className="text-gradient">Powered by Smart AI Matching</span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+              Powered by Smart AI Matching
+            </span>
           </h1>
 
-          <p className="hero-subtitle">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-400 max-w-2xl leading-relaxed">
             Hire top Pakistani photographers, developers, designers, and marketers across Karachi, Lahore, Islamabad, and beyond. Pay safely in PKR with milestone escrow.
           </p>
 
           {/* Search Box Form */}
-          <form onSubmit={handleSearchSubmit} className="hero-search-box glass-panel animate-slide-up">
-            <div className="search-field-group">
-              <Search className="search-icon" size={20} />
+          <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl p-2.5 sm:p-3 rounded-2xl bg-slate-900/80 border border-slate-700/80 backdrop-blur-2xl shadow-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-slate-800/60 rounded-xl border border-slate-700/50">
+              <Search className="text-slate-400 shrink-0" size={18} />
               <input 
                 type="text" 
-                className="search-main-input"
-                placeholder="What skill are you looking for? e.g. Fashion Photography, React, Figma..."
+                className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-400 focus:outline-none"
+                placeholder="What skill are you looking for? e.g. React, Photography, Figma..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div className="search-divider"></div>
-
-            <div className="search-field-group city-group">
-              <MapPin className="search-icon-city" size={18} />
+            <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/60 rounded-xl border border-slate-700/50">
+              <MapPin className="text-indigo-400 shrink-0" size={16} />
               <select 
-                className="city-select-hero"
+                className="bg-transparent text-xs sm:text-sm text-slate-200 focus:outline-none cursor-pointer"
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
               >
                 {CITIES.map(city => (
-                  <option key={city} value={city}>{city}</option>
+                  <option key={city} value={city} className="bg-slate-900 text-slate-100">{city}</option>
                 ))}
               </select>
             </div>
 
-            <button type="submit" className="btn btn-primary search-ai-cta">
-              <Search size={18} />
+            <button type="submit" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-lg shadow-indigo-600/25 active:scale-95 transition-all cursor-pointer">
+              <Search size={16} />
               <span>Search Talent</span>
             </button>
           </form>
 
           {/* Quick AI Match Launcher Pill */}
-          <div className="hero-ai-trigger-strip">
-            <Link to="/ai-match" className="ai-trigger-banner glass-panel">
-              <Sparkles size={18} className="text-gradient-ai" />
-              <span>Have a specific project in mind? <strong>Try AI Neural Matcher</strong> to get instant candidate recommendations &rarr;</span>
+          <div className="w-full max-w-2xl">
+            <Link 
+              to="/ai-match" 
+              className="flex items-center justify-center gap-2.5 p-3 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900 border border-purple-500/30 text-xs sm:text-sm text-purple-200 hover:text-white hover:border-purple-500/60 transition-all group shadow-lg"
+            >
+              <Sparkles size={16} className="text-purple-400 group-hover:scale-110 transition-transform" />
+              <span>Have a project in mind? <strong className="text-purple-300">Try AI Neural Matcher</strong> to get instant recommendations &rarr;</span>
             </Link>
           </div>
 
           {/* Live Platform Metrics */}
-          <div className="hero-stats-grid">
-            <div className="stat-card glass-panel">
-              <div className="stat-icon-wrap stat-indigo"><ShieldCheck size={22} /></div>
-              <div className="stat-info">
-                <div className="stat-number">550+</div>
-                <div className="stat-title">Verified Pakistani Pros</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full pt-4">
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl flex items-center gap-3.5 text-left">
+              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <div className="text-lg sm:text-xl font-black text-white">550+</div>
+                <div className="text-xs text-slate-400">Verified Pros</div>
               </div>
             </div>
 
-            <div className="stat-card glass-panel">
-              <div className="stat-icon-wrap stat-purple"><Zap size={22} /></div>
-              <div className="stat-info">
-                <div className="stat-number">98.4%</div>
-                <div className="stat-title">AI Matching Precision</div>
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl flex items-center gap-3.5 text-left">
+              <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <Zap size={20} />
+              </div>
+              <div>
+                <div className="text-lg sm:text-xl font-black text-white">98.4%</div>
+                <div className="text-xs text-slate-400">AI Match Accuracy</div>
               </div>
             </div>
 
-            <div className="stat-card glass-panel">
-              <div className="stat-icon-wrap stat-emerald"><TrendingUp size={22} /></div>
-              <div className="stat-info">
-                <div className="stat-number">PKR 18.5M+</div>
-                <div className="stat-title">Secured in Local Escrow</div>
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl flex items-center gap-3.5 text-left">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <TrendingUp size={20} />
+              </div>
+              <div>
+                <div className="text-lg sm:text-xl font-black text-white">PKR 18.5M+</div>
+                <div className="text-xs text-slate-400">Paid in Escrow</div>
               </div>
             </div>
 
-            <div className="stat-card glass-panel">
-              <div className="stat-icon-wrap stat-amber"><Star size={22} /></div>
-              <div className="stat-info">
-                <div className="stat-number">4.9 / 5.0</div>
-                <div className="stat-title">Average Client Rating</div>
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl flex items-center gap-3.5 text-left">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <Star size={20} />
+              </div>
+              <div>
+                <div className="text-lg sm:text-xl font-black text-white">4.9 / 5.0</div>
+                <div className="text-xs text-slate-400">Client Rating</div>
               </div>
             </div>
           </div>
@@ -143,192 +153,218 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
       </section>
 
       {/* 2. HOW IT WORKS (3 STEPS) */}
-      <section className="how-it-works-section">
-        <div className="container">
-          <div className="section-header-center text-center">
-            <div className="badge badge-pro"><Sparkles size={14} /> Seamless Workflow</div>
-            <h2 className="section-title">How <span className="text-gradient">TalentX</span> Works</h2>
-            <p className="section-desc">From project brief to final delivery in three straightforward steps.</p>
+      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold border border-indigo-500/20">
+            <Sparkles size={13} /> Seamless Workflow
+          </div>
+          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            How <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">TalentX</span> Works
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
+            From project brief to final delivery in three straightforward steps.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative space-y-4">
+            <span className="text-3xl font-black text-indigo-400/20 absolute top-5 right-6">01</span>
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+              <Briefcase size={22} />
+            </div>
+            <h3 className="text-lg font-bold text-white">1. Post a Project Brief</h3>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              Describe what you need done, select on-site or remote, and set your budget in PKR. Use our AI Assistant to auto-draft requirements.
+            </p>
           </div>
 
-          <div className="steps-cards-grid">
-            <div className="step-card glass-card">
-              <div className="step-num-badge">01</div>
-              <div className="step-icon-circle"><Briefcase size={24} /></div>
-              <h3>1. Post a Project Brief</h3>
-              <p>Describe what you need done, select on-site or remote, and set your budget in PKR. Use our AI Assistant to auto-draft requirements.</p>
+          <div className="p-6 rounded-3xl bg-gradient-to-b from-purple-950/40 via-slate-900/90 to-slate-900 border border-purple-500/40 shadow-xl relative space-y-4">
+            <span className="text-3xl font-black text-purple-400/30 absolute top-5 right-6">02</span>
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 flex items-center justify-center border border-purple-500/30">
+              <Sparkles size={22} />
             </div>
+            <h3 className="text-lg font-bold text-white">2. AI Candidate Match</h3>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Our Neural algorithm scans 500+ local verified portfolios, comparing skills, city proximity, rates, and past client feedback.
+            </p>
+          </div>
 
-            <div className="step-card glass-card featured-step">
-              <div className="step-num-badge">02</div>
-              <div className="step-icon-circle ai-circle"><Sparkles size={24} /></div>
-              <h3>2. AI Candidate Match</h3>
-              <p>Our Neural algorithm scans 500+ local verified portfolios, comparing skills, city proximity, rates, and past client feedback.</p>
+          <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative space-y-4">
+            <span className="text-3xl font-black text-emerald-400/20 absolute top-5 right-6">03</span>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+              <ShieldCheck size={22} />
             </div>
-
-            <div className="step-card glass-card">
-              <div className="step-num-badge">03</div>
-              <div className="step-icon-circle"><ShieldCheck size={24} /></div>
-              <h3>3. Milestone Escrow & Hire</h3>
-              <p>Hire directly with 50/50 milestone protection. Review deliverables and release funds securely in PKR via JazzCash/Bank.</p>
-            </div>
+            <h3 className="text-lg font-bold text-white">3. Milestone Escrow & Hire</h3>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              Hire directly with 50/50 milestone protection. Review deliverables and release funds securely in PKR via JazzCash/Bank.
+            </p>
           </div>
         </div>
       </section>
 
       {/* 3. CATEGORY HIGHLIGHTS */}
-      <section className="categories-section">
-        <div className="container">
-          <div className="section-header-flex">
-            <div>
-              <div className="badge badge-ai"><Layers size={14} /> Skill Domains</div>
-              <h2 className="section-title">Explore by <span className="text-gradient">Expertise</span></h2>
-              <p className="section-desc">Top in-demand skilled fields across Pakistani markets.</p>
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold border border-indigo-500/20">
+              <Layers size={13} /> Skill Domains
             </div>
-            <Link to="/talents" className="btn btn-secondary">
-              <span>View All Categories</span>
-              <ArrowRight size={16} />
-            </Link>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Explore by <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Expertise</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">Top in-demand skilled fields across Pakistani markets.</p>
           </div>
+          <Link to="/talents" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs sm:text-sm font-semibold text-slate-200 hover:text-white transition-colors w-fit">
+            <span>View All Categories</span>
+            <ArrowRight size={15} />
+          </Link>
+        </div>
 
-          <div className="category-showcase-grid">
-            {categoryHighlights.map((cat, idx) => (
-              <Link 
-                key={idx} 
-                to={`/talents?cat=${encodeURIComponent(cat.cat)}`} 
-                className="category-showcase-card glass-card"
-              >
-                <div className="cat-img-box">
-                  <img src={cat.img} alt={cat.title} className="cat-img" />
-                  <div className="cat-overlay"></div>
-                  <span className="cat-badge-pill">{cat.count}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {categoryHighlights.map((cat, idx) => (
+            <Link 
+              key={idx} 
+              to={`/talents?cat=${encodeURIComponent(cat.cat)}`} 
+              className="rounded-3xl bg-slate-900/80 border border-slate-800/80 overflow-hidden shadow-lg hover:border-indigo-500/40 transition-all group flex flex-col justify-between"
+            >
+              <div className="relative h-44 overflow-hidden">
+                <img src={cat.img} alt={cat.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                <span className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white">
+                  {cat.count}
+                </span>
+              </div>
+              <div className="p-5 space-y-2">
+                <div className="text-2xl">{cat.icon}</div>
+                <h4 className="font-bold text-sm text-white group-hover:text-indigo-300 transition-colors">{cat.title}</h4>
+                <div className="text-xs font-semibold text-indigo-400 flex items-center gap-1 pt-1">
+                  <span>Browse Portfolios</span>
+                  <ArrowRight size={12} />
                 </div>
-                <div className="cat-info-box">
-                  <div className="cat-icon-emoji">{cat.icon}</div>
-                  <h4>{cat.title}</h4>
-                  <div className="cat-explore-link">Browse Portfolios &rarr;</div>
-                </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
       {/* 4. FEATURED TALENT PREVIEW */}
-      <section className="featured-talent-section">
-        <div className="container">
-          <div className="section-header-flex">
-            <div>
-              <div className="badge badge-pro"><Award size={14} /> Top Rated Pros</div>
-              <h2 className="section-title">Featured <span className="text-gradient">Local Talents</span></h2>
-              <p className="section-desc">Hand-picked professionals with 5.0 star reviews and verified portfolio work.</p>
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold border border-indigo-500/20">
+              <Award size={13} /> Top Rated Pros
             </div>
-            <Link to="/talents" className="btn btn-primary">
-              <span>Explore All {talents.length} Pros</span>
-              <ArrowRight size={16} />
-            </Link>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Featured <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Local Talents</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">Hand-picked professionals with 5.0 star reviews and verified portfolio work.</p>
           </div>
+          <Link to="/talents" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-md shadow-indigo-600/20 transition-all w-fit">
+            <span>Explore All {talents.length} Pros</span>
+            <ArrowRight size={15} />
+          </Link>
+        </div>
 
-          <div className="talents-grid">
-            {talents.slice(0, 3).map((talent) => (
-              <div key={talent.id} className="talent-card glass-card">
-                <div className="talent-card-header">
-                  <div className="talent-avatar-wrap">
-                    <img src={talent.avatar} alt={talent.name} className="talent-avatar" />
-                    <span className="verified-status-dot"><ShieldCheck size={14} /></span>
-                  </div>
-                  <div className="talent-head-info">
-                    <div className="talent-name-row">
-                      <h3 className="talent-name">{talent.name}</h3>
-                      <div className="talent-rating-badge">
-                        <Star size={13} className="star-icon fill-gold" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {talents.slice(0, 3).map((talent) => (
+            <div key={talent.id} className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-indigo-500/40 backdrop-blur-xl shadow-lg transition-all flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <img src={talent.avatar} alt={talent.name} className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-800" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-sm text-white truncate">{talent.name}</h3>
+                      <div className="flex items-center gap-1 text-xs text-amber-400 font-bold">
+                        <Star size={12} className="fill-amber-400" />
                         <span>{talent.rating}</span>
                       </div>
                     </div>
-                    <div className="talent-location-row">
-                      <MapPin size={13} className="loc-icon" />
+                    <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
+                      <MapPin size={12} />
                       <span>{talent.city} &bull; {talent.area}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="talent-headline-box">
-                  <p className="talent-headline">{talent.headline}</p>
-                </div>
+                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{talent.headline}</p>
 
-                <div className="talent-skills-row">
+                <div className="flex flex-wrap gap-1.5">
                   {talent.skills.slice(0, 3).map(skill => (
-                    <span key={skill} className="skill-tag">{skill}</span>
+                    <span key={skill} className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
+                      {skill}
+                    </span>
                   ))}
                 </div>
-
-                {talent.portfolio && talent.portfolio.length > 0 && (
-                  <div className="portfolio-thumbnails-grid mb-3">
-                    {talent.portfolio.slice(0, 2).map((item) => (
-                      <div key={item.id} className="portfolio-thumb-item">
-                        <img src={item.image} alt={item.title} className="portfolio-thumb-img" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="talent-card-footer">
-                  <div className="talent-pricing-box">
-                    <div className="rate-amount">PKR {talent.hourlyRate.toLocaleString()} <span className="rate-unit">/ hr</span></div>
-                    <div className="daily-rate-text">{talent.workMode}</div>
-                  </div>
-                  <Link to={`/profile/${talent.id}`} className="btn btn-primary btn-sm">
-                    <span>View Profile</span>
-                    <ArrowRight size={14} />
-                  </Link>
-                </div>
               </div>
-            ))}
-          </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                <div>
+                  <div className="text-sm font-black text-emerald-400">PKR {talent.hourlyRate.toLocaleString()} <span className="text-[10px] text-slate-400 font-normal">/ hr</span></div>
+                  <div className="text-[10px] text-slate-500">{talent.workMode}</div>
+                </div>
+                <Link to={`/profile/${talent.id}`} className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors">
+                  <span>Profile</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* 5. WHY TALENTX VS GLOBAL PLATFORMS */}
-      <section className="comparison-section">
-        <div className="container">
-          <div className="comparison-banner glass-panel">
-            <div className="comparison-header text-center">
-              <div className="badge badge-ai">🇵🇰 Built for Pakistan</div>
-              <h2>Why Choose <span className="text-gradient">TalentX</span> over Fiverr or Upwork?</h2>
-              <p>Tailored specifically for local businesses, on-site requirements, and PKR transactions.</p>
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="p-8 sm:p-12 rounded-3xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-2xl shadow-2xl space-y-8">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold border border-indigo-500/20">
+              🇵🇰 Built for Pakistan
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Why Choose <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">TalentX</span> over Fiverr or Upwork?
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
+              Tailored specifically for local businesses, on-site requirements, and PKR transactions.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="flex items-start gap-4 p-5 rounded-2xl bg-slate-800/40 border border-slate-700/50">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0">
+                <Check size={20} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-white">Physical & On-Site Hiring</h4>
+                <p className="text-xs text-slate-400 leading-relaxed">Book local fashion photographers, drone videographers, and event crews who physically come to your office or venue.</p>
+              </div>
             </div>
 
-            <div className="comparison-grid">
-              <div className="comparison-feature-item">
-                <div className="comp-icon check"><Check size={20} /></div>
-                <div>
-                  <h4>Physical & On-Site Hiring</h4>
-                  <p>Book local fashion photographers, drone videographers, and event crews who physically come to your office or venue.</p>
-                </div>
+            <div className="flex items-start gap-4 p-5 rounded-2xl bg-slate-800/40 border border-slate-700/50">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0">
+                <Check size={20} />
               </div>
-
-              <div className="comparison-feature-item">
-                <div className="comp-icon check"><Check size={20} /></div>
-                <div>
-                  <h4>Zero Dollar/Credit Card Hassles</h4>
-                  <p>No Payoneer or international credit card required. Pay easily in PKR through JazzCash, EasyPaisa, or direct bank transfer.</p>
-                </div>
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-white">Zero Dollar / Card Hassles</h4>
+                <p className="text-xs text-slate-400 leading-relaxed">No Payoneer or international credit card required. Pay easily in PKR through JazzCash, EasyPaisa, or direct bank transfer.</p>
               </div>
+            </div>
 
-              <div className="comparison-feature-item">
-                <div className="comp-icon check"><Check size={20} /></div>
-                <div>
-                  <h4>Local Language & Direct Communication</h4>
-                  <p>Communicate effortlessly in Urdu, Punjabi, or Roman Urdu with direct WhatsApp/call coordination for local projects.</p>
-                </div>
+            <div className="flex items-start gap-4 p-5 rounded-2xl bg-slate-800/40 border border-slate-700/50">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0">
+                <Check size={20} />
               </div>
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-white">Local Language Communication</h4>
+                <p className="text-xs text-slate-400 leading-relaxed">Communicate effortlessly in Urdu, Punjabi, or Roman Urdu with direct WhatsApp/call coordination for local projects.</p>
+              </div>
+            </div>
 
-              <div className="comparison-feature-item">
-                <div className="comp-icon check"><Check size={20} /></div>
-                <div>
-                  <h4>AI Match Precision in Hours</h4>
-                  <p>Instead of browsing 5,000 global profiles, our AI engine ranks the top 3 best-suited candidates in your exact city.</p>
-                </div>
+            <div className="flex items-start gap-4 p-5 rounded-2xl bg-slate-800/40 border border-slate-700/50">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0">
+                <Check size={20} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-white">AI Match Precision in Hours</h4>
+                <p className="text-xs text-slate-400 leading-relaxed">Instead of browsing 5,000 global profiles, our AI engine ranks the top 3 best-suited candidates in your exact city.</p>
               </div>
             </div>
           </div>
@@ -336,23 +372,23 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
       </section>
 
       {/* 6. BOTTOM CTA */}
-      <section className="cta-banner-section">
-        <div className="container">
-          <div className="cta-banner-box glass-panel">
-            <div className="cta-content">
-              <h2>Ready to Find the Best Local Talent for Your Next Project?</h2>
-              <p>Join hundreds of businesses and skilled freelancers across Pakistan today.</p>
-              <div className="cta-buttons-row">
-                <Link to="/post-job" className="btn btn-primary btn-lg">
-                  <Briefcase size={18} />
-                  <span>Post a Project Now</span>
-                </Link>
-                <Link to="/talents" className="btn btn-secondary btn-lg">
-                  <Search size={18} />
-                  <span>Browse Portfolios</span>
-                </Link>
-              </div>
-            </div>
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+        <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/60 to-slate-900 border border-indigo-500/30 shadow-2xl space-y-6">
+          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            Ready to Find the Best Local Talent for Your Next Project?
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">
+            Join hundreds of businesses and skilled freelancers across Pakistan today.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Link to="/post-job" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-lg shadow-indigo-600/25 transition-all">
+              <Briefcase size={16} />
+              <span>Post a Project Now</span>
+            </Link>
+            <Link to="/talents" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold transition-colors">
+              <Search size={16} />
+              <span>Browse Portfolios</span>
+            </Link>
           </div>
         </div>
       </section>

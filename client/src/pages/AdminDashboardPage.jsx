@@ -9,35 +9,35 @@ import {
   CheckCircle2, 
   XCircle, 
   AlertTriangle, 
-  Sparkles,
-  ShieldCheck,
-  Search,
-  Eye,
-  SlidersHorizontal,
-  Lock,
-  Plus,
-  Trash2,
-  Edit3,
-  Check,
-  X,
-  RefreshCw,
-  Download,
-  Megaphone,
-  Power,
-  Sliders,
-  ExternalLink,
-  ChevronRight,
-  UserCheck,
-  UserX,
-  ArrowLeft,
-  LogOut,
-  Layers,
-  Settings,
-  AlertCircle,
-  Clock,
-  MapPin,
-  Building2,
-  Cpu,
+  Sparkles, 
+  ShieldCheck, 
+  Search, 
+  Eye, 
+  SlidersHorizontal, 
+  Lock, 
+  Plus, 
+  Trash2, 
+  Edit3, 
+  Check, 
+  X, 
+  RefreshCw, 
+  Download, 
+  Megaphone, 
+  Power, 
+  Sliders, 
+  ExternalLink, 
+  ChevronRight, 
+  UserCheck, 
+  UserX, 
+  ArrowLeft, 
+  LogOut, 
+  Layers, 
+  Settings, 
+  AlertCircle, 
+  Clock, 
+  MapPin, 
+  Building2, 
+  Cpu, 
   LayoutDashboard
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -494,99 +494,147 @@ export const AdminDashboardPage = ({
   });
 
   return (
-    <div className="dashboard-app-layout">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row antialiased selection:bg-indigo-500 selection:text-white">
       {/* ============================================================
           LEFT SIDEBAR NAVIGATION
           ============================================================ */}
-      <aside className="dashboard-sidebar">
-        {/* Brand Section */}
-        <div className="sidebar-brand-section">
-          <Link to="/" className="sidebar-brand-link">
-            <div className="sidebar-logo-icon">X</div>
-            <div className="sidebar-brand-details">
-              <span className="sidebar-brand-name">TalentX</span>
-              <span className="sidebar-portal-badge admin">ADMIN HUB</span>
+      <aside className="w-full lg:w-72 bg-slate-900/90 backdrop-blur-2xl border-r border-slate-800/80 p-5 flex flex-col justify-between shrink-0 shadow-2xl z-30">
+        <div className="space-y-6">
+          {/* Brand Section */}
+          <div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
+                X
+              </div>
+              <div className="flex flex-col">
+                <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-300">
+                  TalentX
+                </span>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 w-fit mt-0.5">
+                  ADMIN HUB
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Admin Profile Box */}
+          <div className="flex items-center gap-3.5 p-3 rounded-xl bg-slate-800/50 border border-white/5 shadow-inner">
+            <img 
+              src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} 
+              alt="Admin" 
+              className="w-11 h-11 rounded-full object-cover ring-2 ring-rose-500/50"
+            />
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-sm text-slate-200 truncate">{currentUser?.name || 'Administrator'}</span>
+              <span className="text-xs font-medium text-rose-400 flex items-center gap-1">
+                <ShieldCheck size={12} /> Super Admin
+              </span>
             </div>
-          </Link>
-        </div>
-
-        {/* Admin Profile Box */}
-        <div className="sidebar-user-card">
-          <img 
-            src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} 
-            alt="Admin" 
-            className="sidebar-user-avatar"
-          />
-          <div className="sidebar-user-meta">
-            <span className="sidebar-user-name">{currentUser?.name || 'Administrator'}</span>
-            <span className="sidebar-role-pill admin">Super Admin</span>
           </div>
-        </div>
 
-        {/* Navigation Menu */}
-        <nav className="sidebar-nav-menu">
-          <div className="sidebar-menu-label">ADMINISTRATION</div>
+          {/* Navigation Menu */}
+          <nav className="space-y-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 pb-2">
+              Administration
+            </div>
 
-          <button 
-            className={`sidebar-nav-item ${activeTab === 'users' ? 'active' : ''}`}
-            onClick={() => setActiveTab('users')}
-          >
-            <Users size={18} />
-            <span>User Management</span>
-            <span className="sidebar-badge">{talents.length}</span>
-          </button>
+            <button 
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                activeTab === 'users' 
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+              onClick={() => setActiveTab('users')}
+            >
+              <div className="flex items-center gap-3">
+                <Users size={18} className={activeTab === 'users' ? 'text-white' : 'text-slate-400'} />
+                <span>User Management</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'users' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                {talents.length}
+              </span>
+            </button>
 
-          <button 
-            className={`sidebar-nav-item ${activeTab === 'jobs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('jobs')}
-          >
-            <Briefcase size={18} />
-            <span>Job Moderation</span>
-            <span className="sidebar-badge">{jobs.length}</span>
-          </button>
+            <button 
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                activeTab === 'jobs' 
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+              onClick={() => setActiveTab('jobs')}
+            >
+              <div className="flex items-center gap-3">
+                <Briefcase size={18} className={activeTab === 'jobs' ? 'text-white' : 'text-slate-400'} />
+                <span>Job Moderation</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'jobs' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                {jobs.length}
+              </span>
+            </button>
 
-          <button 
-            className={`sidebar-nav-item ${activeTab === 'escrow' ? 'active' : ''}`}
-            onClick={() => setActiveTab('escrow')}
-          >
-            <Lock size={18} />
-            <span>Escrow Ledger</span>
-            <span className="sidebar-badge">{contracts.length}</span>
-          </button>
+            <button 
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                activeTab === 'escrow' 
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+              onClick={() => setActiveTab('escrow')}
+            >
+              <div className="flex items-center gap-3">
+                <Lock size={18} className={activeTab === 'escrow' ? 'text-white' : 'text-slate-400'} />
+                <span>Escrow Ledger</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'escrow' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                {contracts.length}
+              </span>
+            </button>
 
-          <button 
-            className={`sidebar-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            <Settings size={18} />
-            <span>Governance & Settings</span>
-          </button>
-        </nav>
+            <button 
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                activeTab === 'settings' 
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+              onClick={() => setActiveTab('settings')}
+            >
+              <div className="flex items-center gap-3">
+                <Settings size={18} className={activeTab === 'settings' ? 'text-white' : 'text-slate-400'} />
+                <span>Governance & Settings</span>
+              </div>
+            </button>
+          </nav>
 
-        {/* Live System Health Card */}
-        <div className="sidebar-system-card glass-panel">
-          <div className="sys-status-header">
-            <span className="dot online"></span>
-            <strong>Platform Status</strong>
-          </div>
-          <div className="sys-mini-row">
-            <span>AI Matcher:</span>
-            <strong className={aiOnline ? 'text-emerald' : 'text-danger'}>{aiOnline ? 'Online' : 'Offline'}</strong>
-          </div>
-          <div className="sys-mini-row">
-            <span>Commission:</span>
-            <strong className="text-indigo">{commissionPercent}%</strong>
+          {/* Live System Health Card */}
+          <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Platform Health</span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-white/5">
+              <span>AI Matcher:</span>
+              <strong className={aiOnline ? 'text-emerald-400' : 'text-rose-400'}>{aiOnline ? 'Online' : 'Offline'}</strong>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Commission:</span>
+              <strong className="text-indigo-400">{commissionPercent}%</strong>
+            </div>
           </div>
         </div>
 
         {/* Sidebar Footer Controls */}
-        <div className="sidebar-footer-controls">
-          <Link to="/" className="sidebar-footer-btn return-btn">
+        <div className="pt-6 border-t border-slate-800/80 space-y-2">
+          <Link 
+            to="/" 
+            className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors"
+          >
             <ArrowLeft size={16} />
             <span>Return to Marketplace</span>
           </Link>
 
-          <button className="sidebar-footer-btn logout-btn" onClick={onLogout}>
+          <button 
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer" 
+            onClick={onLogout}
+          >
             <LogOut size={16} />
             <span>Log Out</span>
           </button>
@@ -596,13 +644,13 @@ export const AdminDashboardPage = ({
       {/* ============================================================
           MAIN DASHBOARD CONTENT (RIGHT SIDE)
           ============================================================ */}
-      <div className="dashboard-main-content">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header Bar */}
-        <header className="dashboard-content-topbar">
-          <div className="topbar-breadcrumb">
-            <span className="crumb-app">TalentX Admin</span>
-            <span className="crumb-sep">/</span>
-            <span className="crumb-current">
+        <header className="h-16 px-6 sm:px-8 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl flex items-center justify-between shrink-0 sticky top-0 z-20">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <span className="text-slate-400">TalentX Admin</span>
+            <span className="text-slate-600">/</span>
+            <span className="text-slate-200 font-semibold">
               {activeTab === 'users' && 'User & Talent Management'}
               {activeTab === 'jobs' && 'Job Posts Moderation'}
               {activeTab === 'escrow' && 'Milestone Escrow Vault'}
@@ -610,9 +658,9 @@ export const AdminDashboardPage = ({
             </span>
           </div>
 
-          <div className="topbar-actions">
+          <div className="flex items-center gap-3">
             <button 
-              className="btn btn-primary btn-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
               onClick={() => {
                 if (activeTab === 'users') setIsAddUserModalOpen(true);
                 else if (activeTab === 'jobs') setIsAddJobModalOpen(true);
@@ -620,7 +668,7 @@ export const AdminDashboardPage = ({
                 else setIsAddUserModalOpen(true);
               }}
             >
-              <Plus size={15} />
+              <Plus size={16} />
               <span>
                 {activeTab === 'users' && 'Add New Talent'}
                 {activeTab === 'jobs' && 'Post Job as Admin'}
@@ -633,66 +681,80 @@ export const AdminDashboardPage = ({
 
         {/* Global Announcement Alert (If Active) */}
         {isAnnounceActive && announcementText && (
-          <div className="admin-live-announcement-strip">
-            <Megaphone size={16} className="announce-icon" />
-            <div className="announce-content">
-              <strong>Live Platform Notice:</strong> {announcementText}
+          <div className="px-6 py-2.5 bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-indigo-950/80 border-b border-indigo-500/30 flex items-center justify-between text-xs sm:text-sm text-indigo-200 shadow-md">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Megaphone size={16} className="text-indigo-400 shrink-0" />
+              <div className="truncate">
+                <strong className="text-white">Live Platform Notice:</strong> {announcementText}
+              </div>
             </div>
             <button 
-              className="announce-dismiss-btn"
+              className="p-1 hover:bg-white/10 rounded-lg text-indigo-300 hover:text-white transition-colors cursor-pointer"
               onClick={() => setIsAnnounceActive(false)}
               title="Dismiss"
             >
-              <X size={14} />
+              <X size={15} />
             </button>
           </div>
         )}
 
         {/* Body Content */}
-        <div className="dashboard-content-body">
+        <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
           {/* KPI Stats Overview Cards */}
-          <section className="admin-stats-grid">
-            <div className="admin-stat-card glass-panel">
-              <div className="stat-card-header">
-                <span className="stat-card-title">Total Platform GMV</span>
-                <div className="stat-icon-wrapper emerald"><TrendingUp size={20} /></div>
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Stat 1 */}
+            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Platform GMV</span>
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <TrendingUp size={20} />
+                </div>
               </div>
-              <div className="stat-card-value">PKR {totalGMV.toLocaleString()}</div>
-              <div className="stat-card-footer text-emerald">
+              <div className="text-2xl font-black text-white tracking-tight">PKR {totalGMV.toLocaleString()}</div>
+              <div className="mt-2 text-xs font-medium text-emerald-400 flex items-center gap-1.5">
                 <span>↑ 18.4% this month</span> &bull; <span>100% PKR Escrow</span>
               </div>
             </div>
 
-            <div className="admin-stat-card glass-panel">
-              <div className="stat-card-header">
-                <span className="stat-card-title">Platform Revenue ({commissionPercent}%)</span>
-                <div className="stat-icon-wrapper indigo"><DollarSign size={20} /></div>
+            {/* Stat 2 */}
+            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-indigo-500/30 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Platform Revenue ({commissionPercent}%)</span>
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <DollarSign size={20} />
+                </div>
               </div>
-              <div className="stat-card-value">PKR {platformRevenue.toLocaleString()}</div>
-              <div className="stat-card-footer text-indigo">
-                <span>Calculated at {commissionPercent}% take-rate</span>
-              </div>
-            </div>
-
-            <div className="admin-stat-card glass-panel">
-              <div className="stat-card-header">
-                <span className="stat-card-title">Registered Pros & Clients</span>
-                <div className="stat-icon-wrapper purple"><Users size={20} /></div>
-              </div>
-              <div className="stat-card-value">{talents.length} Verified Pros</div>
-              <div className="stat-card-footer text-purple">
-                <span>{talents.filter(t => !t.isSuspended).length} Active Accounts</span>
+              <div className="text-2xl font-black text-white tracking-tight">PKR {platformRevenue.toLocaleString()}</div>
+              <div className="mt-2 text-xs font-medium text-indigo-400">
+                Calculated at {commissionPercent}% take-rate
               </div>
             </div>
 
-            <div className="admin-stat-card glass-panel">
-              <div className="stat-card-header">
-                <span className="stat-card-title">Escrow Vault Secured</span>
-                <div className="stat-icon-wrapper amber"><Lock size={20} /></div>
+            {/* Stat 3 */}
+            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Registered Pros & Clients</span>
+                <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <Users size={20} />
+                </div>
               </div>
-              <div className="stat-card-value">{contracts.length} Contracts</div>
-              <div className="stat-card-footer text-amber">
-                <span>0 Active Disputes &bull; 100% Safe</span>
+              <div className="text-2xl font-black text-white tracking-tight">{talents.length} Verified Pros</div>
+              <div className="mt-2 text-xs font-medium text-purple-400">
+                {talents.filter(t => !t.isSuspended).length} Active Accounts
+              </div>
+            </div>
+
+            {/* Stat 4 */}
+            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-amber-500/30 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Escrow Secured</span>
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Lock size={20} />
+                </div>
+              </div>
+              <div className="text-2xl font-black text-white tracking-tight">{contracts.length} Contracts</div>
+              <div className="mt-2 text-xs font-medium text-amber-400">
+                0 Active Disputes &bull; 100% Safe
               </div>
             </div>
           </section>
@@ -701,22 +763,23 @@ export const AdminDashboardPage = ({
               TAB 1: USERS & TALENT MANAGEMENT
               ============================================================ */}
           {activeTab === 'users' && (
-            <div className="admin-section-container glass-panel mt-6">
-              <div className="admin-toolbar-row">
-                <div className="admin-search-wrapper">
-                  <Search size={16} className="search-icon-inside" />
+            <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-6">
+              {/* Toolbar */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input 
                     type="text" 
-                    className="input-field admin-search-input"
+                    className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
                     placeholder="Search by name, skill, city, category..."
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                   />
                 </div>
 
-                <div className="admin-filters-group">
+                <div className="flex flex-wrap items-center gap-3">
                   <select 
-                    className="input-field select-field admin-filter-select"
+                    className="px-3.5 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={userCityFilter}
                     onChange={(e) => setUserCityFilter(e.target.value)}
                   >
@@ -727,7 +790,7 @@ export const AdminDashboardPage = ({
                   </select>
 
                   <select 
-                    className="input-field select-field admin-filter-select"
+                    className="px-3.5 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={userVerifyFilter}
                     onChange={(e) => setUserVerifyFilter(e.target.value)}
                   >
@@ -737,7 +800,7 @@ export const AdminDashboardPage = ({
                   </select>
 
                   <select 
-                    className="input-field select-field admin-filter-select"
+                    className="px-3.5 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={userStatusFilter}
                     onChange={(e) => setUserStatusFilter(e.target.value)}
                   >
@@ -747,33 +810,33 @@ export const AdminDashboardPage = ({
                   </select>
 
                   <button 
-                    className="btn btn-primary"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors cursor-pointer"
                     onClick={() => setIsAddUserModalOpen(true)}
                   >
                     <Plus size={16} />
-                    <span>Add New Talent</span>
+                    <span>Add Talent</span>
                   </button>
                 </div>
               </div>
 
               {/* Users Data Table */}
-              <div className="table-responsive mt-4">
-                <table className="admin-table">
+              <div className="overflow-x-auto rounded-xl border border-slate-800">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
                   <thead>
-                    <tr>
-                      <th>Professional Talent</th>
-                      <th>Category / Field</th>
-                      <th>City & Area</th>
-                      <th>Hourly Rate</th>
-                      <th>Verification Badge</th>
-                      <th>Account Status</th>
-                      <th className="text-right">Admin Controls</th>
+                    <tr className="bg-slate-800/60 text-slate-400 font-semibold uppercase text-[11px] tracking-wider border-b border-slate-800">
+                      <th className="py-3.5 px-4">Professional Talent</th>
+                      <th className="py-3.5 px-4">Category / Field</th>
+                      <th className="py-3.5 px-4">City & Area</th>
+                      <th className="py-3.5 px-4">Hourly Rate</th>
+                      <th className="py-3.5 px-4">Verification</th>
+                      <th className="py-3.5 px-4">Account Status</th>
+                      <th className="py-3.5 px-4 text-right">Admin Controls</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-800/60">
                     {filteredTalents.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="text-center py-8 text-secondary">
+                        <td colSpan="7" className="text-center py-10 text-slate-400">
                           No talents found matching the current search and filters.
                         </td>
                       </tr>
@@ -781,34 +844,44 @@ export const AdminDashboardPage = ({
                       filteredTalents.map((t) => {
                         const isVerified = t.badge && t.badge !== 'Unverified';
                         return (
-                          <tr key={t.id} className={t.isSuspended ? 'row-suspended' : ''}>
-                            <td>
-                              <div className="admin-user-cell">
-                                <img src={t.avatar} alt={t.name} className="admin-table-avatar" />
+                          <tr key={t.id} className={`hover:bg-slate-800/30 transition-colors ${t.isSuspended ? 'bg-rose-950/10' : ''}`}>
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-3">
+                                <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-700" />
                                 <div>
-                                  <div className="admin-cell-name">
+                                  <div className="font-semibold text-slate-100 flex items-center gap-2">
                                     {t.name}
-                                    {t.isSuspended && <span className="suspended-chip">Suspended</span>}
+                                    {t.isSuspended && (
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">
+                                        Suspended
+                                      </span>
+                                    )}
                                   </div>
-                                  <div className="admin-cell-sub">{t.headline}</div>
+                                  <div className="text-xs text-slate-400 truncate max-w-xs">{t.headline}</div>
                                 </div>
                               </div>
                             </td>
-                            <td>
-                              <span className="skill-tag">{t.category}</span>
+                            <td className="py-3.5 px-4">
+                              <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 font-medium text-xs border border-indigo-500/20">
+                                {t.category}
+                              </span>
                             </td>
-                            <td>
-                              <div className="city-cell">
-                                <MapPin size={13} className="text-secondary" />
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-1.5 text-slate-300">
+                                <MapPin size={13} className="text-slate-400" />
                                 <span>{t.city} ({t.area || 'Main'})</span>
                               </div>
                             </td>
-                            <td>
-                              <strong className="text-emerald">PKR {Number(t.hourlyRate).toLocaleString()}/hr</strong>
+                            <td className="py-3.5 px-4">
+                              <strong className="text-emerald-400 font-bold">PKR {Number(t.hourlyRate).toLocaleString()}/hr</strong>
                             </td>
-                            <td>
+                            <td className="py-3.5 px-4">
                               <button 
-                                className={`badge-toggle-btn ${isVerified ? 'verified' : 'unverified'}`}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                                  isVerified 
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30' 
+                                    : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'
+                                }`}
                                 onClick={() => handleToggleVerify(t.id)}
                                 title="Click to toggle verification status"
                               >
@@ -825,9 +898,13 @@ export const AdminDashboardPage = ({
                                 )}
                               </button>
                             </td>
-                            <td>
+                            <td className="py-3.5 px-4">
                               <button 
-                                className={`status-toggle-btn ${t.isSuspended ? 'suspended' : 'active'}`}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                                  t.isSuspended 
+                                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30' 
+                                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
+                                }`}
                                 onClick={() => handleToggleSuspend(t.id)}
                                 title="Click to Suspend / Activate account"
                               >
@@ -844,10 +921,10 @@ export const AdminDashboardPage = ({
                                 )}
                               </button>
                             </td>
-                            <td>
-                              <div className="table-actions-cell right">
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="inline-flex items-center gap-2">
                                 <button 
-                                  className="action-icon-btn edit"
+                                  className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-indigo-600 transition-colors cursor-pointer"
                                   title="Edit User Details"
                                   onClick={() => {
                                     setEditingUser(t);
@@ -858,7 +935,7 @@ export const AdminDashboardPage = ({
                                 </button>
 
                                 <button 
-                                  className="action-icon-btn delete"
+                                  className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
                                   title="Delete User Permanently"
                                   onClick={() => handleDeleteUser(t.id, t.name)}
                                 >
@@ -880,22 +957,23 @@ export const AdminDashboardPage = ({
               TAB 2: JOB POSTS MODERATION
               ============================================================ */}
           {activeTab === 'jobs' && (
-            <div className="admin-section-container glass-panel mt-6">
-              <div className="admin-toolbar-row">
-                <div className="admin-search-wrapper">
-                  <Search size={16} className="search-icon-inside" />
+            <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-6">
+              {/* Toolbar */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input 
                     type="text" 
-                    className="input-field admin-search-input"
+                    className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
                     placeholder="Search jobs by title, client, or city..."
                     value={jobSearch}
                     onChange={(e) => setJobSearch(e.target.value)}
                   />
                 </div>
 
-                <div className="admin-filters-group">
+                <div className="flex flex-wrap items-center gap-3">
                   <select 
-                    className="input-field select-field admin-filter-select"
+                    className="px-3.5 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={jobCategoryFilter}
                     onChange={(e) => setJobCategoryFilter(e.target.value)}
                   >
@@ -906,7 +984,7 @@ export const AdminDashboardPage = ({
                   </select>
 
                   <select 
-                    className="input-field select-field admin-filter-select"
+                    className="px-3.5 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={jobStatusFilter}
                     onChange={(e) => setJobStatusFilter(e.target.value)}
                   >
@@ -917,74 +995,88 @@ export const AdminDashboardPage = ({
                   </select>
 
                   <button 
-                    className="btn btn-primary"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors cursor-pointer"
                     onClick={() => setIsAddJobModalOpen(true)}
                   >
                     <Plus size={16} />
-                    <span>Post Job as Admin</span>
+                    <span>Post Job</span>
                   </button>
                 </div>
               </div>
 
               {/* Jobs Data Table */}
-              <div className="table-responsive mt-4">
-                <table className="admin-table">
+              <div className="overflow-x-auto rounded-xl border border-slate-800">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
                   <thead>
-                    <tr>
-                      <th>Job Title & Scope</th>
-                      <th>Client / Employer</th>
-                      <th>City & Mode</th>
-                      <th>Budget (PKR)</th>
-                      <th>Bids</th>
-                      <th>Marketplace Status</th>
-                      <th className="text-right">Admin Actions</th>
+                    <tr className="bg-slate-800/60 text-slate-400 font-semibold uppercase text-[11px] tracking-wider border-b border-slate-800">
+                      <th className="py-3.5 px-4">Job Title & Scope</th>
+                      <th className="py-3.5 px-4">Client / Employer</th>
+                      <th className="py-3.5 px-4">City & Mode</th>
+                      <th className="py-3.5 px-4">Budget (PKR)</th>
+                      <th className="py-3.5 px-4">Bids</th>
+                      <th className="py-3.5 px-4">Marketplace Status</th>
+                      <th className="py-3.5 px-4 text-right">Admin Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-800/60">
                     {filteredJobs.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="text-center py-8 text-secondary">
+                        <td colSpan="7" className="text-center py-10 text-slate-400">
                           No job posts found matching current filters.
                         </td>
                       </tr>
                     ) : (
                       filteredJobs.map((j) => (
-                        <tr key={j.id}>
-                          <td>
-                            <div className="admin-job-cell">
-                              <div className="admin-job-title">
-                                {j.title}
-                                {j.isFeatured && <span className="featured-pill"><Sparkles size={11} /> Featured</span>}
+                        <tr key={j.id} className="hover:bg-slate-800/30 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="space-y-0.5">
+                              <div className="font-semibold text-slate-100 flex items-center gap-2">
+                                <span>{j.title}</span>
+                                {j.isFeatured && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                                    <Sparkles size={11} /> Featured
+                                  </span>
+                                )}
                               </div>
-                              <div className="admin-job-sub">{j.category} &bull; Posted {j.postedDate}</div>
+                              <div className="text-xs text-slate-400">{j.category} &bull; Posted {j.postedDate}</div>
                             </div>
                           </td>
-                          <td>
-                            <div className="admin-client-cell">
-                              <Building2 size={14} className="text-secondary" />
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5 text-slate-300">
+                              <Building2 size={14} className="text-slate-400" />
                               <span>{j.clientName}</span>
                             </div>
                           </td>
-                          <td>{j.city} ({j.locationType})</td>
-                          <td>
-                            <strong className="text-emerald">PKR {Number(j.budget).toLocaleString()}</strong>
+                          <td className="py-3.5 px-4 text-slate-300">{j.city} ({j.locationType})</td>
+                          <td className="py-3.5 px-4">
+                            <strong className="text-emerald-400 font-bold">PKR {Number(j.budget).toLocaleString()}</strong>
                           </td>
-                          <td>
-                            <span className="badge badge-pro">{j.proposalsCount || 0} Bids</span>
+                          <td className="py-3.5 px-4">
+                            <span className="px-2.5 py-1 rounded-full bg-slate-800 text-indigo-400 font-semibold text-xs border border-indigo-500/20">
+                              {j.proposalsCount || 0} Bids
+                            </span>
                           </td>
-                          <td>
+                          <td className="py-3.5 px-4">
                             <button 
-                              className={`job-status-btn ${j.status === 'Open' ? 'open' : 'suspended'}`}
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                                j.status === 'Open' 
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30' 
+                                  : 'bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30'
+                              }`}
                               onClick={() => handleToggleJobStatus(j.id, j.status)}
                               title="Click to toggle Open / Suspended"
                             >
                               {j.status === 'Open' ? '● Live / Open' : '✕ Suspended'}
                             </button>
                           </td>
-                          <td>
-                            <div className="table-actions-cell right">
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="inline-flex items-center gap-2">
                               <button 
-                                className={`action-icon-btn ${j.isFeatured ? 'featured' : ''}`}
+                                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                                  j.isFeatured 
+                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' 
+                                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                                }`}
                                 title={j.isFeatured ? 'Unpin Featured' : 'Pin to Homepage Featured'}
                                 onClick={() => handleToggleJobFeatured(j.id)}
                               >
@@ -992,7 +1084,7 @@ export const AdminDashboardPage = ({
                               </button>
 
                               <button 
-                                className="action-icon-btn edit"
+                                className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-indigo-600 transition-colors cursor-pointer border border-slate-700"
                                 title="Edit Job Details"
                                 onClick={() => {
                                   setEditingJob(j);
@@ -1003,7 +1095,7 @@ export const AdminDashboardPage = ({
                               </button>
 
                               <button 
-                                className="action-icon-btn delete"
+                                className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer border border-slate-700"
                                 title="Delete Job Post"
                                 onClick={() => handleDeleteJob(j.id, j.title)}
                               >
@@ -1024,59 +1116,71 @@ export const AdminDashboardPage = ({
               TAB 3: ESCROW LEDGER & FINANCIAL VAULT
               ============================================================ */}
           {activeTab === 'escrow' && (
-            <div className="admin-section-container glass-panel mt-6">
-              <div className="escrow-vault-hero">
-                <div className="vault-info">
-                  <div className="badge badge-warning"><Lock size={13} /> Pakistani Rupee Escrow Vault</div>
-                  <h3 className="vault-title">Platform Milestone Escrow Contracts</h3>
-                  <p className="vault-desc">
+            <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-6">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent border border-amber-500/20">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30">
+                    <Lock size={12} /> Pakistani Rupee Escrow Vault
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Platform Milestone Escrow Contracts</h3>
+                  <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
                     Funds remain securely locked in the TalentX Escrow Trust until client approves the work. As Super Admin, you have executive dispute resolution authority to force-release or refund milestones.
                   </p>
                 </div>
 
-                <div className="vault-actions">
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => setIsAddContractModalOpen(true)}
-                  >
-                    <Plus size={16} />
-                    <span>Create Escrow Contract</span>
-                  </button>
-                </div>
+                <button 
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-amber-600 hover:bg-amber-500 transition-colors cursor-pointer shrink-0 shadow-lg shadow-amber-600/20"
+                  onClick={() => setIsAddContractModalOpen(true)}
+                >
+                  <Plus size={16} />
+                  <span>Create Escrow Contract</span>
+                </button>
               </div>
 
               {/* Contracts List */}
-              <div className="contracts-ledger-list mt-6">
+              <div className="space-y-4">
                 {contracts.length === 0 ? (
-                  <div className="empty-state-box text-center py-8">
-                    <Lock size={36} className="text-secondary mb-2" />
-                    <h4>No active escrow contracts</h4>
-                    <p className="text-secondary">Create a test contract to simulate platform escrow transactions.</p>
+                  <div className="text-center py-12 text-slate-400 bg-slate-800/20 rounded-2xl border border-dashed border-slate-800">
+                    <Lock size={36} className="mx-auto mb-2 text-slate-500" />
+                    <h4 className="font-semibold text-slate-200">No active escrow contracts</h4>
+                    <p className="text-xs text-slate-500 mt-1">Create a test contract to simulate platform escrow transactions.</p>
                   </div>
                 ) : (
                   contracts.map((c) => (
-                    <div key={c.id} className="admin-contract-card glass-panel">
-                      <div className="contract-card-top">
-                        <div>
-                          <div className="contract-parties-header">
-                            <span className={`contract-status-badge ${c.status === 'Completed' ? 'status-completed' : c.status === 'Frozen (Dispute)' ? 'status-frozen' : 'status-progress'}`}>
+                    <div key={c.id} className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 shadow-lg space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-700/60">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                              c.status === 'Completed' 
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                : c.status === 'Frozen (Dispute)' 
+                                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' 
+                                : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                            }`}>
                               {c.status}
                             </span>
-                            <span className="contract-id-text">ID: {c.id}</span>
+                            <span className="text-xs text-slate-400 font-mono">ID: {c.id}</span>
                           </div>
-                          <h4 className="contract-card-heading">{c.jobTitle}</h4>
-                          <div className="contract-users-sub">
-                            <span>🏢 Client: <strong>{c.clientName}</strong></span>
+                          <h4 className="text-base font-bold text-white">{c.jobTitle}</h4>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                            <span>🏢 Client: <strong className="text-slate-200">{c.clientName}</strong></span>
                             <span>&bull;</span>
-                            <span>🧑‍💻 Hired Talent: <strong>{c.talentName}</strong></span>
+                            <span>🧑‍💻 Hired Talent: <strong className="text-slate-200">{c.talentName}</strong></span>
                           </div>
                         </div>
 
-                        <div className="contract-total-box">
-                          <div className="contract-amount-label">Escrow Value</div>
-                          <div className="contract-amount-number">PKR {Number(c.amount).toLocaleString()}</div>
+                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
+                          <div className="text-left sm:text-right">
+                            <div className="text-xs text-slate-400">Escrow Value</div>
+                            <div className="text-lg font-black text-emerald-400">PKR {Number(c.amount).toLocaleString()}</div>
+                          </div>
                           <button 
-                            className={`btn btn-sm mt-2 ${c.status === 'Frozen (Dispute)' ? 'btn-primary' : 'btn-secondary'}`}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              c.status === 'Frozen (Dispute)' 
+                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
+                                : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                            }`}
                             onClick={() => handleToggleFreezeContract(c.id, c.status)}
                           >
                             <AlertTriangle size={13} />
@@ -1086,58 +1190,65 @@ export const AdminDashboardPage = ({
                       </div>
 
                       {/* Milestones Breakdown */}
-                      <div className="contract-milestones-list">
-                        <div className="milestones-heading">
-                          <span>Milestone Escrow Schedule & Admin Overrides:</span>
+                      <div className="space-y-2.5">
+                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Milestone Escrow Schedule & Admin Overrides:
                         </div>
 
                         {c.milestones?.map((m, idx) => (
-                          <div key={m.id || idx} className={`admin-milestone-row ${m.isPaid ? 'released' : 'locked'}`}>
-                            <div className="milestone-info-cell">
-                              <div className={`milestone-num ${m.isPaid ? 'done' : 'pending'}`}>
+                          <div 
+                            key={m.id || idx} 
+                            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${
+                              m.isPaid 
+                                ? 'bg-emerald-950/20 border-emerald-500/20' 
+                                : 'bg-slate-900/60 border-slate-750'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                m.isPaid ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                              }`}>
                                 {m.isPaid ? <Check size={13} /> : idx + 1}
                               </div>
                               <div>
-                                <div className="milestone-title-text">{m.title}</div>
-                                <div className="milestone-amount-text">PKR {Number(m.amount).toLocaleString()}</div>
+                                <div className="text-sm font-semibold text-slate-200">{m.title}</div>
+                                <div className="text-xs text-emerald-400 font-medium">PKR {Number(m.amount).toLocaleString()}</div>
                               </div>
                             </div>
 
-                            <div className="milestone-status-cell">
+                            <div className="flex items-center gap-3">
                               {m.isPaid ? (
-                                <span className="badge badge-success">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold border border-emerald-500/30">
                                   <CheckCircle2 size={13} /> Escrow Released (Paid)
                                 </span>
                               ) : (
-                                <span className="badge badge-warning">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold border border-amber-500/30">
                                   <Lock size={13} /> Locked in Trust
                                 </span>
                               )}
-                            </div>
 
-                            <div className="milestone-admin-controls">
                               {!m.isPaid ? (
-                                <>
+                                <div className="flex items-center gap-2">
                                   <button 
-                                    className="btn btn-primary btn-sm"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
                                     onClick={() => handleAdminForceRelease(c.id, m.id)}
                                     title="Force Release to Freelancer"
                                   >
                                     <Check size={13} />
-                                    <span>Force Release (PKR {Number(m.amount).toLocaleString()})</span>
+                                    <span>Force Release</span>
                                   </button>
 
                                   <button 
-                                    className="btn btn-secondary btn-sm text-danger"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/40 text-rose-400 border border-rose-500/30 text-xs font-semibold transition-colors cursor-pointer"
                                     onClick={() => handleAdminForceRefund(c.id, m.id)}
                                     title="Refund to Client"
                                   >
                                     <X size={13} />
                                     <span>Force Refund</span>
                                   </button>
-                                </>
+                                </div>
                               ) : (
-                                <span className="text-secondary text-sm">Settled & Completed</span>
+                                <span className="text-xs text-slate-400 font-medium">Settled & Completed</span>
                               )}
                             </div>
                           </div>
@@ -1154,193 +1265,205 @@ export const AdminDashboardPage = ({
               TAB 4: GOVERNANCE & PLATFORM CONTROLS
               ============================================================ */}
           {activeTab === 'settings' && (
-            <div className="admin-governance-grid mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Commission Fee Manager */}
-              <div className="gov-card glass-panel">
-                <div className="gov-card-header">
-                  <div className="gov-icon-wrap indigo"><DollarSign size={22} /></div>
-                  <div>
-                    <h3 className="gov-title">Platform Take-Rate & Commission Fee</h3>
-                    <p className="gov-desc">Adjust the percentage deducted from milestone releases for platform maintenance.</p>
-                  </div>
-                </div>
-
-                <div className="gov-fee-slider-box mt-4">
-                  <div className="fee-display-row">
-                    <span className="fee-label">Current Commission Rate:</span>
-                    <span className="fee-rate-huge">{localCommission}%</span>
-                  </div>
-
-                  <input 
-                    type="range" 
-                    min="1" 
-                    max="20" 
-                    step="0.5"
-                    value={localCommission}
-                    onChange={(e) => setLocalCommission(parseFloat(e.target.value))}
-                    className="fee-slider"
-                  />
-                  
-                  <div className="slider-ticks">
-                    <span>1% (Free Tier)</span>
-                    <span>5% (Standard)</span>
-                    <span>10% (Pro)</span>
-                    <span>20% (Enterprise)</span>
-                  </div>
-
-                  <div className="fee-simulation-box mt-4">
-                    <div className="sim-title">Live Revenue Simulation:</div>
-                    <div className="sim-grid">
-                      <div>
-                        <span className="sim-label">Est. Platform GMV:</span>
-                        <strong>PKR {totalGMV.toLocaleString()}</strong>
-                      </div>
-                      <div>
-                        <span className="sim-label">TalentX Net Revenue:</span>
-                        <strong className="text-emerald">PKR {Math.round(totalGMV * (localCommission / 100)).toLocaleString()}</strong>
-                      </div>
+              <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl flex flex-col justify-between space-y-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      <DollarSign size={22} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">Platform Take-Rate & Commission</h3>
+                      <p className="text-xs text-slate-400">Adjust the percentage deducted from milestone releases.</p>
                     </div>
                   </div>
 
-                  <button 
-                    className="btn btn-primary mt-4 w-full"
-                    onClick={handleSaveSettings}
-                  >
-                    <Check size={16} />
-                    <span>Apply & Save Fee Rate ({localCommission}%)</span>
-                  </button>
+                  <div className="mt-6 space-y-4">
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/60">
+                      <span className="text-xs font-medium text-slate-300">Current Commission Rate:</span>
+                      <span className="text-2xl font-black text-indigo-400">{localCommission}%</span>
+                    </div>
+
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="20" 
+                      step="0.5"
+                      value={localCommission}
+                      onChange={(e) => setLocalCommission(parseFloat(e.target.value))}
+                      className="w-full accent-indigo-500 cursor-pointer"
+                    />
+                    
+                    <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                      <span>1% (Free)</span>
+                      <span>5% (Standard)</span>
+                      <span>10% (Pro)</span>
+                      <span>20% (Max)</span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/40 space-y-2">
+                      <div className="text-xs font-semibold text-slate-300">Live Revenue Simulation:</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-slate-400 block">Est. Platform GMV:</span>
+                          <strong className="text-slate-200">PKR {totalGMV.toLocaleString()}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block">Net Revenue:</span>
+                          <strong className="text-emerald-400">PKR {Math.round(totalGMV * (localCommission / 100)).toLocaleString()}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                <button 
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors cursor-pointer shadow-lg shadow-indigo-600/20"
+                  onClick={handleSaveSettings}
+                >
+                  <Check size={16} />
+                  <span>Apply & Save Fee Rate ({localCommission}%)</span>
+                </button>
               </div>
 
               {/* Global Platform Announcement Broadcast */}
-              <div className="gov-card glass-panel">
-                <div className="gov-card-header">
-                  <div className="gov-icon-wrap purple"><Megaphone size={22} /></div>
-                  <div>
-                    <h3 className="gov-title">Global Platform Broadcast Banner</h3>
-                    <p className="gov-desc">Publish a site-wide announcement visible across the top of TalentX.</p>
+              <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl flex flex-col justify-between space-y-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                      <Megaphone size={22} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">Global Broadcast Banner</h3>
+                      <p className="text-xs text-slate-400">Publish a site-wide announcement visible to all users.</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Broadcast Message Text</label>
+                      <textarea 
+                        className="w-full p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-purple-500 transition-colors" 
+                        rows="3"
+                        placeholder="e.g. ⚡ Eid Special: 0% platform fee on all mobile app contracts this week."
+                        value={announcementText}
+                        onChange={(e) => setAnnouncementText(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/60">
+                      <span className="text-xs font-semibold text-slate-200">Enable Broadcast Banner on Site:</span>
+                      <button 
+                        className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${isAnnounceActive ? 'bg-purple-600' : 'bg-slate-700'}`}
+                        onClick={() => setIsAnnounceActive(!isAnnounceActive)}
+                      >
+                        <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${isAnnounceActive ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="announce-form mt-4">
-                  <div className="form-group">
-                    <label className="form-label">Broadcast Message Text</label>
-                    <textarea 
-                      className="input-field textarea-field" 
-                      rows="3"
-                      placeholder="e.g. ⚡ Eid Mubarak! 0% platform fee on all mobile app contracts this week."
-                      value={announcementText}
-                      onChange={(e) => setAnnouncementText(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="toggle-row mt-3">
-                    <label className="toggle-label-text">
-                      <strong>Enable Broadcast Banner on Site:</strong>
-                    </label>
-                    <button 
-                      className={`toggle-switch-btn ${isAnnounceActive ? 'active' : ''}`}
-                      onClick={() => setIsAnnounceActive(!isAnnounceActive)}
-                    >
-                      <span className="switch-slider"></span>
-                    </button>
-                  </div>
-
-                  <button 
-                    className="btn btn-ai mt-4 w-full"
-                    onClick={handleSaveSettings}
-                  >
-                    <Megaphone size={16} />
-                    <span>Broadcast Platform Alert</span>
-                  </button>
-                </div>
+                <button 
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 transition-colors cursor-pointer shadow-lg shadow-purple-600/20"
+                  onClick={handleSaveSettings}
+                >
+                  <Megaphone size={16} />
+                  <span>Broadcast Platform Alert</span>
+                </button>
               </div>
 
               {/* Infrastructure & System Health Controls */}
-              <div className="gov-card glass-panel">
-                <div className="gov-card-header">
-                  <div className="gov-icon-wrap emerald"><Cpu size={22} /></div>
+              <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <Cpu size={22} />
+                  </div>
                   <div>
-                    <h3 className="gov-title">System Microservices & Health</h3>
-                    <p className="gov-desc">Enable or simulate platform engine microservices in real-time.</p>
+                    <h3 className="text-base font-bold text-white">System Microservices & Health</h3>
+                    <p className="text-xs text-slate-400">Toggle live or mock engine microservices in real-time.</p>
                   </div>
                 </div>
 
-                <div className="system-toggles-list mt-4">
-                  <div className="system-toggle-item">
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/60">
                     <div>
-                      <div className="item-title">Neural AI Matcher Engine</div>
-                      <div className="item-sub">Semantic vector scoring for talent matching</div>
+                      <div className="text-sm font-semibold text-slate-200">Neural AI Matcher Engine</div>
+                      <div className="text-xs text-slate-400">Semantic vector scoring for talent matching</div>
                     </div>
                     <button 
-                      className={`toggle-switch-btn ${aiOnline ? 'active' : ''}`}
+                      className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${aiOnline ? 'bg-emerald-600' : 'bg-slate-700'}`}
                       onClick={() => {
                         setAiOnline(!aiOnline);
                         showToast(`AI Matcher Engine set to ${!aiOnline ? 'ONLINE' : 'OFFLINE'}`, 'ai');
                       }}
                     >
-                      <span className="switch-slider"></span>
+                      <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${aiOnline ? 'left-7' : 'left-1'}`} />
                     </button>
                   </div>
 
-                  <div className="system-toggle-item">
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/60">
                     <div>
-                      <div className="item-title">MongoDB Cloud Cluster (Live API)</div>
-                      <div className="item-sub">Cloud Atlas sync and persistent caching</div>
+                      <div className="text-sm font-semibold text-slate-200">MongoDB Cloud Cluster</div>
+                      <div className="text-xs text-slate-400">Cloud Atlas sync and persistent caching</div>
                     </div>
                     <button 
-                      className={`toggle-switch-btn ${dbOnline ? 'active' : ''}`}
+                      className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${dbOnline ? 'bg-emerald-600' : 'bg-slate-700'}`}
                       onClick={() => {
                         setDbOnline(!dbOnline);
                         showToast(`MongoDB Cluster Mock set to ${!dbOnline ? 'ONLINE' : 'OFFLINE'}`, 'success');
                       }}
                     >
-                      <span className="switch-slider"></span>
+                      <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${dbOnline ? 'left-7' : 'left-1'}`} />
                     </button>
                   </div>
 
-                  <div className="system-toggle-item">
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/60">
                     <div>
-                      <div className="item-title">New User Registrations</div>
-                      <div className="item-sub">Allow public visitors to register as Freelancers or Clients</div>
+                      <div className="text-sm font-semibold text-slate-200">New User Registrations</div>
+                      <div className="text-xs text-slate-400">Allow public visitors to register</div>
                     </div>
                     <button 
-                      className={`toggle-switch-btn ${allowSignups ? 'active' : ''}`}
+                      className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${allowSignups ? 'bg-indigo-600' : 'bg-slate-700'}`}
                       onClick={() => {
                         setAllowSignups(!allowSignups);
                         showToast(`Registrations ${!allowSignups ? 'OPENED' : 'LOCKED'}`, 'warning');
                       }}
                     >
-                      <span className="switch-slider"></span>
+                      <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${allowSignups ? 'left-7' : 'left-1'}`} />
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Platform Backup & Reset Controls */}
-              <div className="gov-card glass-panel">
-                <div className="gov-card-header">
-                  <div className="gov-icon-wrap amber"><RefreshCw size={22} /></div>
+              <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <RefreshCw size={22} />
+                  </div>
                   <div>
-                    <h3 className="gov-title">Data Management & Backup</h3>
-                    <p className="gov-desc">Export database snapshot or restore initial clean seed datasets.</p>
+                    <h3 className="text-base font-bold text-white">Data Management & Backup</h3>
+                    <p className="text-xs text-slate-400">Export snapshot or restore initial clean seed datasets.</p>
                   </div>
                 </div>
 
-                <div className="backup-actions-stack mt-4">
+                <div className="space-y-3 pt-2">
                   <button 
-                    className="btn btn-secondary w-full justify-between"
+                    className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-slate-200 transition-colors cursor-pointer"
                     onClick={handleExportDataJSON}
                   >
-                    <span className="flex items-center gap-2">
-                      <Download size={16} />
-                      <span>Export All Platform Data (JSON)</span>
+                    <div className="flex items-center gap-2.5">
+                      <Download size={16} className="text-indigo-400" />
+                      <span className="text-xs sm:text-sm font-semibold">Export Platform Data (JSON)</span>
+                    </div>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30">
+                      Download
                     </span>
-                    <span className="badge badge-pro">Instant Download</span>
                   </button>
 
                   <button 
-                    className="btn btn-secondary w-full justify-between text-danger"
+                    className="w-full flex items-center justify-between p-3.5 rounded-xl bg-rose-950/20 hover:bg-rose-950/40 border border-rose-500/30 text-rose-300 transition-colors cursor-pointer"
                     onClick={() => {
                       if (window.confirm('⚠️ WARNING: This will reset all mock talents, jobs, contracts and settings to default seed values. Proceed?')) {
                         onResetDatabase();
@@ -1348,42 +1471,46 @@ export const AdminDashboardPage = ({
                       }
                     }}
                   >
-                    <span className="flex items-center gap-2">
-                      <RefreshCw size={16} />
-                      <span>Reset to Default Demo Data</span>
+                    <div className="flex items-center gap-2.5">
+                      <RefreshCw size={16} className="text-rose-400" />
+                      <span className="text-xs sm:text-sm font-semibold">Reset to Default Demo Data</span>
+                    </div>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-semibold border border-rose-500/30">
+                      Reset Data
                     </span>
-                    <span className="badge badge-warning">Reset Data</span>
                   </button>
                 </div>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </main>
 
       {/* ============================================================
           MODAL 1: ADD NEW USER / TALENT MODAL
           ============================================================ */}
       {isAddUserModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsAddUserModalOpen(false)}>
-          <div className="modal-dialog glass-card max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-header-text">
-                <div className="badge badge-pro"><Users size={12} /> Admin Management</div>
-                <h3>Add New Talent to Platform</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setIsAddUserModalOpen(false)}>
+          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/60">
+              <div className="space-y-0.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-400 uppercase tracking-wider">
+                  <Users size={12} /> Admin Management
+                </span>
+                <h3 className="text-lg font-bold text-white">Add New Talent to Platform</h3>
               </div>
-              <button className="modal-close-btn" onClick={() => setIsAddUserModalOpen(false)}>
+              <button className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => setIsAddUserModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateNewUser} className="modal-body">
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Full Name *</label>
+            <form onSubmit={handleCreateNewUser} className="p-6 overflow-y-auto space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Full Name *</label>
                   <input 
                     type="text" 
-                    className="input-field" 
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                     placeholder="e.g. Daniyal Qureshi"
                     value={newUserForm.name}
                     onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
@@ -1391,10 +1518,10 @@ export const AdminDashboardPage = ({
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Professional Category *</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Category *</label>
                   <select 
-                    className="input-field select-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={newUserForm.category}
                     onChange={(e) => setNewUserForm({ ...newUserForm, category: e.target.value })}
                   >
@@ -1405,11 +1532,11 @@ export const AdminDashboardPage = ({
                 </div>
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Professional Headline *</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Professional Headline *</label>
                 <input 
                   type="text" 
-                  className="input-field" 
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                   placeholder="e.g. Senior MERN Stack & Next.js Architect"
                   value={newUserForm.headline}
                   onChange={(e) => setNewUserForm({ ...newUserForm, headline: e.target.value })}
@@ -1417,11 +1544,11 @@ export const AdminDashboardPage = ({
                 />
               </div>
 
-              <div className="form-grid-2 mt-3">
-                <div className="form-group">
-                  <label className="form-label">City *</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">City *</label>
                   <select 
-                    className="input-field select-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={newUserForm.city}
                     onChange={(e) => setNewUserForm({ ...newUserForm, city: e.target.value })}
                   >
@@ -1431,11 +1558,11 @@ export const AdminDashboardPage = ({
                   </select>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Area / Locality</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Area / Locality</label>
                   <input 
                     type="text" 
-                    className="input-field" 
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                     placeholder="e.g. Gulberg III, DHA, F-7"
                     value={newUserForm.area}
                     onChange={(e) => setNewUserForm({ ...newUserForm, area: e.target.value })}
@@ -1443,12 +1570,12 @@ export const AdminDashboardPage = ({
                 </div>
               </div>
 
-              <div className="form-grid-2 mt-3">
-                <div className="form-group">
-                  <label className="form-label">Hourly Rate (PKR) *</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Hourly Rate (PKR) *</label>
                   <input 
                     type="number" 
-                    className="input-field" 
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                     placeholder="4500"
                     value={newUserForm.hourlyRate}
                     onChange={(e) => setNewUserForm({ ...newUserForm, hourlyRate: e.target.value })}
@@ -1456,10 +1583,10 @@ export const AdminDashboardPage = ({
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Verification Badge</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Verification Badge</label>
                   <select 
-                    className="input-field select-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={newUserForm.badge}
                     onChange={(e) => setNewUserForm({ ...newUserForm, badge: e.target.value })}
                   >
@@ -1471,11 +1598,11 @@ export const AdminDashboardPage = ({
                 </div>
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Skills (Comma-separated) *</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Skills (Comma-separated) *</label>
                 <input 
                   type="text" 
-                  className="input-field" 
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                   placeholder="React, Next.js, Node.js, MongoDB, Tailwind"
                   value={newUserForm.skills}
                   onChange={(e) => setNewUserForm({ ...newUserForm, skills: e.target.value })}
@@ -1483,10 +1610,10 @@ export const AdminDashboardPage = ({
                 />
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Professional Bio</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Professional Bio</label>
                 <textarea 
-                  className="input-field textarea-field" 
+                  className="w-full p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                   rows="3"
                   placeholder="Write a brief background about this professional..."
                   value={newUserForm.bio}
@@ -1494,17 +1621,20 @@ export const AdminDashboardPage = ({
                 />
               </div>
 
-              <div className="modal-footer mt-4">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <button 
                   type="button" 
-                  className="btn btn-secondary"
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                   onClick={() => setIsAddUserModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+                >
                   <Plus size={16} />
-                  <span>Publish Talent to Marketplace</span>
+                  <span>Publish Talent</span>
                 </button>
               </div>
             </form>
@@ -1516,44 +1646,46 @@ export const AdminDashboardPage = ({
           MODAL 2: EDIT USER MODAL
           ============================================================ */}
       {isEditUserModalOpen && editingUser && (
-        <div className="modal-overlay" onClick={() => setIsEditUserModalOpen(false)}>
-          <div className="modal-dialog glass-card max-w-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-header-text">
-                <div className="badge badge-warning"><Edit3 size={12} /> Admin Edit</div>
-                <h3>Edit Talent Profile ({editingUser.name})</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setIsEditUserModalOpen(false)}>
+          <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/60">
+              <div className="space-y-0.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                  <Edit3 size={12} /> Admin Edit
+                </span>
+                <h3 className="text-lg font-bold text-white">Edit Talent Profile ({editingUser.name})</h3>
               </div>
-              <button className="modal-close-btn" onClick={() => setIsEditUserModalOpen(false)}>
+              <button className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => setIsEditUserModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditUser} className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
+            <form onSubmit={handleSaveEditUser} className="p-6 overflow-y-auto space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Full Name</label>
                 <input 
                   type="text" 
-                  className="input-field"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                   value={editingUser.name}
                   onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
                 />
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Headline</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Headline</label>
                 <input 
                   type="text" 
-                  className="input-field"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                   value={editingUser.headline}
                   onChange={(e) => setEditingUser({ ...editingUser, headline: e.target.value })}
                 />
               </div>
 
-              <div className="form-grid-2 mt-3">
-                <div className="form-group">
-                  <label className="form-label">City</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">City</label>
                   <select 
-                    className="input-field select-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={editingUser.city}
                     onChange={(e) => setEditingUser({ ...editingUser, city: e.target.value })}
                   >
@@ -1563,21 +1695,21 @@ export const AdminDashboardPage = ({
                   </select>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Hourly Rate (PKR)</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Hourly Rate (PKR)</label>
                   <input 
                     type="number" 
-                    className="input-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                     value={editingUser.hourlyRate}
                     onChange={(e) => setEditingUser({ ...editingUser, hourlyRate: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Badge</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Badge</label>
                 <select 
-                  className="input-field select-field"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                   value={editingUser.badge || 'Verified Pro'}
                   onChange={(e) => setEditingUser({ ...editingUser, badge: e.target.value })}
                 >
@@ -1588,15 +1720,18 @@ export const AdminDashboardPage = ({
                 </select>
               </div>
 
-              <div className="modal-footer mt-4">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <button 
                   type="button" 
-                  className="btn btn-secondary"
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                   onClick={() => setIsEditUserModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors cursor-pointer"
+                >
                   <Check size={16} />
                   <span>Save Changes</span>
                 </button>
@@ -1610,24 +1745,26 @@ export const AdminDashboardPage = ({
           MODAL 3: POST JOB AS ADMIN MODAL
           ============================================================ */}
       {isAddJobModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsAddJobModalOpen(false)}>
-          <div className="modal-dialog glass-card max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-header-text">
-                <div className="badge badge-pro"><Briefcase size={12} /> Priority Posting</div>
-                <h3>Post Job Post as Admin</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setIsAddJobModalOpen(false)}>
+          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/60">
+              <div className="space-y-0.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-400 uppercase tracking-wider">
+                  <Briefcase size={12} /> Priority Posting
+                </span>
+                <h3 className="text-lg font-bold text-white">Post Job Post as Admin</h3>
               </div>
-              <button className="modal-close-btn" onClick={() => setIsAddJobModalOpen(false)}>
+              <button className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => setIsAddJobModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateNewJob} className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Job Title *</label>
+            <form onSubmit={handleCreateNewJob} className="p-6 overflow-y-auto space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Job Title *</label>
                 <input 
                   type="text" 
-                  className="input-field" 
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                   placeholder="e.g. Next.js SaaS Dashboard with JazzCash API Integration"
                   value={newJobForm.title}
                   onChange={(e) => setNewJobForm({ ...newJobForm, title: e.target.value })}
@@ -1635,22 +1772,22 @@ export const AdminDashboardPage = ({
                 />
               </div>
 
-              <div className="form-grid-2 mt-3">
-                <div className="form-group">
-                  <label className="form-label">Client / Employer Name</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Client / Employer Name</label>
                   <input 
                     type="text" 
-                    className="input-field" 
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                     placeholder="e.g. Retail Horizon Pakistan"
                     value={newJobForm.clientName}
                     onChange={(e) => setNewJobForm({ ...newJobForm, clientName: e.target.value })}
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Category</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Category</label>
                   <select 
-                    className="input-field select-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={newJobForm.category}
                     onChange={(e) => setNewJobForm({ ...newJobForm, category: e.target.value })}
                   >
@@ -1661,12 +1798,12 @@ export const AdminDashboardPage = ({
                 </div>
               </div>
 
-              <div className="form-grid-2 mt-3">
-                <div className="form-group">
-                  <label className="form-label">Budget (PKR) *</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Budget (PKR) *</label>
                   <input 
                     type="number" 
-                    className="input-field" 
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                     placeholder="75000"
                     value={newJobForm.budget}
                     onChange={(e) => setNewJobForm({ ...newJobForm, budget: e.target.value })}
@@ -1674,10 +1811,10 @@ export const AdminDashboardPage = ({
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">City *</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">City *</label>
                   <select 
-                    className="input-field select-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={newJobForm.city}
                     onChange={(e) => setNewJobForm({ ...newJobForm, city: e.target.value })}
                   >
@@ -1688,21 +1825,21 @@ export const AdminDashboardPage = ({
                 </div>
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Required Skills (Comma separated)</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Required Skills (Comma separated)</label>
                 <input 
                   type="text" 
-                  className="input-field" 
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                   placeholder="React, Node.js, JazzCash API, Tailwind"
                   value={newJobForm.requiredSkills}
                   onChange={(e) => setNewJobForm({ ...newJobForm, requiredSkills: e.target.value })}
                 />
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Project Description</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Project Description</label>
                 <textarea 
-                  className="input-field textarea-field" 
+                  className="w-full p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500" 
                   rows="3"
                   placeholder="Describe scope, deliverables, and timelines..."
                   value={newJobForm.description}
@@ -1710,17 +1847,20 @@ export const AdminDashboardPage = ({
                 />
               </div>
 
-              <div className="modal-footer mt-4">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <button 
                   type="button" 
-                  className="btn btn-secondary"
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                   onClick={() => setIsAddJobModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+                >
                   <Sparkles size={16} />
-                  <span>Publish Job to Live Feed</span>
+                  <span>Publish Job</span>
                 </button>
               </div>
             </form>
@@ -1732,44 +1872,46 @@ export const AdminDashboardPage = ({
           MODAL 4: EDIT JOB MODAL
           ============================================================ */}
       {isEditJobModalOpen && editingJob && (
-        <div className="modal-overlay" onClick={() => setIsEditJobModalOpen(false)}>
-          <div className="modal-dialog glass-card max-w-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-header-text">
-                <div className="badge badge-warning"><Edit3 size={12} /> Admin Edit</div>
-                <h3>Edit Job Post</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setIsEditJobModalOpen(false)}>
+          <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/60">
+              <div className="space-y-0.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                  <Edit3 size={12} /> Admin Edit
+                </span>
+                <h3 className="text-lg font-bold text-white">Edit Job Post</h3>
               </div>
-              <button className="modal-close-btn" onClick={() => setIsEditJobModalOpen(false)}>
+              <button className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => setIsEditJobModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditJob} className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Job Title</label>
+            <form onSubmit={handleSaveEditJob} className="p-6 overflow-y-auto space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Job Title</label>
                 <input 
                   type="text" 
-                  className="input-field"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                   value={editingJob.title}
                   onChange={(e) => setEditingJob({ ...editingJob, title: e.target.value })}
                 />
               </div>
 
-              <div className="form-grid-2 mt-3">
-                <div className="form-group">
-                  <label className="form-label">Budget (PKR)</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Budget (PKR)</label>
                   <input 
                     type="number" 
-                    className="input-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
                     value={editingJob.budget}
                     onChange={(e) => setEditingJob({ ...editingJob, budget: e.target.value })}
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Status</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Status</label>
                   <select 
-                    className="input-field select-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={editingJob.status}
                     onChange={(e) => setEditingJob({ ...editingJob, status: e.target.value })}
                   >
@@ -1780,25 +1922,28 @@ export const AdminDashboardPage = ({
                 </div>
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Description</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Description</label>
                 <textarea 
-                  className="input-field textarea-field" 
+                  className="w-full p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" 
                   rows="3"
                   value={editingJob.description}
                   onChange={(e) => setEditingJob({ ...editingJob, description: e.target.value })}
                 />
               </div>
 
-              <div className="modal-footer mt-4">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <button 
                   type="button" 
-                  className="btn btn-secondary"
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                   onClick={() => setIsEditJobModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors cursor-pointer"
+                >
                   <Check size={16} />
                   <span>Save Job Changes</span>
                 </button>
@@ -1812,46 +1957,48 @@ export const AdminDashboardPage = ({
           MODAL 5: NEW ESCROW CONTRACT MODAL
           ============================================================ */}
       {isAddContractModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsAddContractModalOpen(false)}>
-          <div className="modal-dialog glass-card max-w-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-header-text">
-                <div className="badge badge-warning"><Lock size={12} /> Escrow Vault</div>
-                <h3>Create Platform Escrow Contract</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setIsAddContractModalOpen(false)}>
+          <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/60">
+              <div className="space-y-0.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                  <Lock size={12} /> Escrow Vault
+                </span>
+                <h3 className="text-lg font-bold text-white">Create Platform Escrow Contract</h3>
               </div>
-              <button className="modal-close-btn" onClick={() => setIsAddContractModalOpen(false)}>
+              <button className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => setIsAddContractModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateTestContract} className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Project / Contract Title *</label>
+            <form onSubmit={handleCreateTestContract} className="p-6 overflow-y-auto space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Project / Contract Title *</label>
                 <input 
                   type="text" 
-                  className="input-field" 
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" 
                   value={newContractForm.jobTitle}
                   onChange={(e) => setNewContractForm({ ...newContractForm, jobTitle: e.target.value })}
                   required
                 />
               </div>
 
-              <div className="form-grid-2 mt-3">
-                <div className="form-group">
-                  <label className="form-label">Client Name *</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Client Name *</label>
                   <input 
                     type="text" 
-                    className="input-field" 
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" 
                     value={newContractForm.clientName}
                     onChange={(e) => setNewContractForm({ ...newContractForm, clientName: e.target.value })}
                     required
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Hired Talent *</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Hired Talent *</label>
                   <select 
-                    className="input-field select-field"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={newContractForm.talentName}
                     onChange={(e) => setNewContractForm({ ...newContractForm, talentName: e.target.value })}
                   >
@@ -1862,31 +2009,34 @@ export const AdminDashboardPage = ({
                 </div>
               </div>
 
-              <div className="form-group mt-3">
-                <label className="form-label">Total Escrow Amount (PKR) *</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">Total Escrow Amount (PKR) *</label>
                 <input 
                   type="number" 
-                  className="input-field" 
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" 
                   value={newContractForm.amount}
                   onChange={(e) => setNewContractForm({ ...newContractForm, amount: e.target.value })}
                   required
                 />
-                <span className="text-secondary text-xs mt-1 block">
+                <span className="text-slate-400 text-xs mt-1 block">
                   Will be automatically divided into 2 secured milestone deliverables.
                 </span>
               </div>
 
-              <div className="modal-footer mt-4">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <button 
                   type="button" 
-                  className="btn btn-secondary"
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                   onClick={() => setIsAddContractModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-amber-600 hover:bg-amber-500 transition-colors cursor-pointer"
+                >
                   <Lock size={16} />
-                  <span>Activate & Lock in Escrow</span>
+                  <span>Activate in Escrow</span>
                 </button>
               </div>
             </form>

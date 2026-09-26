@@ -24,8 +24,9 @@ import {
 // Global Layout Components
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { Toast } from './components/Toast';
 import { Preloader } from './components/Preloader';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Modals
 import { AuthModal } from './components/AuthModal';
@@ -81,8 +82,7 @@ function AppContent() {
   const [hiringTalent, setHiringTalent] = useState(null);
   const [aiTargetJob, setAiTargetJob] = useState(null);
 
-  // Toast Notification
-  const [toast, setToast] = useState(null);
+  // Toast Notification via react-toastify
   const [isAnnouncementBannerVisible, setIsAnnouncementBannerVisible] = useState(true);
 
   // Auto-dismiss top announcement banner after 7 seconds
@@ -106,7 +106,19 @@ function AppContent() {
   }, []);
 
   const showToast = (message, type = 'success') => {
-    setToast({ message, type });
+    if (type === 'error') {
+      toast.error(message);
+    } else if (type === 'warning') {
+      toast.warning(message);
+    } else if (type === 'info') {
+      toast.info(message);
+    } else if (type === 'ai') {
+      toast.info(message, {
+        icon: '✨'
+      });
+    } else {
+      toast.success(message);
+    }
   };
 
   // Auth Handlers
@@ -214,20 +226,20 @@ function AppContent() {
   };
 
   return (
-    <div className={`talentx-app ${isDashboardRoute ? 'dashboard-view-mode' : ''}`}>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white font-sans">
       {/* Animated 3D Preloader */}
       {isLoading && <Preloader onFinish={() => setIsLoading(false)} />}
 
       {/* Global Announcement Banner (Marketplace only) */}
       {!isDashboardRoute && platformSettings?.isAnnouncementActive && platformSettings?.announcement && isAnnouncementBannerVisible && (
-        <div className="marketplace-announcement-banner">
-          <div className="container announcement-inner">
-            <div className="announcement-content">
-              <Megaphone size={16} className="announcement-icon" />
-              <span>{platformSettings.announcement}</span>
+        <div className="bg-gradient-to-r from-indigo-900/90 via-purple-900/90 to-slate-900 border-b border-indigo-500/30 px-4 py-2.5 text-xs text-indigo-200 shadow-md">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 truncate">
+              <Megaphone size={15} className="text-indigo-400 shrink-0" />
+              <span className="truncate">{platformSettings.announcement}</span>
             </div>
             <button 
-              className="announcement-close-btn"
+              className="p-1 rounded-lg hover:bg-white/10 text-indigo-300 hover:text-white transition-colors cursor-pointer"
               onClick={() => setIsAnnouncementBannerVisible(false)}
             >
               <X size={14} />
@@ -247,7 +259,7 @@ function AppContent() {
       )}
 
       {/* Multi-Page Routes */}
-      <div className={isDashboardRoute ? 'dashboard-main-container' : 'app-main-view'}>
+      <div className="flex-1 flex flex-col min-w-0">
         <Routes>
           <Route 
             path="/" 
@@ -326,7 +338,10 @@ function AppContent() {
                 jobs={jobs}
                 contracts={contracts}
                 proposals={proposals}
+                talents={talents}
                 onUpdateContracts={handleUpdateContracts}
+                onUpdateJobs={handleUpdateJobs}
+                onAddContract={handleContractCreate}
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 onUpdateCurrentUser={handleUpdateCurrentUser}
@@ -428,14 +443,19 @@ function AppContent() {
         />
       )}
 
-      {/* Floating Toast Notification */}
-      {toast && (
-        <Toast 
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {/* React-Toastify Global Notification Hub */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3500}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 }

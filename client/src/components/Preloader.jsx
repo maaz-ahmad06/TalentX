@@ -64,52 +64,55 @@ export const Preloader = ({ onFinish }) => {
   }, [progress]);
 
   return (
-    <div className={`talentx-preloader-overlay ${isFadingOut ? 'preloader-fade-out' : ''}`}>
+    <div className={`fixed inset-0 z-[99999] bg-slate-950 flex items-center justify-center p-4 transition-opacity duration-500 overflow-hidden ${isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
       {/* Background Animated Glowing Ambient Orbs */}
-      <div className="preloader-bg-orb orb-1"></div>
-      <div className="preloader-bg-orb orb-2"></div>
-      <div className="preloader-bg-orb orb-3"></div>
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-600/10 rounded-full blur-3xl"></div>
 
-      <div className="preloader-content-box">
+      <div className="relative w-full max-w-md bg-slate-900/80 border border-white/10 rounded-3xl p-8 backdrop-blur-2xl shadow-2xl flex flex-col items-center text-center">
         {/* Animated 3D Emblem with Orbiting Rings */}
-        <div className="preloader-emblem-wrap">
-          {/* Outer Orbit Ring */}
-          <div className="preloader-orbit-ring ring-1"></div>
-          <div className="preloader-orbit-ring ring-2"></div>
+        <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-2 border-dashed border-indigo-500/40 animate-spin" style={{ animationDuration: '8s' }}></div>
+          <div className="absolute inset-2 rounded-full border-2 border-dashed border-purple-500/30 animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }}></div>
           
           {/* Glowing Center Logo */}
-          <div className="preloader-center-logo">
-            <span className="preloader-logo-x">X</span>
-            <div className="preloader-logo-glow"></div>
+          <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center font-black text-white text-2xl shadow-xl shadow-indigo-500/40">
+            <span>X</span>
+            <div className="absolute inset-0 rounded-2xl bg-indigo-500/30 blur-md -z-10"></div>
           </div>
 
-          <Sparkles className="preloader-sparkle-dot sparkle-top" size={16} />
-          <Sparkles className="preloader-sparkle-dot sparkle-bottom" size={14} />
+          <Sparkles className="absolute -top-1 right-2 text-indigo-400 animate-bounce" size={16} />
+          <Sparkles className="absolute -bottom-1 left-2 text-purple-400 animate-pulse" size={14} />
         </div>
 
         {/* Brand Text */}
-        <div className="preloader-brand-title">
-          <h1>Talent<span className="text-gradient">X</span></h1>
-          <span className="preloader-country-tag">🇵🇰 PAKISTAN LOCAL TALENT NETWORK</span>
+        <div className="mb-6">
+          <h1 className="font-display font-black text-3xl tracking-tight text-white mb-1">
+            Talent<span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">X</span>
+          </h1>
+          <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">
+            🇵🇰 PAKISTAN LOCAL TALENT NETWORK
+          </span>
         </div>
 
-        {/* Progress Bar */}
-        <div className="preloader-progress-track">
+        {/* Progress Bar Track */}
+        <div className="w-full bg-slate-950 border border-white/10 h-2.5 rounded-full overflow-hidden mb-4 p-0.5">
           <div 
-            className="preloader-progress-bar"
+            className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out relative overflow-hidden"
             style={{ width: `${progress}%` }}
           >
-            <div className="progress-shimmer-light"></div>
+            <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
           </div>
         </div>
 
         {/* Status Text & Percentage */}
-        <div className="preloader-status-row">
-          <div className="preloader-status-msg">
-            <span className="status-live-dot"></span>
-            <span>{statusMessages[statusIndex]}</span>
+        <div className="w-full flex items-center justify-between text-xs text-slate-400 font-medium">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span className="line-clamp-1 text-left">{statusMessages[statusIndex]}</span>
           </div>
-          <div className="preloader-percent-number">{progress}%</div>
+          <div className="font-bold font-mono text-indigo-300 text-sm">{progress}%</div>
         </div>
       </div>
     </div>
