@@ -15,14 +15,15 @@ import confetti from 'canvas-confetti';
 export const HiringModal = ({ 
   talent, 
   job = null,
+  currentUser = null,
   onClose, 
   onContractCreated 
 }) => {
   const [contractTitle, setContractTitle] = useState(job ? job.title : `Direct Project with ${talent.name}`);
   const [amount, setAmount] = useState(job ? job.budget : (talent.dailyRate || 35000));
   const [deadline, setDeadline] = useState('2026-10-05');
-  const [milestone1, setMilestone1] = useState('First Deliverable / Raw Footage / Initial Draft');
-  const [milestone2, setMilestone2] = useState('Final Polish, Revisions & Complete Deliverables');
+  const [milestone1, setMilestone1] = useState('First Deliverable / Prototype / Initial Draft');
+  const [milestone2, setMilestone2] = useState('Final Polish, Source Code & Complete Handover');
 
   if (!talent) return null;
 
@@ -31,10 +32,12 @@ export const HiringModal = ({
     const total = Number(amount);
     const half = Math.round(total / 2);
 
+    const clientDisplayName = currentUser?.companyName || currentUser?.name || 'Client Employer';
+
     const newContract = {
       jobId: job ? job.id : `direct_${Date.now()}`,
       jobTitle: contractTitle,
-      clientName: 'Al-Karam Studio Retailers',
+      clientName: clientDisplayName,
       talentId: talent.id,
       talentName: talent.name,
       talentAvatar: talent.avatar,
@@ -43,8 +46,8 @@ export const HiringModal = ({
       deadline: deadline,
       status: 'In Progress',
       milestones: [
-        { id: 'm1', title: milestone1, amount: half, isPaid: true, status: 'Completed' },
-        { id: 'm2', title: milestone2, amount: total - half, isPaid: false, status: 'In Progress' }
+        { id: `m1_${Date.now()}`, title: milestone1, amount: half, isPaid: false, status: 'In Progress' },
+        { id: `m2_${Date.now()}`, title: milestone2, amount: total - half, isPaid: false, status: 'Pending' }
       ]
     };
 

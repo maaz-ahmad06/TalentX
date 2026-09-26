@@ -15,17 +15,23 @@ import { toast } from 'react-toastify';
 export const ProposalModal = ({ 
   job, 
   talents, 
+  currentUser = null,
   onClose, 
   onProposalSubmitted 
 }) => {
-  // Use first talent as default applicant for demo
-  const [selectedTalentId, setSelectedTalentId] = useState(talents[0]?.id || 'talent_1');
+  // Use logged-in talent if available, else first talent
+  const defaultTalentId = (currentUser && currentUser.role === 'talent') 
+    ? currentUser.id 
+    : (talents[0]?.id || '');
+  const [selectedTalentId, setSelectedTalentId] = useState(defaultTalentId);
   const [bidAmount, setBidAmount] = useState(job ? job.budget : 50000);
   const [deliveryDays, setDeliveryDays] = useState(3);
   const [coverLetter, setCoverLetter] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const activeTalent = talents.find(t => t.id === selectedTalentId) || talents[0];
+  const activeTalent = (currentUser && currentUser.role === 'talent' && (!selectedTalentId || selectedTalentId === currentUser.id))
+    ? currentUser
+    : (talents.find(t => t.id === selectedTalentId) || currentUser || talents[0] || { id: 'talent_temp', name: 'Freelancer', avatar: '' });
 
   if (!job) return null;
 
@@ -51,9 +57,9 @@ export const ProposalModal = ({
       jobId: job.id,
       jobTitle: job.title,
       clientName: job.clientName,
-      talentId: activeTalent.id,
-      talentName: activeTalent.name,
-      talentAvatar: activeTalent.avatar,
+      talentId: activeTalent.id || currentUser?.id || `talent_${Date.now()}`,
+      talentName: activeTalent.name || currentUser?.name || 'Freelancer Pro',
+      talentAvatar: activeTalent.avatar || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
       bidAmount: Number(bidAmount),
       deliveryDays: Number(deliveryDays),
       coverLetter: coverLetter,

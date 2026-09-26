@@ -278,8 +278,22 @@ function AppContent() {
               <TalentsPage 
                 talents={talents}
                 onSelectTalent={(talent) => setSelectedTalentModal(talent)}
-                onHireTalent={(talent) => setHiringTalent(talent)}
-                onChatWithTalent={(talent) => navigate('/messages')}
+                onHireTalent={(talent) => {
+                  if (!currentUser) {
+                    showToast('⚠️ Please log in or register as an Employer/Client to send hire offers.', 'warning');
+                    setIsAuthModalOpen(true);
+                    return;
+                  }
+                  setHiringTalent(talent);
+                }}
+                onChatWithTalent={(talent) => {
+                  if (!currentUser) {
+                    showToast('⚠️ Please log in or register to message professionals.', 'warning');
+                    setIsAuthModalOpen(true);
+                    return;
+                  }
+                  navigate('/messages');
+                }}
               />
             } 
           />
@@ -289,8 +303,22 @@ function AppContent() {
             element={
               <TalentProfilePage 
                 talents={talents}
-                onHireTalent={(talent) => setHiringTalent(talent)}
-                onChatWithTalent={(talent) => navigate('/messages')}
+                onHireTalent={(talent) => {
+                  if (!currentUser) {
+                    showToast('⚠️ Please log in or register as an Employer/Client to send hire offers.', 'warning');
+                    setIsAuthModalOpen(true);
+                    return;
+                  }
+                  setHiringTalent(talent);
+                }}
+                onChatWithTalent={(talent) => {
+                  if (!currentUser) {
+                    showToast('⚠️ Please log in or register to message professionals.', 'warning');
+                    setIsAuthModalOpen(true);
+                    return;
+                  }
+                  navigate('/messages');
+                }}
               />
             } 
           />
@@ -300,7 +328,14 @@ function AppContent() {
             element={
               <JobsPage 
                 jobs={jobs}
-                onApplyJob={(job) => setApplyingJob(job)}
+                onApplyJob={(job) => {
+                  if (!currentUser) {
+                    showToast('⚠️ Please log in or register as a Freelancer to submit bids.', 'warning');
+                    setIsAuthModalOpen(true);
+                    return;
+                  }
+                  setApplyingJob(job);
+                }}
                 onMatchJob={(job) => {
                   setAiTargetJob(job);
                   navigate(`/ai-match?jobId=${job.id}`);
@@ -315,8 +350,22 @@ function AppContent() {
               <AIMatchPage 
                 jobs={jobs}
                 talents={talents}
-                onHireTalent={(talent) => setHiringTalent(talent)}
-                onChatWithTalent={(talent) => navigate('/messages')}
+                onHireTalent={(talent) => {
+                  if (!currentUser) {
+                    showToast('⚠️ Please log in or register as an Employer/Client to send hire offers.', 'warning');
+                    setIsAuthModalOpen(true);
+                    return;
+                  }
+                  setHiringTalent(talent);
+                }}
+                onChatWithTalent={(talent) => {
+                  if (!currentUser) {
+                    showToast('⚠️ Please log in or register to message professionals.', 'warning');
+                    setIsAuthModalOpen(true);
+                    return;
+                  }
+                  navigate('/messages');
+                }}
               />
             } 
           />
@@ -327,6 +376,7 @@ function AppContent() {
               <PostJobPage 
                 onJobCreated={handleCreateJob}
                 currentUser={currentUser}
+                onOpenAuth={() => setIsAuthModalOpen(true)}
               />
             } 
           />
@@ -420,8 +470,24 @@ function AppContent() {
         <TalentModal 
           talent={selectedTalentModal}
           onClose={() => setSelectedTalentModal(null)}
-          onHire={(talent) => setHiringTalent(talent)}
-          onChat={(talent) => navigate('/messages')}
+          onHire={(talent) => {
+            if (!currentUser) {
+              showToast('⚠️ Please log in or register as an Employer/Client to send hire offers.', 'warning');
+              setIsAuthModalOpen(true);
+              return;
+            }
+            setSelectedTalentModal(null);
+            setHiringTalent(talent);
+          }}
+          onChat={(talent) => {
+            if (!currentUser) {
+              showToast('⚠️ Please log in or register to message professionals.', 'warning');
+              setIsAuthModalOpen(true);
+              return;
+            }
+            setSelectedTalentModal(null);
+            navigate('/messages');
+          }}
         />
       )}
 
@@ -429,6 +495,7 @@ function AppContent() {
         <ProposalModal 
           job={applyingJob}
           talents={talents}
+          currentUser={currentUser}
           onClose={() => setApplyingJob(null)}
           onProposalSubmitted={handleProposalSubmit}
         />
@@ -438,6 +505,7 @@ function AppContent() {
         <HiringModal 
           talent={hiringTalent}
           job={aiTargetJob}
+          currentUser={currentUser}
           onClose={() => setHiringTalent(null)}
           onContractCreated={handleContractCreate}
         />

@@ -16,22 +16,66 @@ import { CATEGORIES, CITIES } from '../data/mockData';
 import { generateAIJobBrief } from '../utils/aiMatcher';
 import { toast } from 'react-toastify';
 
-export const PostJobPage = ({ onJobCreated, currentUser }) => {
+export const PostJobPage = ({ onJobCreated, currentUser, onOpenAuth }) => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isAIGenerating, setIsAIGenerating] = useState(false);
 
+  // If user is NOT logged in, show Auth Gate
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto flex items-center justify-center">
+        <div className="w-full p-8 sm:p-10 rounded-3xl bg-slate-900/90 border border-slate-800 backdrop-blur-2xl shadow-2xl text-center space-y-6 animate-fadeIn">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto shadow-xl shadow-indigo-500/10">
+            <Briefcase size={36} />
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-semibold border border-amber-500/20">
+              <ShieldCheck size={13} /> Client Account Required
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Sign In to Post a Project Brief
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+              To publish a project listing, receive verified proposals, and hire talent with local milestone protection, please log in or create an account first.
+            </p>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <button 
+              type="button" 
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-lg shadow-indigo-600/25 active:scale-[0.99] transition-all cursor-pointer"
+              onClick={() => onOpenAuth && onOpenAuth()}
+            >
+              <span>Log In / Create Client Account</span>
+              <ArrowRight size={16} />
+            </button>
+
+            <Link 
+              to="/jobs" 
+              className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-2xl font-semibold text-xs sm:text-sm text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition-colors"
+            >
+              <ArrowLeft size={16} />
+              <span>Browse Active Jobs as Guest</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [formData, setFormData] = useState({
     title: '',
-    clientName: currentUser?.name || 'Zara Apparel Co.',
-    category: 'Photography',
+    clientName: currentUser?.companyName || currentUser?.name || '',
+    category: 'Web Development',
     city: currentUser?.city || 'Lahore',
-    locationType: 'On-site',
-    budget: 55000,
+    locationType: 'Hybrid',
+    budget: 50000,
     budgetType: 'Fixed',
     experienceLevel: 'Expert',
     description: '',
-    skillsInput: 'Fashion Photography, Studio Lighting, Adobe Lightroom'
+    skillsInput: 'React, Node.js, Next.js, Tailwind CSS'
   });
 
   const handleAIGenerate = () => {
