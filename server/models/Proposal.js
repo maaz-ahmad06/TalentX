@@ -2,12 +2,15 @@ import mongoose from 'mongoose';
 
 const ProposalSchema = new mongoose.Schema({
   job: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.Mixed,
     ref: 'Job',
     required: true
   },
+  jobTitle: {
+    type: String
+  },
   talent: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.Mixed,
     ref: 'User'
   },
   talentName: {

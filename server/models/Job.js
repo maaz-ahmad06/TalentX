@@ -8,7 +8,7 @@ const JobSchema = new mongoose.Schema({
     maxlength: 120
   },
   client: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.Mixed,
     ref: 'User'
   },
   clientName: {
@@ -20,16 +20,7 @@ const JobSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: true,
-    enum: [
-      'Photography',
-      'Web Development',
-      'UI/UX Design',
-      'Mobile Apps',
-      'Digital Marketing',
-      'Content Writing',
-      'Other'
-    ]
+    required: true
   },
   description: {
     type: String,

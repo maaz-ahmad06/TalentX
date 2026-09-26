@@ -28,10 +28,12 @@ import {
   apiGetTalents,
   apiGetJobs,
   apiCreateJob,
+  apiGetProposals,
   apiGetContracts,
   apiCreateContract,
   apiSubmitProposal,
-  apiUpdateProfile
+  apiUpdateProfile,
+  apiGetMe
 } from './services/api';
 
 // Global Layout Components
@@ -110,35 +112,71 @@ function AppContent() {
 
   // Initialize data from LocalStorage & live MongoDB Atlas Backend
   useEffect(() => {
-    // 1. Instant Local Cache Hydration
-    setTalents(getTalents());
-    setJobs(getJobs());
-    setProposals(getProposals());
-    setContracts(getContracts());
-    setMessages(getMessages());
-    setPlatformSettings(getPlatformSettings());
+    // 1. Verify User Session with MongoDB Atlas
+    const token = localStorage.getItem('talentx_jwt_token');
+    if (token) {
+      apiGetMe().then(res => {
+        if (res && res.success && res.user) {
+          const user = {
+            ...res.user,
+            id: res.user.id || res.user._id
+          };
+          setCurrentUser(user);
+          localStorage.setItem('talentx_auth_user', JSON.stringify(user));
+        }
+      }).catch(err => {
+        if (err.status === 401) {
+          setCurrentUser(null);
+          localStorage.removeItem('talentx_auth_user');
+          localStorage.removeItem('talentx_jwt_token');
+        }
+      });
+    }
 
     // 2. Fetch Live Records from MongoDB Atlas Backend
-    apiGetTalents().then(data => {
-      if (Array.isArray(data) && data.length > 0) {
-        setTalents(data);
-        saveTalents(data);
+    const fetchAtlasData = async () => {
+      try {
+        const liveTalents = await apiGetTalents();
+        if (Array.isArray(liveTalents)) {
+          setTalents(liveTalents);
+          saveTalents(liveTalents);
+        }
+      } catch (err) {
+        console.warn('Atlas talents fetch notice:', err.message);
       }
-    }).catch(err => console.log('Atlas talents fetch notice:', err.message));
 
-    apiGetJobs().then(data => {
-      if (Array.isArray(data) && data.length > 0) {
-        setJobs(data);
-        saveJobs(data);
+      try {
+        const liveJobs = await apiGetJobs();
+        if (Array.isArray(liveJobs)) {
+          setJobs(liveJobs);
+          saveJobs(liveJobs);
+        }
+      } catch (err) {
+        console.warn('Atlas jobs fetch notice:', err.message);
       }
-    }).catch(err => console.log('Atlas jobs fetch notice:', err.message));
 
-    apiGetContracts().then(data => {
-      if (Array.isArray(data) && data.length > 0) {
-        setContracts(data);
-        saveContracts(data);
+      try {
+        const liveProposals = await apiGetProposals();
+        if (Array.isArray(liveProposals)) {
+          setProposals(liveProposals);
+          saveProposals(liveProposals);
+        }
+      } catch (err) {
+        console.warn('Atlas proposals fetch notice:', err.message);
       }
-    }).catch(err => console.log('Atlas contracts fetch notice:', err.message));
+
+      try {
+        const liveContracts = await apiGetContracts();
+        if (Array.isArray(liveContracts)) {
+          setContracts(liveContracts);
+          saveContracts(liveContracts);
+        }
+      } catch (err) {
+        console.warn('Atlas contracts fetch notice:', err.message);
+      }
+    };
+
+    fetchAtlasData();
   }, []);
 
   const showToast = (message, type = 'success') => {
@@ -159,21 +197,25 @@ function AppContent() {
 
   // Auth Handlers
   const handleAuthSuccess = (userData) => {
-    setCurrentUser(userData);
-    localStorage.setItem('talentx_auth_user', JSON.stringify(userData));
+    const user = {
+      ...userData,
+      id: userData.id || userData._id
+    };
+    setCurrentUser(user);
+    localStorage.setItem('talentx_auth_user', JSON.stringify(user));
 
-    if (userData.role === 'talent') {
-      const updatedTalents = [userData, ...talents];
+    if (user.role === 'talent') {
+      const updatedTalents = [user, ...talents.filter(t => (t._id || t.id) !== (user._id || user.id))];
       setTalents(updatedTalents);
       saveTalents(updatedTalents);
     }
 
-    showToast(`🎉 Welcome, ${userData.name}! Logged in as ${userData.role === 'client' ? '🏢 Client' : userData.role === 'admin' ? '🛡️ Admin' : '🧑‍💻 Talent'}.`, 'ai');
+    showToast(`🎉 Welcome, ${user.name}! Logged in as ${user.role === 'client' ? '🏢 Client' : user.role === 'admin' ? '🛡️ Admin' : '🧑‍💻 Talent'}.`, 'ai');
 
     // Automatically navigate to user's personalized dashboard
-    if (userData.role === 'client') {
+    if (user.role === 'client') {
       navigate('/dashboard/client');
-    } else if (userData.role === 'admin') {
+    } else if (user.role === 'admin') {
       navigate('/admin');
     } else {
       navigate('/dashboard/freelancer');
@@ -221,38 +263,76 @@ function AppContent() {
 
   // Job Creation Handler (MongoDB Atlas Synced)
   const handleCreateJob = async (newJobData) => {
-    const created = addJob(newJobData);
-    setJobs(getJobs());
-    showToast(`🎉 "${created.title}" published! AI Matcher found top candidates.`, 'ai');
-
     try {
       const liveJob = await apiCreateJob(newJobData);
       if (liveJob) {
-        const updated = getJobs().map(j => j.id === created.id ? { ...j, _id: liveJob._id } : j);
-        saveJobs(updated);
-        setJobs(updated);
+        const updatedJobs = [liveJob, ...jobs.filter(j => (j._id || j.id) !== (liveJob._id || liveJob.id))];
+        setJobs(updatedJobs);
+        saveJobs(updatedJobs);
+        showToast(`🎉 "${liveJob.title}" published! AI Matcher found top candidates.`, 'ai');
+        return;
       }
     } catch (err) {
       console.warn('MongoDB Job Creation sync notice:', err.message);
     }
+
+    const created = addJob(newJobData);
+    setJobs(getJobs());
+    showToast(`🎉 "${created.title}" published! AI Matcher found top candidates.`, 'ai');
   };
 
   // Proposal Submission Handler (MongoDB Atlas Synced)
   const handleProposalSubmit = async (proposalData) => {
+    try {
+      const liveProposal = await apiSubmitProposal(proposalData);
+      if (liveProposal) {
+        const updatedProposals = [liveProposal, ...proposals];
+        setProposals(updatedProposals);
+        saveProposals(updatedProposals);
+        apiGetJobs().then(data => {
+          if (Array.isArray(data)) {
+            setJobs(data);
+            saveJobs(data);
+          }
+        }).catch(() => {});
+        showToast(`🚀 Proposal sent to ${proposalData.clientName || 'client'}!`, 'success');
+        return;
+      }
+    } catch (err) {
+      console.warn('MongoDB Proposal sync notice:', err.message);
+    }
+
     const created = addProposal(proposalData);
     setProposals(getProposals());
     setJobs(getJobs());
     showToast(`🚀 Proposal sent to ${proposalData.clientName || 'client'}!`, 'success');
-
-    try {
-      await apiSubmitProposal(proposalData);
-    } catch (err) {
-      console.warn('MongoDB Proposal sync notice:', err.message);
-    }
   };
 
   // Contract Creation Handler (MongoDB Atlas Synced)
   const handleContractCreate = async (contractData) => {
+    try {
+      const liveContract = await apiCreateContract(contractData);
+      if (liveContract) {
+        const updatedContracts = [liveContract, ...contracts];
+        setContracts(updatedContracts);
+        saveContracts(updatedContracts);
+
+        addMessage({
+          senderId: 'system',
+          senderName: 'TalentX Escrow Bot',
+          receiverId: contractData.talentId,
+          text: `🎉 Milestone Contract Created: "${contractData.jobTitle}" for PKR ${Number(contractData.amount).toLocaleString()}. Milestone 1 secured in Escrow!`,
+          isClient: true
+        });
+        setMessages(getMessages());
+
+        showToast(`🌟 Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
+        return;
+      }
+    } catch (err) {
+      console.warn('MongoDB Contract sync notice:', err.message);
+    }
+
     const created = addContract(contractData);
     setContracts(getContracts());
     
@@ -266,12 +346,6 @@ function AppContent() {
     setMessages(getMessages());
 
     showToast(`🌟 Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
-
-    try {
-      await apiCreateContract(contractData);
-    } catch (err) {
-      console.warn('MongoDB Contract sync notice:', err.message);
-    }
   };
 
   // Send Message Handler
@@ -281,12 +355,29 @@ function AppContent() {
   };
 
   const handleUpdateCurrentUser = async (userData) => {
-    setCurrentUser(userData);
-    localStorage.setItem('talentx_auth_user', JSON.stringify(userData));
-    updateRegisteredUser(userData);
+    const user = {
+      ...userData,
+      id: userData.id || userData._id
+    };
+    setCurrentUser(user);
+    localStorage.setItem('talentx_auth_user', JSON.stringify(user));
+    updateRegisteredUser(user);
 
     try {
-      await apiUpdateProfile(userData);
+      const res = await apiUpdateProfile(user);
+      if (res && res.success && res.user) {
+        const u = {
+          ...res.user,
+          id: res.user.id || res.user._id
+        };
+        setCurrentUser(u);
+        localStorage.setItem('talentx_auth_user', JSON.stringify(u));
+        if (u.role === 'talent') {
+          const updatedTalents = talents.map(t => ((t._id || t.id) === (u._id || u.id) ? u : t));
+          setTalents(updatedTalents);
+          saveTalents(updatedTalents);
+        }
+      }
     } catch (err) {
       console.warn('MongoDB User Profile sync notice:', err.message);
     }

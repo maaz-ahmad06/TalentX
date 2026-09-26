@@ -132,6 +132,11 @@ export const apiSubmitProposal = async (proposalData) => {
   return res.data;
 };
 
+export const apiGetProposals = async () => {
+  const res = await request('/proposals', { method: 'GET' });
+  return res.data || [];
+};
+
 export const apiGetJobProposals = async (jobId) => {
   const res = await request(`/proposals/job/${jobId}`, { method: 'GET' });
   return res.data || [];

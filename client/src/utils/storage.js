@@ -29,7 +29,7 @@ const DEFAULT_SETTINGS = {
 };
 
 const VERSION_KEY = 'talentx_data_version';
-const CURRENT_VERSION = 'v3_clean_real_only';
+const CURRENT_VERSION = 'v4_mongodb_authoritative_clean';
 
 // Auto-clean legacy mock data on first load to ensure fresh real accounts
 if (typeof window !== 'undefined' && window.localStorage) {

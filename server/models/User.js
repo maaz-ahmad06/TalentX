@@ -35,10 +35,11 @@ const UserSchema = new mongoose.Schema({
     enum: ['client', 'talent', 'admin'],
     default: 'talent'
   },
+  companyName: { type: String },
   phone: { type: String },
   headline: { type: String, default: 'Skilled Professional' },
   bio: { type: String, default: '' },
-  category: { type: String, default: 'Photography' },
+  category: { type: String, default: 'Web Development' },
   subcategories: [{ type: String }],
   skills: [{ type: String }],
   city: { type: String, default: 'Lahore' },

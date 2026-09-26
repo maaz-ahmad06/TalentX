@@ -20,6 +20,7 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
   const [isLoginMode, setIsLoginMode] = useState(false);
   const [selectedRole, setSelectedRole] = useState('talent'); // 'talent', 'client', 'admin'
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -30,124 +31,86 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.email || !formData.password) {
+    const email = (formData.email || '').trim().toLowerCase();
+    const password = formData.password || '';
+
+    if (!email || !password) {
       toast.warning('⚠️ Please enter both email and password.');
       return;
     }
 
+    setIsSubmitting(true);
+
     if (isLoginMode) {
-      // 1. Try Backend MongoDB Atlas Login
-      let backendUser = null;
+      // 1. Authoritative Backend MongoDB Atlas Login
       try {
-        const apiRes = await apiLogin(formData.email.trim(), formData.password);
-        if (apiRes.success && apiRes.user) {
-          backendUser = apiRes.user;
+        const apiRes = await apiLogin(email, password);
+        if (apiRes && apiRes.success && apiRes.user) {
+          const user = {
+            ...apiRes.user,
+            id: apiRes.user.id || apiRes.user._id
+          };
+          onAuthSuccess(user);
+          onClose();
+          return;
         }
       } catch (apiErr) {
-        console.warn('Backend Atlas Login:', apiErr.message);
-      }
-
-      // 2. Local Fallback & Verification
-      const res = loginUser(formData.email, formData.password);
-      if (res.success || backendUser) {
-        const baseUser = backendUser || res.user;
-        const role = baseUser.role || (['admin@talentx.pk', 'admin@gmail.com'].includes(formData.email.toLowerCase().trim()) ? 'admin' : selectedRole);
-        const userData = {
-          ...baseUser,
-          role
-        };
-        onAuthSuccess(userData);
-        onClose();
-      } else {
-        toast.error(res.message || 'Invalid email or password. Please check your credentials and try again.');
-      }
-      return;
-    }
-
-    // Registration flow
-    if (!formData.name.trim()) {
-      toast.warning('⚠️ Please enter your full name.');
-      return;
-    }
-
-    // 1. Register on MongoDB Atlas Database
-    try {
-      await apiRegister({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        role: selectedRole,
-        city: 'Lahore'
-      });
-    } catch (apiErr) {
-      console.warn('Backend Atlas Register notice:', apiErr.message);
-      if (apiErr.message && apiErr.message.toLowerCase().includes('already exists')) {
-        toast.warning('⚠️ An account with this email already exists! Please log in instead.');
-        setIsLoginMode(true);
+        // Fallback check if server offline
+        const localRes = loginUser(email, password);
+        if (localRes.success) {
+          onAuthSuccess(localRes.user);
+          onClose();
+          return;
+        }
+        toast.error('Invalid email or password. Please check your credentials and try again.');
+        setIsSubmitting(false);
         return;
       }
     }
 
-    // 2. Register in Local Cache
-    const regRes = registerUser({
-      name: formData.name.trim(),
-      email: formData.email.trim(),
-      password: formData.password,
-      role: selectedRole,
-      city: 'Lahore',
-      area: 'Main'
-    });
-
-    if (!regRes.success) {
-      toast.warning(`⚠️ ${regRes.message}`);
-      setIsLoginMode(true); // Automatically switch to login mode!
+    // 2. Authoritative Backend MongoDB Atlas Registration
+    if (!formData.name.trim()) {
+      toast.warning('⚠️ Please enter your full name.');
+      setIsSubmitting(false);
       return;
     }
 
-    let userData = regRes.user;
-
-    if (selectedRole === 'talent') {
-      userData = {
-        ...userData,
-        headline: 'Freelance Specialist',
-        category: 'Web Development',
-        hourlyRate: 3500,
-        dailyRate: 24500,
-        rating: 5.0,
-        reviewCount: 0,
-        completedJobs: 0,
-        badge: 'Verified Pro',
-        workMode: 'On-site & Remote',
-        experience: '3+ Years',
-        skills: ['Web Development', 'React', 'Node.js'],
-        bio: 'Dedicated professional ready to build modern digital projects.',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-        coverImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=1200&q=80',
-        portfolio: [],
-        reviews: []
-      };
-
-      // Add to marketplace talents directory
-      addTalent(userData);
-    } else if (selectedRole === 'client') {
-      userData = {
-        ...userData,
-        companyName: formData.name.trim(),
-        headline: `${formData.name.trim()} (Client / Employer)`,
-        category: 'Business Client',
-        avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80'
-      };
-    } else if (selectedRole === 'admin') {
-      userData = {
-        ...userData,
-        headline: 'TalentX System Administrator',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-        badge: 'Super Admin'
-      };
+    if (password.length < 6) {
+      toast.warning('⚠️ Password must be at least 6 characters long.');
+      setIsSubmitting(false);
+      return;
     }
 
-    onAuthSuccess(userData);
-    onClose();
+    try {
+      const regRes = await apiRegister({
+        name: formData.name.trim(),
+        email: email,
+        password: password,
+        role: selectedRole,
+        city: 'Lahore'
+      });
+
+      if (regRes && regRes.success && regRes.user) {
+        const user = {
+          ...regRes.user,
+          id: regRes.user.id || regRes.user._id
+        };
+        toast.success('🎉 Account registered successfully in MongoDB database!');
+        onAuthSuccess(user);
+        onClose();
+        return;
+      }
+    } catch (apiErr) {
+      const errMsg = apiErr.message || '';
+      if (errMsg.toLowerCase().includes('already exists') || apiErr.status === 400) {
+        toast.warning('⚠️ An account with this email already exists in the database! Please log in instead.');
+        setIsLoginMode(true);
+      } else {
+        toast.error(errMsg || 'Registration failed. Please check your database connection.');
+      }
+      setIsSubmitting(false);
+      return;
+    }
   };
 
   return (
@@ -313,10 +276,22 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
           {/* Submit Action Button */}
           <button 
             type="submit" 
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-lg shadow-indigo-600/25 active:scale-[0.99] transition-all cursor-pointer mt-2"
+            disabled={isSubmitting}
+            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-lg shadow-indigo-600/25 active:scale-[0.99] transition-all cursor-pointer mt-2 ${
+              isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
           >
-            <span>{isLoginMode ? 'Log In' : `Create ${selectedRole === 'talent' ? 'Freelancer' : selectedRole === 'client' ? 'Client' : 'Admin'} Account`}</span>
-            <ArrowRight size={16} />
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span>Connecting to Database...</span>
+              </span>
+            ) : (
+              <>
+                <span>{isLoginMode ? 'Log In' : `Create ${selectedRole === 'talent' ? 'Freelancer' : selectedRole === 'client' ? 'Client' : 'Admin'} Account`}</span>
+                <ArrowRight size={16} />
+              </>
+            )}
           </button>
 
           {/* Bottom Switcher Link */}

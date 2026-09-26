@@ -24,6 +24,12 @@ export const protect = async (req, res, next) => {
       process.env.JWT_SECRET || 'talentx_secret_jwt_key_pakistan_2026'
     );
     req.user = await User.findById(decoded.id);
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User session not found or deleted'
+      });
+    }
     next();
   } catch (err) {
     return res.status(401).json({

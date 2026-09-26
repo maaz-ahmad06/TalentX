@@ -1,27 +1,68 @@
 import { User } from '../models/User.js';
 
-// @desc    Register a new user (Client or Talent)
+// Format user helper
+const formatUserData = (user) => ({
+  id: user._id,
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  city: user.city,
+  area: user.area,
+  category: user.category,
+  headline: user.headline,
+  bio: user.bio,
+  skills: user.skills || [],
+  hourlyRate: user.hourlyRate,
+  dailyRate: user.dailyRate,
+  currency: user.currency,
+  workMode: user.workMode,
+  experience: user.experience,
+  rating: user.rating,
+  reviewCount: user.reviewCount,
+  completedJobs: user.completedJobs,
+  badge: user.badge,
+  avatar: user.avatar,
+  coverImage: user.coverImage,
+  portfolio: user.portfolio || [],
+  phone: user.phone,
+  companyName: user.companyName
+});
+
+// @desc    Register a new user (Client, Talent or Admin)
 // @route   POST /api/auth/register
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role, city, category, headline, hourlyRate, phone } = req.body;
+    const { name, email, password, role, city, category, headline, hourlyRate, phone, companyName } = req.body;
 
-    // Check existing
-    const userExists = await User.findOne({ email });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid email' });
+    }
+
+    // Check existing in MongoDB Atlas
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(400).json({ success: false, message: 'User already exists with this email' });
     }
 
-    // Create user
+    const defaultRole = role || 'talent';
+    const defaultAvatar = defaultRole === 'client' 
+      ? 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80'
+      : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+
+    // Create user in MongoDB Atlas
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       password,
-      role: role || 'talent',
+      role: defaultRole,
       city: city || 'Lahore',
-      category: category || 'Photography',
-      headline: headline || `${role === 'client' ? 'Business Client' : 'Skilled Freelancer'}`,
+      category: category || 'Web Development',
+      headline: headline || (defaultRole === 'client' ? `${name.trim()} (Client / Employer)` : 'Freelance Specialist'),
+      companyName: companyName || (defaultRole === 'client' ? name.trim() : undefined),
       hourlyRate: hourlyRate || 3500,
+      avatar: defaultAvatar,
       phone
     });
 
@@ -30,16 +71,7 @@ export const register = async (req, res) => {
     res.status(201).json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        city: user.city,
-        category: user.category,
-        avatar: user.avatar,
-        headline: user.headline
-      }
+      user: formatUserData(user)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -56,7 +88,8 @@ export const login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
@@ -71,16 +104,7 @@ export const login = async (req, res) => {
     res.status(200).json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        city: user.city,
-        category: user.category,
-        avatar: user.avatar,
-        headline: user.headline
-      }
+      user: formatUserData(user)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -92,7 +116,10 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    res.status(200).json({ success: true, user });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.status(200).json({ success: true, user: formatUserData(user) });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -107,7 +134,7 @@ export const updateProfile = async (req, res) => {
       { $set: req.body },
       { new: true, runValidators: true }
     );
-    res.status(200).json({ success: true, user: updatedUser });
+    res.status(200).json({ success: true, user: formatUserData(updatedUser) });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
