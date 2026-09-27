@@ -250,17 +250,30 @@ export const ClientDashboardPage = ({
           </div>
 
           {/* Client Profile Card */}
-          <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-2xl">
-            <img 
-              src={currentUser?.avatar || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80"} 
-              alt="Client Avatar" 
-              className="w-11 h-11 rounded-full object-cover border-2 border-indigo-500 shadow-md"
-            />
-            <div className="flex flex-col overflow-hidden">
-              <span className="font-bold text-sm text-white truncate">{currentUser?.name || 'Business Client'}</span>
-              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Client Employer</span>
+          <button 
+            type="button"
+            onClick={() => setActiveSubTab('company-settings')}
+            className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/40 rounded-2xl transition-all text-left cursor-pointer group"
+            title="Click to edit profile picture & company settings"
+          >
+            <div className="relative shrink-0">
+              <img 
+                src={currentUser?.avatar || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80"} 
+                alt="Client Avatar" 
+                className="w-11 h-11 rounded-full object-cover border-2 border-indigo-500 shadow-md group-hover:scale-105 transition-transform"
+              />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-indigo-600 border border-slate-900 flex items-center justify-center text-white">
+                <Camera size={10} />
+              </div>
             </div>
-          </div>
+            <div className="flex flex-col overflow-hidden">
+              <span className="font-bold text-sm text-white truncate group-hover:text-indigo-300 transition-colors">{currentUser?.name || 'Business Client'}</span>
+              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+                <span>Client Employer</span>
+                <span className="text-[9px] text-slate-400 font-normal group-hover:text-indigo-200">(Edit)</span>
+              </span>
+            </div>
+          </button>
 
           {/* Navigation Menu */}
           <nav className="space-y-1.5">
@@ -725,11 +738,114 @@ export const ClientDashboardPage = ({
                     <Building2 size={13} /> Employer Settings
                   </div>
                   <h3 className="text-xl font-bold text-white">Company & Account Preferences</h3>
-                  <p className="text-slate-400 text-sm mt-0.5">Manage company name, headquarters, and contact details.</p>
+                  <p className="text-slate-400 text-sm mt-0.5">Manage your profile picture, company branding, headquarters, and contact details.</p>
                 </div>
               </div>
 
-              <form onSubmit={handleSaveCompanySettings} className="space-y-5 max-w-4xl">
+              <form onSubmit={handleSaveCompanySettings} className="space-y-6 max-w-4xl">
+                {/* 1. Real Profile Photo / Company Logo Upload Card */}
+                <div className="p-5 rounded-2xl bg-slate-950/60 border border-white/10 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                        Profile Photo & Company Logo
+                      </label>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Upload your real brand logo or picture from your computer/device.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 cursor-pointer"
+                      onClick={() => setShowLogoUrlInput(!showLogoUrlInput)}
+                    >
+                      <Link2 size={13} />
+                      <span>{showLogoUrlInput ? 'Hide URL Box' : 'Or Paste Web URL'}</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-5">
+                    {/* Live Image Preview with Hover/Camera Badge */}
+                    <div className="relative group shrink-0">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden ring-4 ring-indigo-500/30 shadow-xl bg-slate-900 flex items-center justify-center border border-white/10">
+                        {companyForm.avatar ? (
+                          <img 
+                            src={companyForm.avatar} 
+                            alt="Company Logo Preview" 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-500">
+                            <Building2 size={36} />
+                            <span className="text-[10px] mt-1 font-semibold">No Logo</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Camera Button Overlay */}
+                      <button
+                        type="button"
+                        onClick={() => logoFileInputRef.current?.click()}
+                        className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 rounded-2xl flex flex-col items-center justify-center text-white text-xs font-semibold gap-1 transition-opacity cursor-pointer backdrop-blur-xs"
+                        title="Upload real logo"
+                      >
+                        <Camera size={22} className="text-indigo-400" />
+                        <span>Change</span>
+                      </button>
+                    </div>
+
+                    {/* Action Buttons & Hidden File Input */}
+                    <div className="flex-1 space-y-2.5 w-full">
+                      <input 
+                        ref={logoFileInputRef}
+                        type="file" 
+                        accept="image/png, image/jpeg, image/jpg, image/webp" 
+                        className="hidden" 
+                        onChange={handleLogoFileSelect}
+                      />
+
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => logoFileInputRef.current?.click()}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 active:scale-[0.99] transition-all cursor-pointer"
+                        >
+                          <Upload size={15} />
+                          <span>Upload Real Photo / Logo</span>
+                        </button>
+
+                        {companyForm.avatar && (
+                          <button
+                            type="button"
+                            onClick={handleRemoveLogo}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/20 text-xs font-semibold transition-all cursor-pointer"
+                          >
+                            <Trash2 size={13} />
+                            <span>Remove Photo</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Supports PNG, JPG, or WEBP. Automatically optimized for fast loading across your posted jobs and contract offers.
+                      </p>
+
+                      {/* Optional URL Input Fallback */}
+                      {showLogoUrlInput && (
+                        <div className="pt-2 animate-fadeIn">
+                          <input 
+                            type="url" 
+                            placeholder="https://example.com/company-logo.jpg"
+                            className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                            value={companyForm.avatar}
+                            onChange={(e) => setCompanyForm({ ...companyForm, avatar: e.target.value })}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Contact Person Name *</label>
