@@ -38,6 +38,13 @@ export const MessagesPage = ({
   const [threadSearch, setThreadSearch] = useState('');
   const messagesEndRef = useRef(null);
 
+  // Sync selected talent when talents list loads from MongoDB
+  useEffect(() => {
+    if (!selectedTalent && talents.length > 0) {
+      setSelectedTalent(talents[0]);
+    }
+  }, [talents, selectedTalent]);
+
   // Auto-scroll to the bottom of the messages list when messages update or when changing talent
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -91,8 +98,8 @@ export const MessagesPage = ({
     (t.city && t.city.toLowerCase().includes(threadSearch.toLowerCase()))
   );
 
-  // Core Chat Workspace Component
-  const ChatWorkspace = () => (
+  // Helper to render the core chat workspace directly without nested component recreation
+  const renderChatWorkspace = () => (
     <div className="flex h-full w-full rounded-3xl bg-slate-900/80 border border-white/10 overflow-hidden backdrop-blur-2xl shadow-2xl">
       {/* Left Column: Conversations List */}
       <div className="w-80 bg-slate-950/60 border-r border-white/10 flex flex-col h-full flex-shrink-0">
@@ -124,9 +131,9 @@ export const MessagesPage = ({
           ) : (
             filteredTalents.map((t) => (
               <div 
-                key={t.id} 
+                key={t._id || t.id} 
                 className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
-                  selectedTalent?.id === t.id 
+                  (selectedTalent?._id || selectedTalent?.id) === (t._id || t.id)
                     ? 'bg-indigo-600/20 border border-indigo-500/40 shadow-md' 
                     : 'hover:bg-white/5 border border-transparent'
                 }`}
@@ -184,7 +191,7 @@ export const MessagesPage = ({
             )}
             {selectedTalent && (
               <Link 
-                to={`/profile/${selectedTalent.id}`} 
+                to={`/profile/${selectedTalent._id || selectedTalent.id}`} 
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-semibold transition-all"
               >
                 <span>View Portfolio</span>
@@ -204,9 +211,9 @@ export const MessagesPage = ({
               <p className="text-slate-400 text-xs max-w-xs">Send a direct inquiry regarding your project milestone or availability.</p>
             </div>
           ) : (
-            messages.map((msg) => (
+            messages.map((msg, index) => (
               <div 
-                key={msg.id} 
+                key={msg.id || msg._id || index} 
                 className={`flex w-full ${msg.isClient ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[75%] sm:max-w-[65%] shadow-lg ${
@@ -217,7 +224,7 @@ export const MessagesPage = ({
                   <div className="text-[10px] font-bold opacity-75 mb-1">{msg.senderName}</div>
                   <p className="m-0 text-xs sm:text-sm">{msg.text}</p>
                   <div className="flex items-center justify-end gap-1 text-[10px] opacity-60 mt-1.5">
-                    <span>{msg.time}</span>
+                    <span>{msg.time || 'Just now'}</span>
                     {msg.isClient && <CheckCheck size={12} className="text-cyan-300" />}
                   </div>
                 </div>
@@ -249,6 +256,7 @@ export const MessagesPage = ({
             placeholder={`Message ${selectedTalent?.name || 'freelancer'}...`}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            autoComplete="off"
           />
           <button 
             type="submit" 
@@ -409,7 +417,7 @@ export const MessagesPage = ({
 
           {/* Chat Container embedded seamlessly in dashboard */}
           <div className="flex-1 p-6 overflow-hidden">
-            <ChatWorkspace />
+            {renderChatWorkspace()}
           </div>
         </div>
       </div>
@@ -419,7 +427,7 @@ export const MessagesPage = ({
   // Fallback for Public / Guest Mode
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-100px)]">
-      <ChatWorkspace />
+      {renderChatWorkspace()}
     </div>
   );
 };
