@@ -76,17 +76,20 @@ export const FreelancerDashboardPage = ({
   showToast
 }) => {
   const currentUserId = String(currentUser?._id || currentUser?.id || '');
-  const unreadCount = unreadMessagesCount || (currentUserId 
-    ? messages.filter(m => {
-        const rId = String(m.receiverId || '');
-        const rEmail = (m.receiverEmail || '').toLowerCase();
-        const myEmail = (currentUser?.email || '').toLowerCase();
-        return ((currentUserId && rId === currentUserId) || (myEmail && rEmail && rEmail === myEmail)) && !m.isRead;
-      }).length 
-    : 0);
-  const myTotalMessagesCount = currentUserId 
-    ? messages.filter(m => String(m.receiverId) === currentUserId || String(m.senderId) === currentUserId).length 
-    : messages.length;
+  const currentUserEmail = (currentUser?.email || '').trim().toLowerCase();
+  const unreadCount = Number.isFinite(unreadMessagesCount)
+    ? unreadMessagesCount
+    : (currentUserId && Array.isArray(messages)
+      ? messages.filter(m => {
+          if (!m || m.isRead) return false;
+          const rId = String(m.receiverId || '');
+          const rEmail = (m.receiverEmail || '').trim().toLowerCase();
+          const sId = String(m.senderId || '');
+          const isReceiverMe = (currentUserId && rId === currentUserId) || (currentUserEmail && rEmail && rEmail === currentUserEmail);
+          const isSenderMe = (currentUserId && sId === currentUserId);
+          return isReceiverMe && !isSenderMe && !m.isRead;
+        }).length 
+      : 0);
 
   const [activeSubTab, setActiveSubTab] = useState('contracts');
 
@@ -512,15 +515,11 @@ export const FreelancerDashboardPage = ({
                 <MessageSquare size={18} />
                 <span>Messages & Chat</span>
               </div>
-              {unreadCount > 0 ? (
+              {unreadCount > 0 && (
                 <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-500/30 animate-pulse">
                   {unreadCount}
                 </span>
-              ) : myTotalMessagesCount > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">
-                  {myTotalMessagesCount}
-                </span>
-              ) : null}
+              )}
             </Link>
           </nav>
         </div>

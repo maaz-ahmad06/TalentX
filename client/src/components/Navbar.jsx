@@ -21,7 +21,7 @@ export const Navbar = ({
   currentUser = null, 
   onLogout, 
   onOpenAuth,
-  unreadCount = 1 
+  unreadCount = 0 
 }) => {
   const navigate = useNavigate();
 

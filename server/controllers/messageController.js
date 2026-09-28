@@ -63,13 +63,32 @@ export const sendMessage = async (req, res) => {
 // @route   PUT /api/messages/read/:senderId
 export const markAsRead = async (req, res) => {
   try {
-    const { receiverId } = req.body;
-    if (receiverId) {
-      await Message.updateMany(
-        { senderId: req.params.senderId, receiverId, isRead: false },
-        { $set: { isRead: true } }
-      );
+    const rawSenderId = req.params.senderId;
+    const bodySenderIds = req.body?.senderIds || [rawSenderId];
+    const bodyReceiverIds = req.body?.receiverIds || (req.body?.receiverId ? [req.body.receiverId] : []);
+
+    const senderIds = (Array.isArray(bodySenderIds) ? bodySenderIds : [bodySenderIds])
+      .flatMap(id => String(id || '').split(','))
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const receiverIds = (Array.isArray(bodyReceiverIds) ? bodyReceiverIds : [bodyReceiverIds])
+      .flatMap(id => String(id || '').split(','))
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    let query = { isRead: false };
+    if (senderIds.length > 0) {
+      query.senderId = { $in: senderIds };
     }
+    if (receiverIds.length > 0) {
+      query.receiverId = { $in: receiverIds };
+    }
+
+    if (senderIds.length > 0 || receiverIds.length > 0) {
+      await Message.updateMany(query, { $set: { isRead: true } });
+    }
+
     res.status(200).json({ success: true, message: 'Messages marked as read' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

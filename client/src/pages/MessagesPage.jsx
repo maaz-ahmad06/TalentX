@@ -43,26 +43,44 @@ export const MessagesPage = ({
 
   const currentUserId = String(currentUser?._id || currentUser?.id || '');
   const currentUserEmail = (currentUser?.email || '').trim().toLowerCase();
-  const currentUserName = (currentUser?.name || '').trim().toLowerCase();
 
-  const unreadTotalCount = currentUserId 
-    ? messages.filter(m => {
-        const rId = String(m.receiverId || '');
-        const rEmail = (m.receiverEmail || '').toLowerCase();
-        return ((currentUserId && rId === currentUserId) || (currentUserEmail && rEmail && rEmail === currentUserEmail)) && !m.isRead;
-      }).length 
-    : 0;
+  // Multi-ID set for logged in user
+  const myIds = React.useMemo(() => {
+    if (!currentUser) return new Set();
+    return new Set([
+      currentUser._id,
+      currentUser.id,
+      currentUser.userId,
+      currentUser.email,
+      currentUser.name
+    ].filter(Boolean).map(s => String(s).trim().toLowerCase()));
+  }, [currentUser]);
+
+  const unreadTotalCount = React.useMemo(() => {
+    if (!currentUser || !Array.isArray(messages)) return 0;
+    return messages.filter(m => {
+      if (!m || m.isRead) return false;
+      const sId = String(m.senderId || '').trim().toLowerCase();
+      const rId = String(m.receiverId || '').trim().toLowerCase();
+      const sEmail = (m.senderEmail || '').trim().toLowerCase();
+      const rEmail = (m.receiverEmail || '').trim().toLowerCase();
+      const sName = (m.senderName || '').trim().toLowerCase();
+
+      const isSenderMe = myIds.has(sId) || (sEmail && myIds.has(sEmail)) || (sName && myIds.has(sName));
+      const isReceiverMe = myIds.has(rId) || (rEmail && myIds.has(rEmail));
+
+      return isReceiverMe && !isSenderMe && !m.isRead;
+    }).length;
+  }, [messages, currentUser, myIds]);
 
   // Helper to determine if a contact/user object is the logged-in user themselves
   const isSelf = (userObj) => {
     if (!userObj || !currentUser) return false;
-    const uid = String(userObj._id || userObj.id || userObj.userId || '');
+    const uid = String(userObj._id || userObj.id || userObj.userId || '').trim().toLowerCase();
     const uEmail = (userObj.email || '').trim().toLowerCase();
-    const uName = (userObj.name || '').trim().toLowerCase();
 
-    if (currentUserId && uid && uid === currentUserId) return true;
-    if (currentUserEmail && uEmail && uEmail === currentUserEmail) return true;
-    if (currentUserName && uName && uName === currentUserName && (!uEmail || uEmail === currentUserEmail)) return true;
+    if (uid && myIds.has(uid)) return true;
+    if (uEmail && myIds.has(uEmail)) return true;
     return false;
   };
 
@@ -74,15 +92,15 @@ export const MessagesPage = ({
   const [newChatSearch, setNewChatSearch] = useState('');
   const [threadSearch, setThreadSearch] = useState('');
   const [inputText, setInputText] = useState('');
+
+  const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
+  const isUserNearBottomRef = useRef(true);
+  const lastContactIdRef = useRef(null);
+  const lastMessageCountRef = useRef(0);
 
   // 1. Build dynamic contacts list:
-  // Strictly include only:
-  // - Targeted user (from profile / dashboard chat button)
-  // - People who have exchanged messages with currentUser
-  // - Connected parties (proposals & contracts)
-  // - NEVER include the logged in user themselves!
   const contacts = React.useMemo(() => {
     const list = [];
     const addedIds = new Set();
@@ -96,6 +114,7 @@ export const MessagesPage = ({
       list.push({
         id: cId,
         _id: cId,
+        userId: item.userId || cId,
         name: item.name || 'TalentX Member',
         avatar: item.avatar || FALLBACK_AVATAR,
         headline: item.headline || (item.role === 'client' ? 'Client Employer' : 'Freelance Specialist'),
@@ -121,22 +140,26 @@ export const MessagesPage = ({
 
     // (C) Real Message History (Anyone who has sent or received messages with currentUser)
     const threadMap = new Map();
-    messages.forEach(m => {
-      const sId = String(m.senderId || '');
-      const rId = String(m.receiverId || '');
-      
-      const isSenderMe = sId === currentUserId;
-      const isReceiverMe = rId === currentUserId;
+    (Array.isArray(messages) ? messages : []).forEach(m => {
+      if (!m) return;
+      const sId = String(m.senderId || '').trim().toLowerCase();
+      const rId = String(m.receiverId || '').trim().toLowerCase();
+      const sEmail = (m.senderEmail || '').trim().toLowerCase();
+      const rEmail = (m.receiverEmail || '').trim().toLowerCase();
+      const sName = (m.senderName || '').trim().toLowerCase();
 
-      // Only include messages involving currentUser if logged in
-      if (currentUserId && !isSenderMe && !isReceiverMe) return;
+      const isSenderMe = myIds.has(sId) || (sEmail && myIds.has(sEmail)) || (sName && myIds.has(sName));
+      const isReceiverMe = myIds.has(rId) || (rEmail && myIds.has(rEmail));
 
-      const otherId = isSenderMe ? rId : sId;
+      // Only include messages involving currentUser
+      if (currentUser && !isSenderMe && !isReceiverMe) return;
+
+      const otherId = isSenderMe ? String(m.receiverId || '') : String(m.senderId || '');
       const otherName = isSenderMe ? (m.receiverName || 'Member') : (m.senderName || 'Member');
       const otherAvatar = isSenderMe ? (m.receiverAvatar || FALLBACK_AVATAR) : (m.senderAvatar || FALLBACK_AVATAR);
       const isOtherClient = isSenderMe ? !m.isClient : m.isClient;
 
-      if (!otherId || otherId === currentUserId) return;
+      if (!otherId || myIds.has(otherId.toLowerCase())) return;
 
       if (!threadMap.has(otherId)) {
         threadMap.set(otherId, {
@@ -153,12 +176,15 @@ export const MessagesPage = ({
 
     // Add conversation history counterparts
     threadMap.forEach((entry) => {
-      const fullTalent = talents.find(t => String(t._id || t.id) === entry.id);
+      const fullTalent = (Array.isArray(talents) ? talents : []).find(t => 
+        String(t?._id || t?.id) === entry.id || 
+        (t?.name && entry?.name && String(t.name).trim().toLowerCase() === String(entry.name).trim().toLowerCase())
+      );
       addContact({
         id: entry.id,
-        _id: entry.id,
-        name: fullTalent?.name || entry.name,
-        avatar: fullTalent?.avatar || entry.avatar,
+        _id: fullTalent?._id || entry.id,
+        name: fullTalent?.name || entry.name || 'TalentX Member',
+        avatar: fullTalent?.avatar || entry.avatar || FALLBACK_AVATAR,
         headline: fullTalent?.headline || (entry.role === 'client' ? 'Client Employer' : 'Freelance Specialist'),
         city: fullTalent?.city || 'Pakistan',
         hourlyRate: fullTalent?.hourlyRate,
@@ -169,13 +195,12 @@ export const MessagesPage = ({
     // (D) Connected marketplace parties (Proposals & Contracts)
     if (currentUser) {
       if (currentUser.role === 'client') {
-        // Talents who applied to my posted jobs
-        proposals.forEach(p => {
+        (Array.isArray(proposals) ? proposals : []).forEach(p => {
           const tId = String(p.talentId || '');
-          const matchingJob = jobs.find(j => String(j._id || j.id) === String(p.jobId));
+          const matchingJob = (Array.isArray(jobs) ? jobs : []).find(j => String(j._id || j.id) === String(p.jobId));
           const isMyJob = matchingJob && String(matchingJob.clientId) === currentUserId;
           if (isMyJob || String(p.clientId) === currentUserId) {
-            const tObj = talents.find(t => String(t._id || t.id) === tId);
+            const tObj = (Array.isArray(talents) ? talents : []).find(t => String(t._id || t.id) === tId);
             addContact({
               id: tId,
               _id: tId,
@@ -188,11 +213,10 @@ export const MessagesPage = ({
           }
         });
 
-        // Talents in active contracts
-        contracts.forEach(c => {
+        (Array.isArray(contracts) ? contracts : []).forEach(c => {
           if (String(c.clientId) === currentUserId) {
             const tId = String(c.talentId || '');
-            const tObj = talents.find(t => String(t._id || t.id) === tId);
+            const tObj = (Array.isArray(talents) ? talents : []).find(t => String(t._id || t.id) === tId);
             addContact({
               id: tId,
               _id: tId,
@@ -205,10 +229,9 @@ export const MessagesPage = ({
           }
         });
       } else if (currentUser.role === 'talent') {
-        // Clients of jobs freelancer applied to
-        proposals.forEach(p => {
+        (Array.isArray(proposals) ? proposals : []).forEach(p => {
           if (String(p.talentId) === currentUserId) {
-            const matchingJob = jobs.find(j => String(j._id || j.id) === String(p.jobId));
+            const matchingJob = (Array.isArray(jobs) ? jobs : []).find(j => String(j._id || j.id) === String(p.jobId));
             if (matchingJob) {
               const cId = String(matchingJob.clientId || matchingJob.client?.id || matchingJob.client?._id || '');
               if (cId) {
@@ -226,8 +249,7 @@ export const MessagesPage = ({
           }
         });
 
-        // Clients in active contracts
-        contracts.forEach(c => {
+        (Array.isArray(contracts) ? contracts : []).forEach(c => {
           if (String(c.talentId) === currentUserId) {
             const cId = String(c.clientId || '');
             addContact({
@@ -245,109 +267,242 @@ export const MessagesPage = ({
     }
 
     return list;
-  }, [talents, messages, currentUserId, currentUserEmail, currentUserName, contracts, proposals, jobs, incomingTarget, incomingUserId]);
+  }, [talents, messages, currentUser, myIds, currentUserId, contracts, proposals, jobs, incomingTarget, incomingUserId]);
 
-  const [selectedContact, setSelectedContact] = useState(() => {
-    if (incomingTarget && !isSelf(incomingTarget)) return incomingTarget;
-    if (incomingUserId && incomingUserId !== currentUserId) {
-      const found = talents.find(t => String(t._id || t.id) === incomingUserId);
-      if (found && !isSelf(found)) return found;
+  const [selectedContactId, setSelectedContactId] = useState(() => {
+    if (incomingTarget && !isSelf(incomingTarget)) {
+      return String(incomingTarget._id || incomingTarget.id || incomingTarget.userId || '');
     }
-    return contacts[0] || null;
+    if (incomingUserId && incomingUserId !== currentUserId) {
+      return incomingUserId;
+    }
+    try {
+      return localStorage.getItem('talentx_active_chat_contact_id') || null;
+    } catch {
+      return null;
+    }
   });
 
-  // Keep selected contact synced when list loads or changes
+  // Keep selected contact synced when navigating with explicit target
   useEffect(() => {
     if (incomingTarget && !isSelf(incomingTarget)) {
-      setSelectedContact(incomingTarget);
+      const targetId = String(incomingTarget._id || incomingTarget.id || incomingTarget.userId || '');
+      setSelectedContactId(targetId);
+      try { localStorage.setItem('talentx_active_chat_contact_id', targetId); } catch {}
       return;
     }
     if (incomingUserId && incomingUserId !== currentUserId) {
-      const found = talents.find(t => String(t._id || t.id) === incomingUserId);
-      if (found && !isSelf(found)) {
-        setSelectedContact(found);
-        return;
-      }
+      setSelectedContactId(incomingUserId);
+      try { localStorage.setItem('talentx_active_chat_contact_id', incomingUserId); } catch {}
     }
+  }, [incomingTarget, incomingUserId, currentUserId]);
 
-    if (!selectedContact && contacts.length > 0) {
-      setSelectedContact(contacts[0]);
-    } else if (selectedContact) {
-      const exists = contacts.find(c => String(c._id || c.id) === String(selectedContact._id || selectedContact.id));
-      if (!exists) {
-        if (contacts.length > 0) {
-          setSelectedContact(contacts[0]);
-        } else {
-          setSelectedContact(null);
-        }
-      }
+  const selectContact = React.useCallback((contact) => {
+    if (!contact) {
+      setSelectedContactId(null);
+      try { localStorage.removeItem('talentx_active_chat_contact_id'); } catch {}
+      return;
     }
-  }, [contacts, incomingTarget, incomingUserId]);
-
-  // Mark unread messages as read when opening a contact's thread
-  useEffect(() => {
-    if (selectedContact && onMarkMessagesRead) {
-      onMarkMessagesRead(String(selectedContact._id || selectedContact.id));
+    const cId = String(contact._id || contact.id || contact.userId || '');
+    setSelectedContactId(cId);
+    try { localStorage.setItem('talentx_active_chat_contact_id', cId); } catch {}
+    if (onMarkMessagesRead) {
+      onMarkMessagesRead(contact);
     }
-  }, [selectedContact, onMarkMessagesRead]);
+  }, [onMarkMessagesRead]);
 
-  // Auto-scroll to bottom of conversation
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, selectedContact]);
+  // Derive active selectedContact object dynamically from contacts, talents or incomingTarget
+  const selectedContact = React.useMemo(() => {
+    if (!selectedContactId) return null;
+    const targetIdStr = String(selectedContactId).trim().toLowerCase();
 
-
-
-  // Send real manual message — NO fake auto-replies!
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (!inputText.trim() || !selectedContact) return;
-
-    const contactId = String(selectedContact._id || selectedContact.id);
-
-    onSendMessage({
-      senderId: currentUserId || 'guest',
-      senderName: currentUser?.name || 'User',
-      senderAvatar: currentUser?.avatar || '',
-      receiverId: contactId,
-      receiverName: selectedContact.name,
-      receiverAvatar: selectedContact.avatar || '',
-      text: inputText.trim(),
-      isClient: currentUser?.role === 'client'
+    // 1. Look in dynamic contacts computed from history
+    const foundInContacts = contacts.find(c => {
+      if (!c) return false;
+      const cId = String(c._id || c.id || c.userId || '').trim().toLowerCase();
+      const cName = String(c.name || '').trim().toLowerCase();
+      return cId === targetIdStr || cName === targetIdStr;
     });
+    if (foundInContacts) return foundInContacts;
 
-    setInputText('');
-  };
+    // 2. Look in full talents directory
+    const foundInTalents = (Array.isArray(talents) ? talents : []).find(t => {
+      if (!t) return false;
+      const tId = String(t._id || t.id || '').trim().toLowerCase();
+      const tName = String(t.name || '').trim().toLowerCase();
+      return tId === targetIdStr || tName === targetIdStr;
+    });
+    if (foundInTalents && !isSelf(foundInTalents)) {
+      return {
+        id: String(foundInTalents._id || foundInTalents.id),
+        _id: String(foundInTalents._id || foundInTalents.id),
+        userId: String(foundInTalents._id || foundInTalents.id),
+        name: foundInTalents.name || 'TalentX Member',
+        avatar: foundInTalents.avatar || FALLBACK_AVATAR,
+        headline: foundInTalents.headline || 'Freelance Specialist',
+        city: foundInTalents.city || 'Pakistan',
+        hourlyRate: foundInTalents.hourlyRate,
+        role: foundInTalents.role || 'talent'
+      };
+    }
 
-  const filteredContacts = contacts.filter(c => 
-    (c.name || '').toLowerCase().includes(threadSearch.toLowerCase()) ||
-    (c.city && c.city.toLowerCase().includes(threadSearch.toLowerCase()))
-  );
+    // 3. Fallback to incomingTarget
+    if (incomingTarget && !isSelf(incomingTarget)) {
+      return incomingTarget;
+    }
 
-  // Filter available members for "Start New Chat" modal (excluding self)
-  const availableNewMembers = talents.filter(t => {
-    if (isSelf(t)) return false;
-    const q = newChatSearch.toLowerCase().trim();
-    if (!q) return true;
-    return (
-      (t.name && t.name.toLowerCase().includes(q)) ||
-      (t.headline && t.headline.toLowerCase().includes(q)) ||
-      (t.city && t.city.toLowerCase().includes(q)) ||
-      (t.skills && t.skills.some(s => s.toLowerCase().includes(q)))
-    );
-  });
+    return null;
+  }, [selectedContactId, contacts, talents, isSelf, incomingTarget]);
+
+  // Multi-ID set for the currently selected contact
+  const selectedContactIds = React.useMemo(() => {
+    if (!selectedContact && !selectedContactId) return new Set();
+    const ids = [
+      selectedContactId,
+      selectedContact?._id,
+      selectedContact?.id,
+      selectedContact?.userId,
+      selectedContact?.email,
+      selectedContact?.name
+    ].filter(Boolean).map(s => String(s).trim().toLowerCase());
+    return new Set(ids);
+  }, [selectedContact, selectedContactId]);
 
   // 1-on-1 Messages between currentUser and selectedContact
   const activeThreadMessages = React.useMemo(() => {
-    if (!selectedContact) return [];
-    const contactId = String(selectedContact._id || selectedContact.id);
-    return messages.filter(m => {
-      const sId = String(m.senderId || '');
-      const rId = String(m.receiverId || '');
-      return (sId === currentUserId && rId === contactId) ||
-             (sId === contactId && rId === currentUserId);
+    if (!selectedContactId || selectedContactIds.size === 0) return [];
+    
+    const thread = (Array.isArray(messages) ? messages : []).filter(m => {
+      if (!m || !m.text) return false;
+      const sId = String(m.senderId || '').trim().toLowerCase();
+      const rId = String(m.receiverId || '').trim().toLowerCase();
+      const sEmail = String(m.senderEmail || '').trim().toLowerCase();
+      const rEmail = String(m.receiverEmail || '').trim().toLowerCase();
+      const sName = String(m.senderName || '').trim().toLowerCase();
+      const rName = String(m.receiverName || '').trim().toLowerCase();
+
+      const isSenderMe = myIds.has(sId) || (sEmail && myIds.has(sEmail)) || (sName && myIds.has(sName));
+      const isReceiverMe = myIds.has(rId) || (rEmail && myIds.has(rEmail)) || (rName && myIds.has(rName));
+
+      const isSenderContact = selectedContactIds.has(sId) || (sEmail && selectedContactIds.has(sEmail)) || (sName && selectedContactIds.has(sName));
+      const isReceiverContact = selectedContactIds.has(rId) || (rEmail && selectedContactIds.has(rEmail)) || (rName && selectedContactIds.has(rName));
+
+      return (isSenderMe && isReceiverContact) || (isSenderContact && isReceiverMe);
     });
-  }, [messages, currentUserId, selectedContact]);
+
+    // Deduplicate messages
+    const seen = new Set();
+    const deduplicated = [];
+    thread.forEach(m => {
+      if (!m) return;
+      const key = m._id ? String(m._id) : (m.id ? String(m.id) : `${m.senderId}_${m.receiverId}_${m.text}_${m.time || ''}`);
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduplicated.push(m);
+      }
+    });
+
+    return deduplicated;
+  }, [messages, myIds, selectedContactId, selectedContactIds]);
+
+  // Mark unread messages as read only when unread messages from contact exist
+  useEffect(() => {
+    if (!selectedContact || !onMarkMessagesRead) return;
+
+    const hasUnreadFromContact = activeThreadMessages.some(m => {
+      if (!m || m.isRead) return false;
+      const sId = String(m.senderId || '').trim().toLowerCase();
+      const sEmail = String(m.senderEmail || '').trim().toLowerCase();
+      const sName = String(m.senderName || '').trim().toLowerCase();
+      const isSenderMe = myIds.has(sId) || (sEmail && myIds.has(sEmail)) || (sName && myIds.has(sName));
+      return !isSenderMe && !m.isRead;
+    });
+
+    if (hasUnreadFromContact) {
+      onMarkMessagesRead(selectedContact);
+    }
+  }, [selectedContact, activeThreadMessages, onMarkMessagesRead, myIds]);
+
+  // User scroll listener to detect if reading history
+  const handleFeedScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    isUserNearBottomRef.current = isNearBottom;
+  };
+
+  // Smart scroll effect: Only auto-scroll on initial load or if user is at the bottom
+  useEffect(() => {
+    if (!selectedContactId) return;
+    const currentContactKey = String(selectedContactId || '');
+    const isContactSwitch = lastContactIdRef.current !== currentContactKey;
+    const currentMsgCount = activeThreadMessages.length;
+    const isNewMessageAdded = currentMsgCount > lastMessageCountRef.current;
+
+    lastContactIdRef.current = currentContactKey;
+    lastMessageCountRef.current = currentMsgCount;
+
+    if (isContactSwitch) {
+      isUserNearBottomRef.current = true;
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      }, 50);
+    } else if (isNewMessageAdded && isUserNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [activeThreadMessages, selectedContactId]);
+
+  // Send real manual message — NO fake auto-replies!
+  const handleSend = () => {
+    const trimmed = (inputText || '').trim();
+    if (!trimmed || !selectedContactId) return;
+
+    const primaryContactId = String(selectedContact?._id || selectedContact?.id || selectedContact?.userId || selectedContactId || '');
+    const primaryMyId = String(currentUser?._id || currentUser?.id || currentUser?.userId || 'guest');
+
+    if (onSendMessage) {
+      onSendMessage({
+        senderId: primaryMyId,
+        senderName: currentUser?.name || 'User',
+        senderAvatar: currentUser?.avatar || '',
+        receiverId: primaryContactId,
+        receiverName: selectedContact?.name || 'Member',
+        receiverAvatar: selectedContact?.avatar || '',
+        text: trimmed,
+        isClient: currentUser?.role === 'client'
+      });
+    }
+
+    setInputText('');
+    isUserNearBottomRef.current = true;
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      chatInputRef.current?.focus();
+    }, 50);
+  };
+
+  const filteredContacts = React.useMemo(() => {
+    const q = (threadSearch || '').trim().toLowerCase();
+    return (Array.isArray(contacts) ? contacts : []).filter(c => {
+      if (!c) return false;
+      const name = String(c.name || '').toLowerCase();
+      const city = String(c.city || '').toLowerCase();
+      return name.includes(q) || city.includes(q);
+    });
+  }, [contacts, threadSearch]);
+
+  // Filter available members for "Start New Chat" modal (excluding self)
+  const availableNewMembers = React.useMemo(() => {
+    const q = (newChatSearch || '').trim().toLowerCase();
+    return (Array.isArray(talents) ? talents : []).filter(t => {
+      if (!t || isSelf(t)) return false;
+      if (!q) return true;
+      const name = String(t.name || '').toLowerCase();
+      const headline = String(t.headline || '').toLowerCase();
+      const city = String(t.city || '').toLowerCase();
+      const skillsMatch = Array.isArray(t.skills) && t.skills.some(s => String(s || '').toLowerCase().includes(q));
+      return name.includes(q) || headline.includes(q) || city.includes(q) || skillsMatch;
+    });
+  }, [talents, isSelf, newChatSearch]);
 
   // Helper to render the core chat workspace directly without nested component recreation
   const renderChatWorkspace = () => (
@@ -408,14 +563,46 @@ export const MessagesPage = ({
             </div>
           ) : (
             filteredContacts.map((c) => {
-              const cId = String(c._id || c.id);
-              const threadMsgs = messages.filter(m => 
-                (String(m.senderId) === currentUserId && String(m.receiverId) === cId) ||
-                (String(m.senderId) === cId && String(m.receiverId) === currentUserId)
-              );
+              const cId = String(c._id || c.id || '');
+              const contactCandidateIds = new Set([c._id, c.id, c.userId, c.email, c.name].filter(Boolean).map(s => String(s).trim().toLowerCase()));
+
+              const threadMsgs = (Array.isArray(messages) ? messages : []).filter(m => {
+                if (!m) return false;
+                const sId = String(m.senderId || '').trim().toLowerCase();
+                const rId = String(m.receiverId || '').trim().toLowerCase();
+                const sEmail = (m.senderEmail || '').trim().toLowerCase();
+                const rEmail = (m.receiverEmail || '').trim().toLowerCase();
+                const sName = (m.senderName || '').trim().toLowerCase();
+                const rName = (m.receiverName || '').trim().toLowerCase();
+
+                const isSenderMe = myIds.has(sId) || (sEmail && myIds.has(sEmail)) || (sName && myIds.has(sName));
+                const isReceiverMe = myIds.has(rId) || (rEmail && myIds.has(rEmail)) || (rName && myIds.has(rName));
+
+                const isContactSender = contactCandidateIds.has(sId) || (sEmail && contactCandidateIds.has(sEmail)) || (sName && contactCandidateIds.has(sName));
+                const isContactReceiver = contactCandidateIds.has(rId) || (rEmail && contactCandidateIds.has(rEmail)) || (rName && contactCandidateIds.has(rName));
+
+                return (isSenderMe && isContactReceiver) || (isContactSender && isReceiverMe);
+              });
+
               const lastMsg = threadMsgs[threadMsgs.length - 1];
-              const unreadCount = threadMsgs.filter(m => String(m.receiverId) === currentUserId && !m.isRead).length;
-              const isSelected = selectedContact && String(selectedContact._id || selectedContact.id) === cId;
+              const unreadCount = threadMsgs.filter(m => {
+                if (!m || m.isRead) return false;
+                const sId = String(m.senderId || '').trim().toLowerCase();
+                const rId = String(m.receiverId || '').trim().toLowerCase();
+                const sEmail = (m.senderEmail || '').trim().toLowerCase();
+                const rEmail = (m.receiverEmail || '').trim().toLowerCase();
+                const sName = (m.senderName || '').trim().toLowerCase();
+
+                const isSenderMe = myIds.has(sId) || (sEmail && myIds.has(sEmail)) || (sName && myIds.has(sName));
+                const isReceiverMe = myIds.has(rId) || (rEmail && myIds.has(rEmail));
+
+                return isReceiverMe && !isSenderMe && !m.isRead;
+              }).length;
+
+              const isSelected = selectedContact && (
+                String(selectedContact._id || selectedContact.id || selectedContact.userId || '') === cId ||
+                (selectedContact.name && c.name && String(selectedContact.name).trim().toLowerCase() === String(c.name).trim().toLowerCase())
+              );
 
               return (
                 <div 
@@ -425,17 +612,17 @@ export const MessagesPage = ({
                       ? 'bg-indigo-600/20 border border-indigo-500/40 shadow-md' 
                       : 'hover:bg-white/5 border border-transparent'
                   }`}
-                  onClick={() => setSelectedContact(c)}
+                  onClick={() => selectContact(c)}
                 >
                   <div className="relative w-10 h-10 flex-shrink-0">
-                    <img src={c.avatar || FALLBACK_AVATAR} alt={c.name} className="w-full h-full rounded-full object-cover border border-white/10" />
+                    <img src={c.avatar || FALLBACK_AVATAR} alt={c.name || 'User'} className="w-full h-full rounded-full object-cover border border-white/10" />
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900"></span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <span className={`font-bold text-xs truncate ${isSelected ? 'text-indigo-300' : 'text-white'}`}>{c.name}</span>
+                      <span className={`font-bold text-xs truncate ${isSelected ? 'text-indigo-300' : 'text-white'}`}>{c.name || 'Member'}</span>
                       {lastMsg && (
-                        <span className="text-[10px] text-slate-500 shrink-0">{lastMsg.time}</span>
+                        <span className="text-[10px] text-slate-500 shrink-0">{lastMsg.time || ''}</span>
                       )}
                     </div>
                     <div className="flex items-center justify-between gap-1 mt-0.5">
@@ -443,7 +630,7 @@ export const MessagesPage = ({
                         {lastMsg ? lastMsg.text : (c.headline || 'Direct Conversation')}
                       </p>
                       {unreadCount > 0 && (
-                        <span className="shrink-0 px-1.5 py-0.2 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold shadow-sm">
+                        <span className="shrink-0 min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-indigo-600 text-white text-[10px] font-black shadow-md shadow-indigo-500/30">
                           {unreadCount}
                         </span>
                       )}
@@ -476,7 +663,7 @@ export const MessagesPage = ({
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                    <MapPin size={11} /> {selectedContact.city || 'Pakistan'} {selectedContact.hourlyRate ? `• PKR ${Number(selectedContact.hourlyRate).toLocaleString()}/hr` : ''}
+                    <MapPin size={11} /> {selectedContact.city || 'Pakistan'} {Number.isFinite(Number(selectedContact.hourlyRate)) && Number(selectedContact.hourlyRate) > 0 ? `• PKR ${Number(selectedContact.hourlyRate).toLocaleString()}/hr` : ''}
                   </div>
                 </div>
               </div>
@@ -484,6 +671,7 @@ export const MessagesPage = ({
               <div className="flex items-center gap-2">
                 {onHireTalent && selectedContact.role !== 'client' && (
                   <button 
+                    type="button"
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 transition-all cursor-pointer"
                     onClick={() => onHireTalent(selectedContact)}
                   >
@@ -491,7 +679,7 @@ export const MessagesPage = ({
                     <span>Send Hire Offer</span>
                   </button>
                 )}
-                {selectedContact.role !== 'client' && (
+                {selectedContact.role !== 'client' && (selectedContact._id || selectedContact.id) && (
                   <Link 
                     to={`/profile/${selectedContact._id || selectedContact.id}`} 
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-semibold transition-all"
@@ -503,7 +691,11 @@ export const MessagesPage = ({
             </div>
 
             {/* Messages Feed */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div 
+              ref={chatFeedRef}
+              onScroll={handleFeedScroll}
+              className="flex-1 overflow-y-auto p-6 space-y-4"
+            >
               {activeThreadMessages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-6">
                   <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
@@ -511,16 +703,21 @@ export const MessagesPage = ({
                   </div>
                   <h4 className="font-bold text-white text-base mb-1">Start the Conversation</h4>
                   <p className="text-slate-400 text-xs max-w-xs">
-                    Send a direct message to {selectedContact.name} regarding your project or inquiry.
+                    Send a direct message to {selectedContact.name || 'Member'} regarding your project or inquiry.
                   </p>
                 </div>
               ) : (
                 activeThreadMessages.map((msg, index) => {
-                  const isSentByMe = String(msg.senderId) === currentUserId;
+                  if (!msg) return null;
+                  const sId = String(msg.senderId || '').trim().toLowerCase();
+                  const sEmail = (msg.senderEmail || '').trim().toLowerCase();
+                  const sName = (msg.senderName || '').trim().toLowerCase();
+
+                  const isSentByMe = myIds.has(sId) || (sEmail && myIds.has(sEmail)) || (sName && myIds.has(sName));
 
                   return (
                     <div 
-                      key={msg.id || msg._id || index} 
+                      key={msg._id || msg.id || `msg_${index}`} 
                       className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}
                     >
                       <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[75%] sm:max-w-[65%] shadow-lg ${
@@ -529,9 +726,9 @@ export const MessagesPage = ({
                           : 'bg-slate-900 border border-white/10 text-slate-200 rounded-bl-none'
                       }`}>
                         <div className="text-[10px] font-bold opacity-80 mb-1 flex items-center justify-between gap-3">
-                          <span>{isSentByMe ? 'You' : (msg.senderName || selectedContact.name || 'Contact')}</span>
+                          <span>{isSentByMe ? 'You' : (msg.senderName || selectedContact?.name || 'Contact')}</span>
                         </div>
-                        <p className="m-0 text-xs sm:text-sm whitespace-pre-wrap">{msg.text}</p>
+                        <p className="m-0 text-xs sm:text-sm whitespace-pre-wrap">{msg.text || ''}</p>
                         <div className="flex items-center justify-end gap-1 text-[10px] opacity-70 mt-1.5">
                           <span>{msg.time || 'Just now'}</span>
                           {isSentByMe && (
@@ -546,38 +743,48 @@ export const MessagesPage = ({
               <div ref={messagesEndRef} />
             </div>
 
-
-
-            {/* Input Form */}
-            <form onSubmit={handleSend} className="p-4 px-6 bg-slate-900 border-t border-white/10 flex items-center gap-3 flex-shrink-0">
+            {/* Input Bar — Pure div container, zero form submissions */}
+            <div className="p-4 px-6 bg-slate-900 border-t border-white/10 flex items-center gap-3 flex-shrink-0">
               <input 
                 ref={chatInputRef}
                 type="text"
                 className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-sm outline-none transition-all"
-                placeholder={`Message ${selectedContact.name || 'member'}...`}
+                placeholder={`Message ${selectedContact?.name || 'member'}...`}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    if (e.preventDefault) e.preventDefault();
+                    if (e.stopPropagation) e.stopPropagation();
+                    handleSend();
+                  }
+                }}
                 autoComplete="off"
               />
               <button 
-                type="submit" 
+                type="button" 
+                onClick={(e) => {
+                  if (e.preventDefault) e.preventDefault();
+                  if (e.stopPropagation) e.stopPropagation();
+                  handleSend();
+                }}
                 className="w-10 h-10 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 transition-all cursor-pointer flex-shrink-0"
                 title="Send Message"
               >
                 <Send size={16} />
               </button>
-            </form>
+            </div>
           </>
         ) : (
-          /* Empty state when no conversation is selected */
+          /* Empty state when no conversation is selected (WhatsApp / LinkedIn style) */
           <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
             <div className="w-16 h-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shadow-xl shadow-indigo-500/10">
               <MessageSquare size={32} />
             </div>
-            <div className="space-y-1 max-w-sm">
-              <h3 className="text-xl font-black text-white font-display">TalentX Direct Messaging</h3>
+            <div className="space-y-1.5 max-w-md">
+              <h3 className="text-xl font-black text-white font-display">Select a Conversation</h3>
               <p className="text-slate-400 text-xs leading-relaxed">
-                Connect and collaborate 1-on-1 with verified Pakistani freelancers and hiring companies.
+                Choose a conversation from the left sidebar to view messages, or start a new direct chat with verified clients and freelancers.
               </p>
             </div>
             <div className="flex gap-3 pt-2">
@@ -652,7 +859,7 @@ export const MessagesPage = ({
                     <div 
                       key={mId}
                       onClick={() => {
-                        setSelectedContact({
+                        selectContact({
                           id: mId,
                           _id: mId,
                           name: member.name || 'TalentX Member',
@@ -812,13 +1019,9 @@ export const MessagesPage = ({
                   <MessageSquare size={18} />
                   <span>Messages & Chat</span>
                 </div>
-                {unreadTotalCount > 0 ? (
+                {unreadTotalCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-black shadow-md shadow-indigo-500/30 animate-pulse">
                     {unreadTotalCount}
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">
-                    {contacts.length}
                   </span>
                 )}
               </Link>

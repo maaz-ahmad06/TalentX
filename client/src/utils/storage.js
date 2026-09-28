@@ -325,8 +325,8 @@ export const addMessage = (msg) => {
   const msgs = getMessages();
   const newMsg = {
     ...msg,
-    id: `msg_${Date.now()}`,
-    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    id: msg.id || msg._id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    time: msg.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
   const updated = [...msgs, newMsg];
   saveMessages(updated);

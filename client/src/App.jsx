@@ -65,6 +65,26 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { Megaphone, X } from 'lucide-react';
 
+// Error Boundary Component to catch and recover gracefully without full screen blocking
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: false, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.warn('TalentX ErrorBoundary caught notice:', error, errorInfo);
+  }
+
+  render() {
+    return this.props.children;
+  }
+}
+
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -82,8 +102,29 @@ function AppContent() {
   // Route check: Hide public Navbar & Footer on all dashboard routes and logged-in messages workspace
   const isDashboardRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard') || (Boolean(currentUser) && location.pathname === '/messages');
 
-  // Preloader State
-  const [isLoading, setIsLoading] = useState(true);
+  // Preloader State: Only show once per session on public marketplace landing, never on messages/dashboards
+  const [isLoading, setIsLoading] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname || '';
+        if (path.startsWith('/messages') || path.startsWith('/dashboard') || path.startsWith('/admin')) {
+          return false;
+        }
+        return !sessionStorage.getItem('talentx_preloader_seen');
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+
+  const handlePreloaderFinish = () => {
+    setIsLoading(false);
+    try {
+      sessionStorage.setItem('talentx_preloader_seen', 'true');
+    } catch {}
+  };
+
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Data Collections
@@ -200,8 +241,41 @@ function AppContent() {
       try {
         const liveMessages = await apiGetMessages();
         if (Array.isArray(liveMessages)) {
-          setMessages(liveMessages);
-          saveMessages(liveMessages);
+          setMessages(prev => {
+            if (!Array.isArray(prev)) return liveMessages;
+            
+            // Build a deduplicated map by _id and signature
+            const mergedMap = new Map();
+            
+            // First add live messages from MongoDB
+            liveMessages.forEach(m => {
+              if (m && m._id) {
+                mergedMap.set(String(m._id), m);
+              }
+            });
+
+            // Retain any pending optimistic messages not yet assigned an _id
+            prev.forEach(localMsg => {
+              if (localMsg && !localMsg._id && localMsg.id) {
+                const alreadySynced = liveMessages.some(lm => 
+                  String(lm.senderId) === String(localMsg.senderId) && 
+                  String(lm.receiverId) === String(localMsg.receiverId) && 
+                  lm.text === localMsg.text
+                );
+                if (!alreadySynced) {
+                  mergedMap.set(String(localMsg.id), localMsg);
+                }
+              }
+            });
+
+            const merged = Array.from(mergedMap.values());
+            // Only update state if message content or length actually changed
+            if (JSON.stringify(prev) !== JSON.stringify(merged)) {
+              saveMessages(merged);
+              return merged;
+            }
+            return prev;
+          });
         }
       } catch (err) {
         // silent background sync
@@ -384,61 +458,160 @@ function AppContent() {
   const handleSendMessage = async (msgData) => {
     const formatted = {
       ...msgData,
-      id: msgData.id || `msg_${Date.now()}`,
+      id: msgData.id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       time: msgData.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       createdAt: new Date().toISOString(),
       isRead: false
     };
 
     // 1. Optimistic Local State & Cache Update
-    const updated = addMessage(formatted);
-    setMessages(getMessages());
+    addMessage(formatted);
+    setMessages(prev => {
+      const list = Array.isArray(prev) ? prev : [];
+      return [...list, formatted];
+    });
 
     // 2. Direct Sync with MongoDB Cloud
     try {
       const liveMsg = await apiSendMessage(formatted);
       if (liveMsg) {
-        const synced = getMessages().map(m => m.id === formatted.id ? { ...m, _id: liveMsg._id } : m);
-        saveMessages(synced);
-        setMessages(synced);
+        setMessages(prev => {
+          if (!Array.isArray(prev)) return [liveMsg];
+          return prev.map(m => {
+            if (!m) return m;
+            if (m.id === formatted.id || (m._id && liveMsg._id && String(m._id) === String(liveMsg._id))) {
+              return { ...liveMsg, id: formatted.id };
+            }
+            return m;
+          });
+        });
+        const currentSaved = getMessages();
+        if (Array.isArray(currentSaved)) {
+          const synced = currentSaved.map(m => {
+            if (!m) return m;
+            if (m.id === formatted.id || (m._id && liveMsg._id && String(m._id) === String(liveMsg._id))) {
+              return { ...liveMsg, id: formatted.id };
+            }
+            return m;
+          });
+          saveMessages(synced);
+        }
       }
     } catch (err) {
       console.warn('MongoDB Message cloud sync notice:', err.message);
     }
   };
 
-  const handleMarkMessagesRead = async (senderId) => {
-    if (!currentUser) return;
-    const currentUserId = String(currentUser._id || currentUser.id || '');
-    if (!currentUserId || !senderId) return;
+  const handleMarkMessagesRead = async (targetContact) => {
+    if (!currentUser || !targetContact) return;
 
-    // Update local state
-    const currentMsgs = getMessages();
-    const updated = currentMsgs.map(m => {
-      if (String(m.senderId) === String(senderId) && String(m.receiverId) === currentUserId) {
-        return { ...m, isRead: true };
-      }
-      return m;
+    // Collect all candidate IDs for targetContact
+    let contactIds = [];
+    if (typeof targetContact === 'string') {
+      contactIds = [targetContact];
+    } else if (typeof targetContact === 'object') {
+      contactIds = [
+        targetContact._id, 
+        targetContact.id, 
+        targetContact.userId, 
+        targetContact.name, 
+        targetContact.email
+      ].filter(Boolean).map(String);
+    }
+    const contactIdSet = new Set(contactIds.map(s => s.trim().toLowerCase()));
+
+    // Collect all candidate IDs for currentUser
+    const myIds = [
+      currentUser._id, 
+      currentUser.id, 
+      currentUser.userId, 
+      currentUser.email,
+      currentUser.name
+    ].filter(Boolean).map(String);
+    const myIdSet = new Set(myIds.map(s => s.trim().toLowerCase()));
+
+    // 1. Instantly update React messages state
+    setMessages(prev => {
+      if (!Array.isArray(prev)) return [];
+      let hasChanges = false;
+      const updated = prev.map(m => {
+        if (!m || m.isRead) return m;
+        const sId = String(m.senderId || '').trim().toLowerCase();
+        const rId = String(m.receiverId || '').trim().toLowerCase();
+        const sEmail = (m.senderEmail || '').trim().toLowerCase();
+        const rEmail = (m.receiverEmail || '').trim().toLowerCase();
+        const sName = (m.senderName || '').trim().toLowerCase();
+
+        const matchSender = contactIdSet.has(sId) || (sEmail && contactIdSet.has(sEmail)) || (sName && contactIdSet.has(sName));
+        const matchReceiver = myIdSet.has(rId) || (rEmail && myIdSet.has(rEmail));
+
+        if (matchSender && matchReceiver) {
+          hasChanges = true;
+          return { ...m, isRead: true };
+        }
+        return m;
+      });
+      return hasChanges ? updated : prev;
     });
-    saveMessages(updated);
-    setMessages(updated);
 
-    // Sync with MongoDB Cloud
+    // 2. Update LocalStorage safely
     try {
-      await apiMarkMessagesRead(senderId, currentUserId);
+      const currentMsgs = getMessages();
+      if (Array.isArray(currentMsgs)) {
+        const updated = currentMsgs.map(m => {
+          if (!m || m.isRead) return m;
+          const sId = String(m.senderId || '').trim().toLowerCase();
+          const rId = String(m.receiverId || '').trim().toLowerCase();
+          const sEmail = (m.senderEmail || '').trim().toLowerCase();
+          const rEmail = (m.receiverEmail || '').trim().toLowerCase();
+          const sName = (m.senderName || '').trim().toLowerCase();
+
+          const matchSender = contactIdSet.has(sId) || (sEmail && contactIdSet.has(sEmail)) || (sName && contactIdSet.has(sName));
+          const matchReceiver = myIdSet.has(rId) || (rEmail && myIdSet.has(rEmail));
+
+          if (matchSender && matchReceiver) {
+            return { ...m, isRead: true };
+          }
+          return m;
+        });
+        saveMessages(updated);
+      }
+    } catch (err) {
+      console.warn('Storage sync notice:', err);
+    }
+
+    // 3. Sync with MongoDB Cloud
+    try {
+      await apiMarkMessagesRead(contactIds, myIds);
     } catch (err) {
       console.warn('MongoDB Message read status sync notice:', err.message);
     }
   };
 
-  const currentUserId = String(currentUser?._id || currentUser?.id || '');
-  const unreadMessagesCount = currentUserId 
+  const myIdSetForCount = React.useMemo(() => {
+    if (!currentUser) return new Set();
+    return new Set([
+      currentUser._id, 
+      currentUser.id, 
+      currentUser.userId, 
+      currentUser.email,
+      currentUser.name
+    ].filter(Boolean).map(s => String(s).trim().toLowerCase()));
+  }, [currentUser]);
+
+  const unreadMessagesCount = (currentUser && Array.isArray(messages))
     ? messages.filter(m => {
-        const rId = String(m.receiverId || '');
-        const rEmail = (m.receiverEmail || '').toLowerCase();
-        const myEmail = (currentUser?.email || '').toLowerCase();
-        const isReceiverMe = (currentUserId && rId === currentUserId) || (myEmail && rEmail && rEmail === myEmail);
-        return isReceiverMe && !m.isRead;
+        if (!m || m.isRead) return false;
+        const sId = String(m.senderId || '').trim().toLowerCase();
+        const rId = String(m.receiverId || '').trim().toLowerCase();
+        const sEmail = (m.senderEmail || '').trim().toLowerCase();
+        const rEmail = (m.receiverEmail || '').trim().toLowerCase();
+        const sName = (m.senderName || '').trim().toLowerCase();
+
+        const isSenderMe = myIdSetForCount.has(sId) || (sEmail && myIdSetForCount.has(sEmail)) || (sName && myIdSetForCount.has(sName));
+        const isReceiverMe = myIdSetForCount.has(rId) || (rEmail && myIdSetForCount.has(rEmail));
+
+        return isReceiverMe && !isSenderMe && !m.isRead;
       }).length 
     : 0;
 
@@ -474,7 +647,9 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white font-sans">
       {/* Animated 3D Preloader */}
-      {isLoading && <Preloader onFinish={() => setIsLoading(false)} />}
+      {isLoading && !isDashboardRoute && location.pathname !== '/messages' && (
+        <Preloader onFinish={handlePreloaderFinish} />
+      )}
 
       {/* Global Announcement Banner (Marketplace only) */}
       {!isDashboardRoute && platformSettings?.isAnnouncementActive && platformSettings?.announcement && isAnnouncementBannerVisible && (
@@ -783,9 +958,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AppContent />
+      </Router>
+    </ErrorBoundary>
   );
 }
 

@@ -182,10 +182,13 @@ export const apiSendMessage = async (msgData) => {
   return res.data;
 };
 
-export const apiMarkMessagesRead = async (senderId, receiverId) => {
-  return await request(`/messages/read/${senderId}`, {
+export const apiMarkMessagesRead = async (senderIds, receiverIds) => {
+  const sList = Array.isArray(senderIds) ? senderIds : [senderIds].filter(Boolean);
+  const rList = Array.isArray(receiverIds) ? receiverIds : [receiverIds].filter(Boolean);
+  const primarySender = sList[0] || 'all';
+  return await request(`/messages/read/${encodeURIComponent(primarySender)}`, {
     method: 'PUT',
-    body: JSON.stringify({ receiverId })
+    body: JSON.stringify({ senderIds: sList, receiverIds: rList })
   });
 };
 
