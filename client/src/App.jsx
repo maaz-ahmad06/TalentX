@@ -513,7 +513,7 @@ function AppContent() {
                     setIsAuthModalOpen(true);
                     return;
                   }
-                  navigate('/messages');
+                  navigate('/messages', { state: { targetUser: talent } });
                 }}
               />
             } 
@@ -538,7 +538,7 @@ function AppContent() {
                     setIsAuthModalOpen(true);
                     return;
                   }
-                  navigate('/messages');
+                  navigate('/messages', { state: { targetUser: talent } });
                 }}
               />
             } 
@@ -585,7 +585,7 @@ function AppContent() {
                     setIsAuthModalOpen(true);
                     return;
                   }
-                  navigate('/messages');
+                  navigate('/messages', { state: { targetUser: talent } });
                 }}
               />
             } 
@@ -708,7 +708,7 @@ function AppContent() {
               return;
             }
             setSelectedTalentModal(null);
-            navigate('/messages');
+            navigate('/messages', { state: { targetUser: talent } });
           }}
         />
       )}

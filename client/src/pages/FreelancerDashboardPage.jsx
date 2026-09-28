@@ -651,6 +651,24 @@ export const FreelancerDashboardPage = ({
                           <div className="bg-slate-950/80 border border-white/10 p-4 rounded-2xl text-right">
                             <div className="text-xl font-black text-emerald-400 font-display">PKR {Number(contract.amount).toLocaleString()}</div>
                             <div className="text-xs text-slate-500 mt-0.5">Due: {contract.deadline || '2026-10-05'}</div>
+                            <div className="mt-2.5 flex justify-end">
+                              <Link 
+                                to="/messages" 
+                                state={{ 
+                                  targetUser: { 
+                                    id: contract.clientId, 
+                                    _id: contract.clientId, 
+                                    name: contract.clientName || 'Client Employer', 
+                                    avatar: contract.clientAvatar || '',
+                                    role: 'client'
+                                  } 
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-semibold transition-all"
+                              >
+                                <MessageSquare size={13} />
+                                <span>Message Client</span>
+                              </Link>
+                            </div>
                           </div>
                         </div>
 
