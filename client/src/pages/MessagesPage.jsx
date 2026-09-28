@@ -25,6 +25,7 @@ const FALLBACK_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a6
 export const MessagesPage = ({ 
   messages = [], 
   onSendMessage, 
+  onMarkMessagesRead,
   talents = [], 
   contracts = [],
   proposals = [],
@@ -33,70 +34,129 @@ export const MessagesPage = ({
   onLogout,
   onHireTalent 
 }) => {
-  const [selectedTalent, setSelectedTalent] = useState(talents[0] || null);
+  const currentUserId = String(currentUser?._id || currentUser?.id || '');
+
+  // 1. Build dynamic contacts list:
+  // Include registered talents (excluding current user) & any users who have exchanged messages
+  const contacts = React.useMemo(() => {
+    const list = [];
+    const addedIds = new Set();
+
+    // Add talents (excluding current logged-in user)
+    talents.forEach(t => {
+      const tId = String(t._id || t.id || '');
+      if (tId && tId !== currentUserId && !addedIds.has(tId)) {
+        addedIds.add(tId);
+        list.push({
+          id: tId,
+          _id: tId,
+          name: t.name || 'User',
+          avatar: t.avatar || FALLBACK_AVATAR,
+          headline: t.headline || (t.role === 'client' ? 'Client Employer' : 'Freelance Specialist'),
+          city: t.city || 'Pakistan',
+          hourlyRate: t.hourlyRate,
+          role: t.role || 'talent'
+        });
+      }
+    });
+
+    // Also include conversation counterparts from message history
+    messages.forEach(m => {
+      const isSenderMe = String(m.senderId) === currentUserId;
+      const otherId = isSenderMe ? String(m.receiverId) : String(m.senderId);
+      const otherName = isSenderMe ? (m.receiverName || 'User') : (m.senderName || 'User');
+      const otherAvatar = isSenderMe ? (m.receiverAvatar || FALLBACK_AVATAR) : (m.senderAvatar || FALLBACK_AVATAR);
+
+      if (otherId && otherId !== currentUserId && !addedIds.has(otherId)) {
+        addedIds.add(otherId);
+        list.push({
+          id: otherId,
+          _id: otherId,
+          name: otherName,
+          avatar: otherAvatar,
+          headline: m.isClient ? 'Client Employer' : 'Freelance Specialist',
+          city: 'Pakistan',
+          role: m.isClient ? 'client' : 'talent'
+        });
+      }
+    });
+
+    return list;
+  }, [talents, messages, currentUserId]);
+
+  const [selectedContact, setSelectedContact] = useState(contacts[0] || null);
   const [inputText, setInputText] = useState('');
   const [threadSearch, setThreadSearch] = useState('');
   const messagesEndRef = useRef(null);
 
-  // Sync selected talent when talents list loads from MongoDB
+  // Sync selected contact when contacts list loads or changes
   useEffect(() => {
-    if (!selectedTalent && talents.length > 0) {
-      setSelectedTalent(talents[0]);
+    if (!selectedContact && contacts.length > 0) {
+      setSelectedContact(contacts[0]);
+    } else if (selectedContact) {
+      const exists = contacts.find(c => String(c._id || c.id) === String(selectedContact._id || selectedContact.id));
+      if (!exists && contacts.length > 0) {
+        setSelectedContact(contacts[0]);
+      }
     }
-  }, [talents, selectedTalent]);
+  }, [contacts, selectedContact]);
 
-  // Auto-scroll to the bottom of the messages list when messages update or when changing talent
+  // Mark unread messages as read when opening a contact's thread
+  useEffect(() => {
+    if (selectedContact && onMarkMessagesRead) {
+      onMarkMessagesRead(String(selectedContact._id || selectedContact.id));
+    }
+  }, [selectedContact, onMarkMessagesRead]);
+
+  // Auto-scroll to the bottom of the messages list when messages update or when changing contact
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, selectedTalent]);
+  }, [messages, selectedContact]);
 
   const quickReplies = [
-    'Salam! Are you available for a shoot this weekend?',
+    'Salam! Are you available for a project this week?',
     'Can you share your portfolio drive link?',
     'Our budget is fixed at PKR 45,000 for this scope.',
-    'Yes, we can arrange an on-site meeting in Gulberg.'
+    'Yes, we can arrange an online meeting to discuss.'
   ];
 
+  // Send real manual message — NO fake auto-replies!
   const handleSend = (e) => {
     e.preventDefault();
-    if (!inputText.trim() || !selectedTalent) return;
+    if (!inputText.trim() || !selectedContact) return;
 
-    const senderName = currentUser?.name || 'Client Business';
-    const isClient = currentUser?.role === 'client' || !currentUser;
+    const contactId = String(selectedContact._id || selectedContact.id);
 
     onSendMessage({
-      senderId: currentUser?.id || 'client_01',
-      senderName: senderName,
-      receiverId: selectedTalent.id,
-      text: inputText,
-      isClient: isClient
+      senderId: currentUserId || 'guest',
+      senderName: currentUser?.name || 'User',
+      senderAvatar: currentUser?.avatar || '',
+      receiverId: contactId,
+      receiverName: selectedContact.name,
+      receiverAvatar: selectedContact.avatar || '',
+      text: inputText.trim(),
+      isClient: currentUser?.role === 'client'
     });
 
     setInputText('');
-
-    // Simulated instant reply
-    setTimeout(() => {
-      const autoResponses = [
-        `Walaikum Assalam! Thank you for reaching out. Yes, I'm fully available for this project in ${selectedTalent.city || 'Pakistan'}.`,
-        `Sounds great! I have reviewed the requirements and I can deliver the first milestone within 48 hours.`,
-        `I am happy to collaborate on this budget. Please send over the contract offer so we can lock the schedule.`
-      ];
-      const randomResponse = autoResponses[Math.floor(Math.random() * autoResponses.length)];
-      
-      onSendMessage({
-        senderId: selectedTalent.id,
-        senderName: selectedTalent.name,
-        receiverId: currentUser?.id || 'client_01',
-        text: randomResponse,
-        isClient: !isClient
-      });
-    }, 1200);
   };
 
-  const filteredTalents = talents.filter(t => 
-    t.name.toLowerCase().includes(threadSearch.toLowerCase()) ||
-    (t.city && t.city.toLowerCase().includes(threadSearch.toLowerCase()))
+  const filteredContacts = contacts.filter(c => 
+    (c.name || '').toLowerCase().includes(threadSearch.toLowerCase()) ||
+    (c.city && c.city.toLowerCase().includes(threadSearch.toLowerCase()))
   );
+
+  // 1-on-1 Messages between currentUser and selectedContact
+  const activeThreadMessages = React.useMemo(() => {
+    if (!selectedContact) return [];
+    const contactId = String(selectedContact._id || selectedContact.id);
+    return messages.filter(m => {
+      const sId = String(m.senderId || '');
+      const rId = String(m.receiverId || '');
+      return (sId === currentUserId && rId === contactId) ||
+             (sId === contactId && rId === currentUserId);
+    });
+  }, [messages, currentUserId, selectedContact]);
 
   // Helper to render the core chat workspace directly without nested component recreation
   const renderChatWorkspace = () => (
@@ -124,34 +184,56 @@ export const MessagesPage = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {filteredTalents.length === 0 ? (
-            <div className="p-4 text-center text-slate-500 text-xs">
+          {filteredContacts.length === 0 ? (
+            <div className="p-6 text-center text-slate-500 text-xs">
               No matching conversations found.
             </div>
           ) : (
-            filteredTalents.map((t) => (
-              <div 
-                key={t._id || t.id} 
-                className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
-                  (selectedTalent?._id || selectedTalent?.id) === (t._id || t.id)
-                    ? 'bg-indigo-600/20 border border-indigo-500/40 shadow-md' 
-                    : 'hover:bg-white/5 border border-transparent'
-                }`}
-                onClick={() => setSelectedTalent(t)}
-              >
-                <div className="relative w-10 h-10 flex-shrink-0">
-                  <img src={t.avatar || FALLBACK_AVATAR} alt={t.name} className="w-full h-full rounded-full object-cover border border-white/10" />
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900"></span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-white truncate">{t.name}</span>
-                    <span className="text-[10px] font-semibold text-emerald-400">Active</span>
+            filteredContacts.map((c) => {
+              const cId = String(c._id || c.id);
+              const threadMsgs = messages.filter(m => 
+                (String(m.senderId) === currentUserId && String(m.receiverId) === cId) ||
+                (String(m.senderId) === cId && String(m.receiverId) === currentUserId)
+              );
+              const lastMsg = threadMsgs[threadMsgs.length - 1];
+              const unreadCount = threadMsgs.filter(m => String(m.receiverId) === currentUserId && !m.isRead).length;
+              const isSelected = selectedContact && String(selectedContact._id || selectedContact.id) === cId;
+
+              return (
+                <div 
+                  key={cId} 
+                  className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
+                    isSelected 
+                      ? 'bg-indigo-600/20 border border-indigo-500/40 shadow-md' 
+                      : 'hover:bg-white/5 border border-transparent'
+                  }`}
+                  onClick={() => setSelectedContact(c)}
+                >
+                  <div className="relative w-10 h-10 flex-shrink-0">
+                    <img src={c.avatar || FALLBACK_AVATAR} alt={c.name} className="w-full h-full rounded-full object-cover border border-white/10" />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900"></span>
                   </div>
-                  <p className="text-[11px] text-slate-400 truncate mt-0.5">{t.headline || 'Professional Specialist'}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`font-bold text-xs truncate ${isSelected ? 'text-indigo-300' : 'text-white'}`}>{c.name}</span>
+                      {lastMsg && (
+                        <span className="text-[10px] text-slate-500 shrink-0">{lastMsg.time}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-1 mt-0.5">
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {lastMsg ? lastMsg.text : (c.headline || 'Direct Conversation')}
+                      </p>
+                      {unreadCount > 0 && (
+                        <span className="shrink-0 px-1.5 py-0.2 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold shadow-sm">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -162,36 +244,36 @@ export const MessagesPage = ({
         <div className="p-4 px-6 border-b border-white/10 flex items-center justify-between gap-4 bg-slate-900/50 backdrop-blur-md flex-shrink-0">
           <div className="flex items-center gap-3">
             <img 
-              src={selectedTalent?.avatar || FALLBACK_AVATAR} 
-              alt={selectedTalent?.name || 'User'} 
+              src={selectedContact?.avatar || FALLBACK_AVATAR} 
+              alt={selectedContact?.name || 'User'} 
               className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 shadow-md" 
             />
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="font-bold text-white text-sm">{selectedTalent?.name || 'TalentX Specialist'}</h4>
+                <h4 className="font-bold text-white text-sm">{selectedContact?.name || 'TalentX Member'}</h4>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold">
-                  <ShieldCheck size={11} /> Verified
+                  <ShieldCheck size={11} /> {selectedContact?.role === 'client' ? 'Client' : 'Verified Pro'}
                 </span>
               </div>
               <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                <MapPin size={11} /> {selectedTalent?.city || 'Pakistan'} &bull; PKR {Number(selectedTalent?.hourlyRate || 3500).toLocaleString()}/hr
+                <MapPin size={11} /> {selectedContact?.city || 'Pakistan'} {selectedContact?.hourlyRate ? `• PKR ${Number(selectedContact.hourlyRate).toLocaleString()}/hr` : ''}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {onHireTalent && selectedTalent && (
+            {onHireTalent && selectedContact && selectedContact.role !== 'client' && (
               <button 
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 transition-all cursor-pointer"
-                onClick={() => onHireTalent(selectedTalent)}
+                onClick={() => onHireTalent(selectedContact)}
               >
                 <Sparkles size={13} />
                 <span>Send Hire Offer</span>
               </button>
             )}
-            {selectedTalent && (
+            {selectedContact && selectedContact.role !== 'client' && (
               <Link 
-                to={`/profile/${selectedTalent._id || selectedTalent.id}`} 
+                to={`/profile/${selectedContact._id || selectedContact.id}`} 
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-semibold transition-all"
               >
                 <span>View Portfolio</span>
@@ -202,34 +284,42 @@ export const MessagesPage = ({
 
         {/* Messages Feed (Independent Scroll Container) */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.length === 0 ? (
+          {activeThreadMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
                 <MessageSquare size={24} />
               </div>
               <h4 className="font-bold text-white text-base mb-1">Start the Conversation</h4>
-              <p className="text-slate-400 text-xs max-w-xs">Send a direct inquiry regarding your project milestone or availability.</p>
+              <p className="text-slate-400 text-xs max-w-xs">Send a direct message to {selectedContact?.name || 'this contact'} regarding your project or inquiry.</p>
             </div>
           ) : (
-            messages.map((msg, index) => (
-              <div 
-                key={msg.id || msg._id || index} 
-                className={`flex w-full ${msg.isClient ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[75%] sm:max-w-[65%] shadow-lg ${
-                  msg.isClient 
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-none shadow-indigo-500/20' 
-                    : 'bg-slate-900 border border-white/10 text-slate-200 rounded-bl-none'
-                }`}>
-                  <div className="text-[10px] font-bold opacity-75 mb-1">{msg.senderName}</div>
-                  <p className="m-0 text-xs sm:text-sm">{msg.text}</p>
-                  <div className="flex items-center justify-end gap-1 text-[10px] opacity-60 mt-1.5">
-                    <span>{msg.time || 'Just now'}</span>
-                    {msg.isClient && <CheckCheck size={12} className="text-cyan-300" />}
+            activeThreadMessages.map((msg, index) => {
+              const isSentByMe = String(msg.senderId) === currentUserId;
+
+              return (
+                <div 
+                  key={msg.id || msg._id || index} 
+                  className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[75%] sm:max-w-[65%] shadow-lg ${
+                    isSentByMe 
+                      ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-br-none shadow-indigo-500/20' 
+                      : 'bg-slate-900 border border-white/10 text-slate-200 rounded-bl-none'
+                  }`}>
+                    <div className="text-[10px] font-bold opacity-80 mb-1 flex items-center justify-between gap-3">
+                      <span>{isSentByMe ? 'You' : (msg.senderName || selectedContact?.name || 'Contact')}</span>
+                    </div>
+                    <p className="m-0 text-xs sm:text-sm whitespace-pre-wrap">{msg.text}</p>
+                    <div className="flex items-center justify-end gap-1 text-[10px] opacity-70 mt-1.5">
+                      <span>{msg.time || 'Just now'}</span>
+                      {isSentByMe && (
+                        <CheckCheck size={12} className={msg.isRead ? 'text-emerald-300' : 'text-cyan-200'} />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -253,7 +343,7 @@ export const MessagesPage = ({
           <input 
             type="text"
             className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-sm outline-none transition-all"
-            placeholder={`Message ${selectedTalent?.name || 'freelancer'}...`}
+            placeholder={`Message ${selectedContact?.name || 'member'}...`}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             autoComplete="off"

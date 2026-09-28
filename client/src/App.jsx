@@ -32,6 +32,9 @@ import {
   apiGetContracts,
   apiCreateContract,
   apiSubmitProposal,
+  apiGetMessages,
+  apiSendMessage,
+  apiMarkMessagesRead,
   apiUpdateProfile,
   apiGetMe
 } from './services/api';
@@ -173,6 +176,16 @@ function AppContent() {
         }
       } catch (err) {
         console.warn('Atlas contracts fetch notice:', err.message);
+      }
+
+      try {
+        const liveMessages = await apiGetMessages();
+        if (Array.isArray(liveMessages)) {
+          setMessages(liveMessages);
+          saveMessages(liveMessages);
+        }
+      } catch (err) {
+        console.warn('Atlas messages fetch notice:', err.message);
       }
     };
 
@@ -348,11 +361,61 @@ function AppContent() {
     showToast(`🌟 Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
   };
 
-  // Send Message Handler
-  const handleSendMessage = (msgData) => {
-    const newMsg = addMessage(msgData);
+  // Real-Time Messaging Handlers (MongoDB Atlas Synced)
+  const handleSendMessage = async (msgData) => {
+    const formatted = {
+      ...msgData,
+      id: msgData.id || `msg_${Date.now()}`,
+      time: msgData.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      createdAt: new Date().toISOString(),
+      isRead: false
+    };
+
+    // 1. Optimistic Local State & Cache Update
+    const updated = addMessage(formatted);
     setMessages(getMessages());
+
+    // 2. Direct Sync with MongoDB Cloud
+    try {
+      const liveMsg = await apiSendMessage(formatted);
+      if (liveMsg) {
+        const synced = getMessages().map(m => m.id === formatted.id ? { ...m, _id: liveMsg._id } : m);
+        saveMessages(synced);
+        setMessages(synced);
+      }
+    } catch (err) {
+      console.warn('MongoDB Message cloud sync notice:', err.message);
+    }
   };
+
+  const handleMarkMessagesRead = async (senderId) => {
+    if (!currentUser) return;
+    const currentUserId = String(currentUser._id || currentUser.id || '');
+    if (!currentUserId || !senderId) return;
+
+    // Update local state
+    const currentMsgs = getMessages();
+    const updated = currentMsgs.map(m => {
+      if (String(m.senderId) === String(senderId) && String(m.receiverId) === currentUserId) {
+        return { ...m, isRead: true };
+      }
+      return m;
+    });
+    saveMessages(updated);
+    setMessages(updated);
+
+    // Sync with MongoDB Cloud
+    try {
+      await apiMarkMessagesRead(senderId, currentUserId);
+    } catch (err) {
+      console.warn('MongoDB Message read status sync notice:', err.message);
+    }
+  };
+
+  const currentUserId = String(currentUser?._id || currentUser?.id || '');
+  const unreadMessagesCount = currentUserId 
+    ? messages.filter(m => String(m.receiverId) === currentUserId && !m.isRead).length 
+    : 0;
 
   const handleUpdateCurrentUser = async (userData) => {
     const user = {
@@ -412,7 +475,7 @@ function AppContent() {
           currentUser={currentUser}
           onLogout={handleLogout}
           onOpenAuth={() => setIsAuthModalOpen(true)}
-          unreadCount={messages.length > 0 ? 1 : 0}
+          unreadCount={unreadMessagesCount}
         />
       )}
 
@@ -606,6 +669,7 @@ function AppContent() {
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 onSendMessage={handleSendMessage}
+                onMarkMessagesRead={handleMarkMessagesRead}
                 onHireTalent={(talent) => setHiringTalent(talent)}
               />
             } 

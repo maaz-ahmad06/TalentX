@@ -1,14 +1,26 @@
 import mongoose from 'mongoose';
 
 const MessageSchema = new mongoose.Schema({
-  sender: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  senderId: {
+    type: String,
+    required: true
   },
-  senderName: { type: String, required: true },
-  receiver: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  senderName: {
+    type: String,
+    required: true
+  },
+  senderAvatar: {
+    type: String
+  },
+  receiverId: {
+    type: String,
+    required: true
+  },
+  receiverName: {
+    type: String
+  },
+  receiverAvatar: {
+    type: String
   },
   text: {
     type: String,
@@ -17,6 +29,13 @@ const MessageSchema = new mongoose.Schema({
   isClient: {
     type: Boolean,
     default: false
+  },
+  isRead: {
+    type: Boolean,
+    default: false
+  },
+  time: {
+    type: String
   },
   createdAt: {
     type: Date,

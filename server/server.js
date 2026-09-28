@@ -9,6 +9,7 @@ import jobRoutes from './routes/jobRoutes.js';
 import talentRoutes from './routes/talentRoutes.js';
 import proposalRoutes from './routes/proposalRoutes.js';
 import contractRoutes from './routes/contractRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 
 // Load environment variables
@@ -35,6 +36,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/talents', talentRoutes);
 app.use('/api/proposals', proposalRoutes);
 app.use('/api/contracts', contractRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/api/ai', aiRoutes);
 
 // Base Health Check

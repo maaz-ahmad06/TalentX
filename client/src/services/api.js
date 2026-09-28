@@ -166,6 +166,30 @@ export const apiReleaseMilestone = async (contractId, milestoneId) => {
 };
 
 // -------------------------------------------------------------
+// MESSAGING & CHAT (MongoDB Atlas)
+// -------------------------------------------------------------
+export const apiGetMessages = async (userId = '') => {
+  const query = userId ? `?userId=${userId}` : '';
+  const res = await request(`/messages${query}`, { method: 'GET' });
+  return res.data || [];
+};
+
+export const apiSendMessage = async (msgData) => {
+  const res = await request('/messages', {
+    method: 'POST',
+    body: JSON.stringify(msgData)
+  });
+  return res.data;
+};
+
+export const apiMarkMessagesRead = async (senderId, receiverId) => {
+  return await request(`/messages/read/${senderId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ receiverId })
+  });
+};
+
+// -------------------------------------------------------------
 // AI MATCHER (Backend AI Endpoint)
 // -------------------------------------------------------------
 export const apiMatchTalentWithAI = async (jobData) => {
