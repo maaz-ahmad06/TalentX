@@ -288,12 +288,7 @@ export const MessagesPage = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, selectedContact]);
 
-  const quickReplies = [
-    'Salam! Are you available for a project this week?',
-    'Can you share your portfolio drive link?',
-    'Our budget is fixed at PKR 45,000 for this scope.',
-    'Yes, we can arrange an online meeting to discuss.'
-  ];
+
 
   // Send real manual message — NO fake auto-replies!
   const handleSend = (e) => {
@@ -543,19 +538,7 @@ export const MessagesPage = ({
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick Reply Pills Strip */}
-            <div className="flex gap-2 p-3 px-6 overflow-x-auto bg-slate-900/60 border-t border-white/5 flex-shrink-0">
-              {quickReplies.map((qr, i) => (
-                <button 
-                  key={i} 
-                  type="button"
-                  className="px-3.5 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex-shrink-0"
-                  onClick={() => setInputText(qr)}
-                >
-                  {qr}
-                </button>
-              ))}
-            </div>
+
 
             {/* Input Form */}
             <form onSubmit={handleSend} className="p-4 px-6 bg-slate-900 border-t border-white/10 flex items-center gap-3 flex-shrink-0">

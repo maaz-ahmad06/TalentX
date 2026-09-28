@@ -24,44 +24,20 @@ export const ChatDrawer = ({
   const [selectedTalent, setSelectedTalent] = useState(activeTalent || talents[0]);
   const [inputText, setInputText] = useState('');
 
-  const quickReplies = [
-    'Salam! Are you available this weekend?',
-    'Can you share your portfolio drive link?',
-    'Our budget is fixed at PKR 45,000 for this scope.',
-    'Yes, we can arrange an on-site meeting in Gulberg.'
-  ];
-
   const handleSend = (e) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !selectedTalent) return;
 
     onSendMessage({
       senderId: 'client_01',
       senderName: 'Client Business',
       receiverId: selectedTalent.id,
-      text: inputText,
+      receiverName: selectedTalent.name,
+      text: inputText.trim(),
       isClient: true
     });
 
     setInputText('');
-
-    // Simulated Talent Auto-Reply after 1.2 seconds!
-    setTimeout(() => {
-      const autoResponses = [
-        `Walaikum Assalam! Thank you for reaching out. Yes, I'm fully available for this project in ${selectedTalent.city}.`,
-        `Sounds great! I have reviewed the brief and I can deliver the first revision within 48 hours.`,
-        `I am happy to work with this budget. Please send over the contract offer so we can lock the dates.`
-      ];
-      const randomResponse = autoResponses[Math.floor(Math.random() * autoResponses.length)];
-      
-      onSendMessage({
-        senderId: selectedTalent.id,
-        senderName: selectedTalent.name,
-        receiverId: 'client_01',
-        text: randomResponse,
-        isClient: false
-      });
-    }, 1200);
   };
 
   return (
@@ -152,18 +128,7 @@ export const ChatDrawer = ({
             ))}
           </div>
 
-          {/* Quick Reply Pills */}
-          <div className="px-4 py-2 bg-slate-900/40 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto scrollbar-none">
-            {quickReplies.map((qr, i) => (
-              <button 
-                key={i} 
-                className="px-3 py-1 rounded-full bg-slate-800/80 hover:bg-slate-800 text-[11px] text-slate-300 hover:text-white border border-slate-700/60 whitespace-nowrap cursor-pointer transition-colors shrink-0"
-                onClick={() => setInputText(qr)}
-              >
-                {qr}
-              </button>
-            ))}
-          </div>
+
 
           {/* Input Bar */}
           <form onSubmit={handleSend} className="p-3 bg-slate-900/80 border-t border-slate-800 flex items-center gap-2">
