@@ -45,6 +45,14 @@ export const MessagesPage = ({
   const currentUserEmail = (currentUser?.email || '').trim().toLowerCase();
   const currentUserName = (currentUser?.name || '').trim().toLowerCase();
 
+  const unreadTotalCount = currentUserId 
+    ? messages.filter(m => {
+        const rId = String(m.receiverId || '');
+        const rEmail = (m.receiverEmail || '').toLowerCase();
+        return ((currentUserId && rId === currentUserId) || (currentUserEmail && rEmail && rEmail === currentUserEmail)) && !m.isRead;
+      }).length 
+    : 0;
+
   // Helper to determine if a contact/user object is the logged-in user themselves
   const isSelf = (userObj) => {
     if (!userObj || !currentUser) return false;
@@ -799,9 +807,20 @@ export const MessagesPage = ({
               )}
 
               {/* Active Messages Link */}
-              <Link to="/messages" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10">
-                <MessageSquare size={18} />
-                <span>Messages & Chat</span>
+              <Link to="/messages" className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10">
+                <div className="flex items-center gap-3">
+                  <MessageSquare size={18} />
+                  <span>Messages & Chat</span>
+                </div>
+                {unreadTotalCount > 0 ? (
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-black shadow-md shadow-indigo-500/30 animate-pulse">
+                    {unreadTotalCount}
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">
+                    {contacts.length}
+                  </span>
+                )}
               </Link>
             </nav>
           </div>

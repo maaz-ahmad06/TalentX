@@ -35,6 +35,8 @@ export const ClientDashboardPage = ({
   contracts = [], 
   proposals = [], 
   talents = [],
+  messages = [],
+  unreadMessagesCount = 0,
   onUpdateContracts,
   onUpdateJobs,
   onAddContract,
@@ -43,6 +45,19 @@ export const ClientDashboardPage = ({
   onUpdateCurrentUser,
   showToast
 }) => {
+  const currentUserId = String(currentUser?._id || currentUser?.id || '');
+  const unreadCount = unreadMessagesCount || (currentUserId 
+    ? messages.filter(m => {
+        const rId = String(m.receiverId || '');
+        const rEmail = (m.receiverEmail || '').toLowerCase();
+        const myEmail = (currentUser?.email || '').toLowerCase();
+        return ((currentUserId && rId === currentUserId) || (myEmail && rEmail && rEmail === myEmail)) && !m.isRead;
+      }).length 
+    : 0);
+  const myTotalMessagesCount = currentUserId 
+    ? messages.filter(m => String(m.receiverId) === currentUserId || String(m.senderId) === currentUserId).length 
+    : messages.length;
+
   const [activeSubTab, setActiveSubTab] = useState('contracts');
   const [showLogoUrlInput, setShowLogoUrlInput] = useState(false);
   const logoFileInputRef = useRef(null);
@@ -348,6 +363,15 @@ export const ClientDashboardPage = ({
                 <MessageSquare size={18} />
                 <span>Messages & Chat</span>
               </div>
+              {unreadCount > 0 ? (
+                <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-500/30 animate-pulse">
+                  {unreadCount}
+                </span>
+              ) : myTotalMessagesCount > 0 ? (
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">
+                  {myTotalMessagesCount}
+                </span>
+              ) : null}
             </Link>
           </nav>
         </div>

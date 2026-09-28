@@ -192,6 +192,25 @@ function AppContent() {
     fetchAtlasData();
   }, []);
 
+  // Real-time polling for live messages & notifications when user is logged in
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const liveMessages = await apiGetMessages();
+        if (Array.isArray(liveMessages)) {
+          setMessages(liveMessages);
+          saveMessages(liveMessages);
+        }
+      } catch (err) {
+        // silent background sync
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
   const showToast = (message, type = 'success') => {
     if (type === 'error') {
       toast.error(message);
@@ -414,7 +433,13 @@ function AppContent() {
 
   const currentUserId = String(currentUser?._id || currentUser?.id || '');
   const unreadMessagesCount = currentUserId 
-    ? messages.filter(m => String(m.receiverId) === currentUserId && !m.isRead).length 
+    ? messages.filter(m => {
+        const rId = String(m.receiverId || '');
+        const rEmail = (m.receiverEmail || '').toLowerCase();
+        const myEmail = (currentUser?.email || '').toLowerCase();
+        const isReceiverMe = (currentUserId && rId === currentUserId) || (myEmail && rEmail && rEmail === myEmail);
+        return isReceiverMe && !m.isRead;
+      }).length 
     : 0;
 
   const handleUpdateCurrentUser = async (userData) => {
@@ -610,6 +635,8 @@ function AppContent() {
                 contracts={contracts}
                 proposals={proposals}
                 talents={talents}
+                messages={messages}
+                unreadMessagesCount={unreadMessagesCount}
                 onUpdateContracts={handleUpdateContracts}
                 onUpdateJobs={handleUpdateJobs}
                 onAddContract={handleContractCreate}
@@ -628,6 +655,8 @@ function AppContent() {
                 contracts={contracts}
                 proposals={proposals}
                 talents={talents}
+                messages={messages}
+                unreadMessagesCount={unreadMessagesCount}
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 onUpdateCurrentUser={handleUpdateCurrentUser}
@@ -644,6 +673,8 @@ function AppContent() {
                 talents={talents}
                 jobs={jobs}
                 contracts={contracts}
+                messages={messages}
+                unreadMessagesCount={unreadMessagesCount}
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 onUpdateTalents={handleUpdateTalents}

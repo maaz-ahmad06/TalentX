@@ -67,12 +67,27 @@ export const FreelancerDashboardPage = ({
   contracts = [], 
   proposals = [], 
   talents = [], 
+  messages = [],
+  unreadMessagesCount = 0,
   currentUser,
   onLogout,
   onUpdateCurrentUser,
   onUpdateTalents,
   showToast
 }) => {
+  const currentUserId = String(currentUser?._id || currentUser?.id || '');
+  const unreadCount = unreadMessagesCount || (currentUserId 
+    ? messages.filter(m => {
+        const rId = String(m.receiverId || '');
+        const rEmail = (m.receiverEmail || '').toLowerCase();
+        const myEmail = (currentUser?.email || '').toLowerCase();
+        return ((currentUserId && rId === currentUserId) || (myEmail && rEmail && rEmail === myEmail)) && !m.isRead;
+      }).length 
+    : 0);
+  const myTotalMessagesCount = currentUserId 
+    ? messages.filter(m => String(m.receiverId) === currentUserId || String(m.senderId) === currentUserId).length 
+    : messages.length;
+
   const [activeSubTab, setActiveSubTab] = useState('contracts');
 
   // Find active talent profile or fallback to currentUser
@@ -497,6 +512,15 @@ export const FreelancerDashboardPage = ({
                 <MessageSquare size={18} />
                 <span>Messages & Chat</span>
               </div>
+              {unreadCount > 0 ? (
+                <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-black shadow-lg shadow-indigo-500/30 animate-pulse">
+                  {unreadCount}
+                </span>
+              ) : myTotalMessagesCount > 0 ? (
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">
+                  {myTotalMessagesCount}
+                </span>
+              ) : null}
             </Link>
           </nav>
         </div>
@@ -1161,137 +1185,156 @@ export const FreelancerDashboardPage = ({
       {/* ============================================================
           ADD PORTFOLIO PROJECT MODAL (Tailwind CSS)
           ============================================================ */}
+      {/* ============================================================
+          ADD PORTFOLIO PROJECT MODAL (Tailwind CSS)
+          ============================================================ */}
       {isAddProjectModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto" onClick={() => setIsAddProjectModalOpen(false)}>
-          <div className="relative w-full max-w-lg bg-slate-900 border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-indigo-500/10 my-8" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="absolute top-5 right-5 w-9 h-9 rounded-xl bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/10 hover:border-rose-500/30 flex items-center justify-center transition-all cursor-pointer"
-              onClick={() => setIsAddProjectModalOpen(false)}
-            >
-              <X size={18} />
-            </button>
-
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-2">
-                <Award size={14} /> New Showcase Project
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto" 
+          onClick={() => setIsAddProjectModalOpen(false)}
+        >
+          <div 
+            className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl shadow-indigo-500/10 my-auto flex flex-col max-h-[90vh] overflow-hidden" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Pinned Header */}
+            <div className="p-6 pb-4 border-b border-white/10 flex items-start justify-between gap-4 bg-slate-950/50 backdrop-blur-md flex-shrink-0">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  <Award size={14} /> New Showcase Project
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Add Project to Portfolio</h2>
+                <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Display your past work to Pakistani employers and clients.</p>
               </div>
-              <h2 className="text-2xl font-bold text-white tracking-tight">Add Project to Portfolio</h2>
-              <p className="text-slate-400 text-sm mt-1">Display your past work to Pakistani employers and clients.</p>
+
+              <button 
+                type="button"
+                className="w-9 h-9 rounded-xl bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/10 hover:border-rose-500/30 flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
+                onClick={() => setIsAddProjectModalOpen(false)}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            <form onSubmit={handleCreatePortfolioProject} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Project Title *</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
-                  placeholder="e.g. Khaadi Retail App or Drone Commercial Shoot"
-                  value={newProjectForm.title}
-                  onChange={(e) => setNewProjectForm({ ...newProjectForm, title: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Category *</label>
-                <select 
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-sm outline-none transition-all cursor-pointer"
-                  value={newProjectForm.category}
-                  onChange={(e) => setNewProjectForm({ ...newProjectForm, category: e.target.value })}
-                >
-                  {CATEGORIES.filter(c => c.id !== 'all').map(c => (
-                    <option key={c.id} value={c.label} className="bg-slate-900 text-white">{c.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Project Image / Banner *</label>
-                  <button
-                    type="button"
-                    className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
-                    onClick={() => setShowProjectImageUrlInput(!showProjectImageUrlInput)}
-                  >
-                    {showProjectImageUrlInput ? 'Upload Image File' : 'Paste Image URL'}
-                  </button>
-                </div>
-
-                {!showProjectImageUrlInput ? (
-                  <div className="space-y-2">
-                    <input 
-                      ref={projectImageFileInputRef}
-                      type="file" 
-                      accept="image/png, image/jpeg, image/jpg, image/webp" 
-                      className="hidden" 
-                      onChange={handleProjectImageFileSelect}
-                    />
-                    <div className="flex items-center gap-3 p-3 bg-slate-950/80 border border-white/10 rounded-2xl">
-                      {newProjectForm.image && (
-                        <img 
-                          src={newProjectForm.image} 
-                          alt="Project Preview" 
-                          className="w-14 h-14 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
-                        />
-                      )}
-                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => projectImageFileInputRef.current?.click()}
-                          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
-                        >
-                          <Upload size={14} />
-                          <span>Choose Project Photo</span>
-                        </button>
-                        <span className="text-[11px] text-slate-400">JPG, PNG, WEBP</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
+            {/* Scrollable Form Body */}
+            <div className="p-6 sm:p-8 overflow-y-auto flex-1">
+              <form id="portfolio-project-form" onSubmit={handleCreatePortfolioProject} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Project Title *</label>
                   <input 
-                    type="url" 
+                    type="text" 
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
-                    placeholder="https://images.unsplash.com/..."
-                    value={newProjectForm.image}
-                    onChange={(e) => setNewProjectForm({ ...newProjectForm, image: e.target.value })}
+                    placeholder="e.g. Khaadi Retail App or Drone Commercial Shoot"
+                    value={newProjectForm.title}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, title: e.target.value })}
                     required
                   />
-                )}
-              </div>
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Description & Scope *</label>
-                <textarea 
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
-                  rows="3"
-                  placeholder="Describe your role, client results, and technical challenges solved..."
-                  value={newProjectForm.description}
-                  onChange={(e) => setNewProjectForm({ ...newProjectForm, description: e.target.value })}
-                  required
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Category *</label>
+                  <select 
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-sm outline-none transition-all cursor-pointer"
+                    value={newProjectForm.category}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, category: e.target.value })}
+                  >
+                    {CATEGORIES.filter(c => c.id !== 'all').map(c => (
+                      <option key={c.id} value={c.label} className="bg-slate-900 text-white">{c.label}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Tags / Tools (comma separated)</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
-                  placeholder="e.g. React, Next.js, Figma, Sony A7IV"
-                  value={newProjectForm.tags}
-                  onChange={(e) => setNewProjectForm({ ...newProjectForm, tags: e.target.value })}
-                />
-              </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Project Image / Banner *</label>
+                    <button
+                      type="button"
+                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
+                      onClick={() => setShowProjectImageUrlInput(!showProjectImageUrlInput)}
+                    >
+                      {showProjectImageUrlInput ? 'Upload Image File' : 'Paste Image URL'}
+                    </button>
+                  </div>
 
-              <div className="pt-2">
-                <button 
-                  type="submit" 
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-600 hover:to-pink-700 text-white font-bold text-sm shadow-xl shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-                >
-                  <Plus size={16} />
-                  <span>Publish Project to Portfolio</span>
-                </button>
-              </div>
-            </form>
+                  {!showProjectImageUrlInput ? (
+                    <div className="space-y-2">
+                      <input 
+                        ref={projectImageFileInputRef}
+                        type="file" 
+                        accept="image/png, image/jpeg, image/jpg, image/webp" 
+                        className="hidden" 
+                        onChange={handleProjectImageFileSelect}
+                      />
+                      <div className="flex items-center gap-3 p-3 bg-slate-950/80 border border-white/10 rounded-2xl">
+                        {newProjectForm.image && (
+                          <img 
+                            src={newProjectForm.image} 
+                            alt="Project Preview" 
+                            className="w-14 h-14 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => projectImageFileInputRef.current?.click()}
+                            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
+                          >
+                            <Upload size={14} />
+                            <span>Choose Project Photo</span>
+                          </button>
+                          <span className="text-[11px] text-slate-400">JPG, PNG, WEBP</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <input 
+                      type="url" 
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
+                      placeholder="https://images.unsplash.com/..."
+                      value={newProjectForm.image}
+                      onChange={(e) => setNewProjectForm({ ...newProjectForm, image: e.target.value })}
+                      required
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Description & Scope *</label>
+                  <textarea 
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
+                    rows="3"
+                    placeholder="Describe your role, client results, and technical challenges solved..."
+                    value={newProjectForm.description}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, description: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Tags / Tools (comma separated)</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all" 
+                    placeholder="e.g. React, Next.js, Figma, Sony A7IV"
+                    value={newProjectForm.tags}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, tags: e.target.value })}
+                  />
+                </div>
+              </form>
+            </div>
+
+            {/* Pinned Footer */}
+            <div className="p-6 pt-4 border-t border-white/10 bg-slate-950/50 backdrop-blur-md flex-shrink-0">
+              <button 
+                type="submit" 
+                form="portfolio-project-form"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-600 hover:to-pink-700 text-white font-bold text-sm shadow-xl shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Publish Project to Portfolio</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
