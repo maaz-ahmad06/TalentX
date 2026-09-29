@@ -217,7 +217,7 @@ export const FreelancerDashboardPage = ({
 
         const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.88);
         setProfileForm(prev => ({ ...prev, avatar: optimizedBase64 }));
-        if (showToast) showToast('📸 Profile photo uploaded! Click "Save Profile" to publish.', 'success');
+        if (showToast) showToast('Profile photo uploaded! Click "Save Profile" to publish.', 'success');
       };
       img.src = uploadEvent.target.result;
     };
@@ -260,7 +260,7 @@ export const FreelancerDashboardPage = ({
 
         const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.85);
         setNewProjectForm(prev => ({ ...prev, image: optimizedBase64 }));
-        if (showToast) showToast('🖼️ Project image loaded successfully!', 'success');
+        if (showToast) showToast('Project image loaded successfully!', 'success');
       };
       img.src = uploadEvent.target.result;
     };
@@ -333,7 +333,7 @@ export const FreelancerDashboardPage = ({
 
     confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
     if (showToast) {
-      showToast('🎉 Profile details saved! Changes are live on your portfolio.', 'ai');
+      showToast('Profile details saved! Changes are live on your portfolio.', 'ai');
     }
   };
 
@@ -370,14 +370,14 @@ export const FreelancerDashboardPage = ({
     });
 
     confetti({ particleCount: 70, spread: 50, origin: { y: 0.6 } });
-    if (showToast) showToast(`✨ Project "${newProject.title}" added to your showcase!`, 'success');
+    if (showToast) showToast(`Project "${newProject.title}" added to your showcase!`, 'success');
   };
 
   // Load Demo Samples
   const handleLoadSampleProjects = () => {
     updatePortfolioInTalent(SAMPLE_PORTFOLIO_ITEMS);
     confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-    if (showToast) showToast('🌟 Loaded 3 verified sample portfolio projects!', 'ai');
+    if (showToast) showToast('Loaded 3 verified sample portfolio projects!', 'ai');
   };
 
   // Delete Portfolio Project

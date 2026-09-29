@@ -43,7 +43,7 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
     const password = formData.password || '';
 
     if (!email || !password) {
-      toast.warning('⚠️ Please enter both email and password.');
+      toast.warning('Please enter both email and password.');
       return;
     }
 
@@ -58,7 +58,7 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
             ...apiRes.user,
             id: apiRes.user.id || apiRes.user._id
           };
-          toast.success('🎉 Logged in successfully!');
+          toast.success('Logged in successfully!');
           onAuthSuccess(user);
           onClose();
           return;
@@ -69,11 +69,11 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
         // If backend server replied with an HTTP status (Authoritative MongoDB Atlas response)
         if (apiErr.status) {
           if (apiErr.status === 404 || errMsg.toLowerCase().includes('no account found') || errMsg.toLowerCase().includes('sign up first')) {
-            toast.error('❌ No account found with this email. Please sign up first.');
+            toast.error('No account found with this email. Please sign up first.');
           } else if (apiErr.status === 401 || errMsg.toLowerCase().includes('invalid')) {
-            toast.error('❌ Invalid email or password. Please check your credentials and try again.');
+            toast.error('Invalid email or password. Please check your credentials and try again.');
           } else {
-            toast.error(errMsg || '❌ Authentication failed. Please try again.');
+            toast.error(errMsg || 'Authentication failed. Please try again.');
           }
           setIsSubmitting(false);
           return;
@@ -82,16 +82,16 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
         // Fallback check ONLY if MongoDB server is offline (Network error / fetch failed)
         const localRes = loginUser(email, password, selectedRole);
         if (localRes.success) {
-          toast.success('🎉 Logged in successfully!');
+          toast.success('Logged in successfully!');
           onAuthSuccess(localRes.user);
           onClose();
           return;
         }
         
         if (localRes.message && localRes.message.includes('No account found')) {
-          toast.error('❌ No account found with this email. Please sign up first.');
+          toast.error('No account found with this email. Please sign up first.');
         } else {
-          toast.error(localRes.message || '❌ Invalid email or password. Please check your credentials and try again.');
+          toast.error(localRes.message || 'Invalid email or password. Please check your credentials and try again.');
         }
         setIsSubmitting(false);
         return;
@@ -100,13 +100,13 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
 
     // 2. Authoritative Backend MongoDB Atlas Registration
     if (!formData.name.trim()) {
-      toast.warning('⚠️ Please enter your full name.');
+      toast.warning('Please enter your full name.');
       setIsSubmitting(false);
       return;
     }
 
     if (password.length < 6) {
-      toast.warning('⚠️ Password must be at least 6 characters long.');
+      toast.warning('Password must be at least 6 characters long.');
       setIsSubmitting(false);
       return;
     }
@@ -125,7 +125,7 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
           ...regRes.user,
           id: regRes.user.id || regRes.user._id
         };
-        toast.success(`🎉 ${getRoleDisplayName(user.role)} account created successfully!`);
+        toast.success(`${getRoleDisplayName(user.role)} account created successfully!`);
         onAuthSuccess(user);
         onClose();
         return;
@@ -133,7 +133,7 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
     } catch (apiErr) {
       const errMsg = apiErr.message || apiErr.data?.message || '';
       if (errMsg.toLowerCase().includes('already exists') || apiErr.status === 400) {
-        toast.warning(errMsg || '⚠️ An account with this email already exists! Please log in instead.');
+        toast.warning(errMsg || 'An account with this email already exists! Please log in instead.');
         setIsLoginMode(true);
       } else {
         toast.error(errMsg || 'Registration failed. Please check your connection.');

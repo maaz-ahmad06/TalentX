@@ -90,14 +90,14 @@ export const PostJobPage = ({ onJobCreated, currentUser, onOpenAuth }) => {
         skillsInput: aiBrief.skills.join(', ')
       }));
       setIsAIGenerating(false);
-      toast.info('✨ AI Generated tailored project brief & estimated market budget!', { icon: '✨' });
+      toast.info('AI Generated tailored project brief & estimated market budget!');
     }, 600);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.title || !formData.description) {
-      toast.warning('⚠️ Please fill out the project title and description.');
+      toast.warning('Please fill out the project title and description.');
       return;
     }
 

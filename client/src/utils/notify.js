@@ -5,7 +5,7 @@ export const notify = {
   error: (message, options = {}) => toast.error(message, options),
   warning: (message, options = {}) => toast.warning(message, options),
   info: (message, options = {}) => toast.info(message, options),
-  ai: (message, options = {}) => toast.info(message, { icon: '✨', ...options })
+  ai: (message, options = {}) => toast.info(message, options)
 };
 
 export { toast };

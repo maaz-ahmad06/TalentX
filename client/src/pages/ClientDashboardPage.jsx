@@ -136,7 +136,7 @@ export const ClientDashboardPage = ({
 
         const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.88);
         setCompanyForm(prev => ({ ...prev, avatar: optimizedBase64 }));
-        if (showToast) showToast('📸 Company logo selected! Click "Save Company Information" to apply.', 'success');
+        if (showToast) showToast('Company logo selected! Click "Save Company Information" to apply.', 'success');
       };
       img.src = uploadEvent.target.result;
     };
@@ -177,7 +177,7 @@ export const ClientDashboardPage = ({
       onUpdateContracts(updated);
     }
     if (showToast) {
-      showToast('💰 Milestone funds released to freelancer wallet!', 'success');
+      showToast('Milestone funds released to freelancer wallet!', 'success');
     }
   };
 
@@ -218,7 +218,7 @@ export const ClientDashboardPage = ({
     confetti({ particleCount: 90, spread: 60, origin: { y: 0.6 } });
     setActiveSubTab('contracts');
     if (showToast) {
-      showToast(`🎉 Contract created with ${proposal.talentName}! Escrow funded in PKR.`, 'success');
+      showToast(`Contract created with ${proposal.talentName}! Escrow funded in PKR.`, 'success');
     }
   };
 
@@ -240,7 +240,7 @@ export const ClientDashboardPage = ({
 
     confetti({ particleCount: 70, spread: 50, origin: { y: 0.6 } });
     if (showToast) {
-      showToast('🏢 Company & employer settings saved successfully!', 'ai');
+      showToast('Company & employer settings saved successfully!', 'ai');
     }
   };
 

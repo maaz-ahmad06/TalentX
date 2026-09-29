@@ -154,7 +154,7 @@ export const AdminDashboardPage = ({
     
     const updated = talents.map(t => t.id === talentId ? { ...t, isSuspended: newSuspendedState } : t);
     onUpdateTalents(updated);
-    showToast(`Account for ${talent.name} is now ${newSuspendedState ? '⛔ SUSPENDED' : '✅ ACTIVE'}`, newSuspendedState ? 'warning' : 'success');
+    showToast(`Account for ${talent.name} is now ${newSuspendedState ? 'SUSPENDED' : 'ACTIVE'}`, newSuspendedState ? 'warning' : 'success');
   };
 
   const handleDeleteUser = (talentId, name) => {
@@ -205,7 +205,7 @@ export const AdminDashboardPage = ({
     });
 
     confetti({ particleCount: 70, spread: 50, origin: { y: 0.6 } });
-    showToast(`🎉 New professional "${newTalent.name}" added to marketplace!`, 'ai');
+    showToast(`New professional "${newTalent.name}" added to marketplace!`, 'ai');
   };
 
   const handleSaveEditUser = (e) => {
@@ -308,7 +308,7 @@ export const AdminDashboardPage = ({
     });
 
     confetti({ particleCount: 70, spread: 50, origin: { y: 0.6 } });
-    showToast(`🌟 Job "${createdJob.title}" published with Admin Priority!`, 'ai');
+    showToast(`Job "${createdJob.title}" published with Admin Priority!`, 'ai');
   };
 
   const handleSaveEditJob = (e) => {
@@ -361,7 +361,7 @@ export const AdminDashboardPage = ({
 
     confetti({ particleCount: 90, spread: 60, origin: { y: 0.6 } });
     onUpdateContracts(updated);
-    showToast(`⚡ ADMIN OVERRIDE: Milestone funds released directly to freelancer's PKR wallet!`, 'ai');
+    showToast(`ADMIN OVERRIDE: Milestone funds released directly to freelancer's PKR wallet!`, 'ai');
   };
 
   const handleAdminForceRefund = (contractId, milestoneId) => {
@@ -384,7 +384,7 @@ export const AdminDashboardPage = ({
       });
 
       onUpdateContracts(updated);
-      showToast(`🛡️ Dispute resolved: Escrow milestone refunded to client.`, 'warning');
+      showToast(`Dispute resolved: Escrow milestone refunded to client.`, 'warning');
     }
   };
 
@@ -417,7 +417,7 @@ export const AdminDashboardPage = ({
     const updated = [newContract, ...contracts];
     onUpdateContracts(updated);
     setIsAddContractModalOpen(false);
-    showToast(`🔒 New Escrow Contract created and funded with PKR ${Number(newContractForm.amount).toLocaleString()}!`, 'success');
+    showToast(`New Escrow Contract created and funded with PKR ${Number(newContractForm.amount).toLocaleString()}!`, 'success');
   };
 
   // -------------------------------------------------------------
@@ -457,7 +457,7 @@ export const AdminDashboardPage = ({
     downloadAnchor.click();
     downloadAnchor.remove();
 
-    showToast('📥 Platform database exported successfully as JSON file!', 'success');
+    showToast('Platform database exported successfully as JSON file!', 'success');
   };
 
   // -------------------------------------------------------------

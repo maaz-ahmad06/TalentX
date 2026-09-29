@@ -42,14 +42,14 @@ export const ProposalModal = ({
       const generatedPitch = generateAIProposal(job, activeTalent);
       setCoverLetter(generatedPitch);
       setIsGenerating(false);
-      toast.info('✨ AI Generated proposal pitch tailored to job requirements!', { icon: '✨' });
+      toast.info('AI Generated proposal pitch tailored to job requirements!');
     }, 500);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!coverLetter.trim()) {
-      toast.warning('⚠️ Please include a cover letter or use the AI pitch generator.');
+      toast.warning('Please include a cover letter or use the AI pitch generator.');
       return;
     }
 

@@ -42,14 +42,14 @@ export const PostJobModal = ({ onClose, onJobCreated }) => {
         skillsInput: aiBrief.skills.join(', ')
       }));
       setIsAIGenerating(false);
-      toast.info('✨ AI Generated comprehensive project brief & rates!', { icon: '✨' });
+      toast.info('AI Generated comprehensive project brief & rates!');
     }, 600);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.title || !formData.description) {
-      toast.warning('⚠️ Please fill out the job title and description.');
+      toast.warning('Please fill out the job title and description.');
       return;
     }
 

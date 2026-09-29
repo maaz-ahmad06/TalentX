@@ -270,18 +270,18 @@ function AppContent() {
   }, [currentUser]);
 
   const showToast = (message, type = 'success') => {
+    const cleanMessage = typeof message === 'string' 
+      ? message.replace(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}✨🎉🚀⚠️❌🛡️💰📸🖼️🌟⚡⛔✅🔒🏢🧑‍💻]+\s*/u, '').trim()
+      : message;
+
     if (type === 'error') {
-      toast.error(message);
+      toast.error(cleanMessage);
     } else if (type === 'warning') {
-      toast.warning(message);
-    } else if (type === 'info') {
-      toast.info(message);
-    } else if (type === 'ai') {
-      toast.info(message, {
-        icon: '✨'
-      });
+      toast.warning(cleanMessage);
+    } else if (type === 'info' || type === 'ai') {
+      toast.info(cleanMessage);
     } else {
-      toast.success(message);
+      toast.success(cleanMessage);
     }
   };
 
@@ -299,8 +299,6 @@ function AppContent() {
       setTalents(updatedTalents);
       saveTalents(updatedTalents);
     }
-
-    showToast(`🎉 Welcome, ${user.name}! Logged in as ${user.role === 'client' ? '🏢 Client' : user.role === 'admin' ? '🛡️ Admin' : '🧑‍💻 Talent'}.`, 'ai');
 
     // Automatically navigate to user's personalized dashboard
     if (user.role === 'client') {
@@ -359,7 +357,7 @@ function AppContent() {
         const updatedJobs = [liveJob, ...jobs.filter(j => (j._id || j.id) !== (liveJob._id || liveJob.id))];
         setJobs(updatedJobs);
         saveJobs(updatedJobs);
-        showToast(`🎉 "${liveJob.title}" published! AI Matcher found top candidates.`, 'ai');
+        showToast(`"${liveJob.title}" published! AI Matcher found top candidates.`, 'ai');
         return;
       }
     } catch (err) {
@@ -368,7 +366,7 @@ function AppContent() {
 
     const created = addJob(newJobData);
     setJobs(getJobs());
-    showToast(`🎉 "${created.title}" published! AI Matcher found top candidates.`, 'ai');
+    showToast(`"${created.title}" published! AI Matcher found top candidates.`, 'ai');
   };
 
   // Proposal Submission Handler (MongoDB Atlas Synced)
@@ -385,7 +383,7 @@ function AppContent() {
             saveJobs(data);
           }
         }).catch(() => {});
-        showToast(`🚀 Proposal sent to ${proposalData.clientName || 'client'}!`, 'success');
+        showToast(`Proposal sent to ${proposalData.clientName || 'client'}!`, 'success');
         return;
       }
     } catch (err) {
@@ -395,7 +393,7 @@ function AppContent() {
     const created = addProposal(proposalData);
     setProposals(getProposals());
     setJobs(getJobs());
-    showToast(`🚀 Proposal sent to ${proposalData.clientName || 'client'}!`, 'success');
+    showToast(`Proposal sent to ${proposalData.clientName || 'client'}!`, 'success');
   };
 
   // Contract Creation Handler (MongoDB Atlas Synced)
@@ -411,12 +409,12 @@ function AppContent() {
           senderId: 'system',
           senderName: 'TalentX Escrow Bot',
           receiverId: contractData.talentId,
-          text: `🎉 Milestone Contract Created: "${contractData.jobTitle}" for PKR ${Number(contractData.amount).toLocaleString()}. Milestone 1 secured in Escrow!`,
+          text: `Milestone Contract Created: "${contractData.jobTitle}" for PKR ${Number(contractData.amount).toLocaleString()}. Milestone 1 secured in Escrow!`,
           isClient: true
         });
         setMessages(getMessages());
 
-        showToast(`🌟 Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
+        showToast(`Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
         return;
       }
     } catch (err) {
@@ -430,12 +428,12 @@ function AppContent() {
       senderId: 'system',
       senderName: 'TalentX Escrow Bot',
       receiverId: contractData.talentId,
-      text: `🎉 Milestone Contract Created: "${contractData.jobTitle}" for PKR ${Number(contractData.amount).toLocaleString()}. Milestone 1 secured in Escrow!`,
+      text: `Milestone Contract Created: "${contractData.jobTitle}" for PKR ${Number(contractData.amount).toLocaleString()}. Milestone 1 secured in Escrow!`,
       isClient: true
     });
     setMessages(getMessages());
 
-    showToast(`🌟 Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
+    showToast(`Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
   };
 
   // Real-Time Messaging Handlers (MongoDB Atlas Synced)
@@ -685,7 +683,7 @@ function AppContent() {
                 onSelectTalent={(talent) => setSelectedTalentModal(talent)}
                 onHireTalent={(talent) => {
                   if (!currentUser) {
-                    showToast('⚠️ Please log in or register as an Employer/Client to send hire offers.', 'warning');
+                    showToast('Please log in or register as an Employer/Client to send hire offers.', 'warning');
                     setIsAuthModalOpen(true);
                     return;
                   }
@@ -693,7 +691,7 @@ function AppContent() {
                 }}
                 onChatWithTalent={(talent) => {
                   if (!currentUser) {
-                    showToast('⚠️ Please log in or register to message professionals.', 'warning');
+                    showToast('Please log in or register to message professionals.', 'warning');
                     setIsAuthModalOpen(true);
                     return;
                   }
@@ -710,7 +708,7 @@ function AppContent() {
                 talents={talents}
                 onHireTalent={(talent) => {
                   if (!currentUser) {
-                    showToast('⚠️ Please log in or register as an Employer/Client to send hire offers.', 'warning');
+                    showToast('Please log in or register as an Employer/Client to send hire offers.', 'warning');
                     setIsAuthModalOpen(true);
                     return;
                   }
@@ -718,7 +716,7 @@ function AppContent() {
                 }}
                 onChatWithTalent={(talent) => {
                   if (!currentUser) {
-                    showToast('⚠️ Please log in or register to message professionals.', 'warning');
+                    showToast('Please log in or register to message professionals.', 'warning');
                     setIsAuthModalOpen(true);
                     return;
                   }
@@ -735,7 +733,7 @@ function AppContent() {
                 jobs={jobs}
                 onApplyJob={(job) => {
                   if (!currentUser) {
-                    showToast('⚠️ Please log in or register as a Freelancer to submit bids.', 'warning');
+                    showToast('Please log in or register as a Freelancer to submit bids.', 'warning');
                     setIsAuthModalOpen(true);
                     return;
                   }
@@ -757,7 +755,7 @@ function AppContent() {
                 talents={talents}
                 onHireTalent={(talent) => {
                   if (!currentUser) {
-                    showToast('⚠️ Please log in or register as an Employer/Client to send hire offers.', 'warning');
+                    showToast('Please log in or register as an Employer/Client to send hire offers.', 'warning');
                     setIsAuthModalOpen(true);
                     return;
                   }
@@ -765,7 +763,7 @@ function AppContent() {
                 }}
                 onChatWithTalent={(talent) => {
                   if (!currentUser) {
-                    showToast('⚠️ Please log in or register to message professionals.', 'warning');
+                    showToast('Please log in or register to message professionals.', 'warning');
                     setIsAuthModalOpen(true);
                     return;
                   }
@@ -884,7 +882,7 @@ function AppContent() {
           onClose={() => setSelectedTalentModal(null)}
           onHire={(talent) => {
             if (!currentUser) {
-              showToast('⚠️ Please log in or register as an Employer/Client to send hire offers.', 'warning');
+              showToast('Please log in or register as an Employer/Client to send hire offers.', 'warning');
               setIsAuthModalOpen(true);
               return;
             }
@@ -893,7 +891,7 @@ function AppContent() {
           }}
           onChat={(talent) => {
             if (!currentUser) {
-              showToast('⚠️ Please log in or register to message professionals.', 'warning');
+              showToast('Please log in or register to message professionals.', 'warning');
               setIsAuthModalOpen(true);
               return;
             }
