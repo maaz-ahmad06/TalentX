@@ -55,10 +55,10 @@ export const apiRegister = async (userData) => {
   return res;
 };
 
-export const apiLogin = async (email, password) => {
+export const apiLogin = async (email, password, role = '') => {
   const res = await request('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ email, password, role })
   });
 
   if (res.token) {

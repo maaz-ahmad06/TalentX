@@ -102,27 +102,11 @@ function AppContent() {
   // Route check: Hide public Navbar & Footer on all dashboard routes and logged-in messages workspace
   const isDashboardRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard') || (Boolean(currentUser) && location.pathname === '/messages');
 
-  // Preloader State: Only show once per session on public marketplace landing, never on messages/dashboards
-  const [isLoading, setIsLoading] = useState(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const path = window.location.pathname || '';
-        if (path.startsWith('/messages') || path.startsWith('/dashboard') || path.startsWith('/admin')) {
-          return false;
-        }
-        return !sessionStorage.getItem('talentx_preloader_seen');
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  });
+  // Preloader State: Runs on initial page load / refresh
+  const [isLoading, setIsLoading] = useState(true);
 
   const handlePreloaderFinish = () => {
     setIsLoading(false);
-    try {
-      sessionStorage.setItem('talentx_preloader_seen', 'true');
-    } catch {}
   };
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -647,7 +631,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white font-sans">
       {/* Animated 3D Preloader */}
-      {isLoading && !isDashboardRoute && location.pathname !== '/messages' && (
+      {isLoading && (
         <Preloader onFinish={handlePreloaderFinish} />
       )}
 

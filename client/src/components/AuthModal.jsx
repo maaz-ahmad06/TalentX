@@ -16,9 +16,9 @@ import { registerUser, loginUser, addTalent } from '../utils/storage';
 import { apiRegister, apiLogin } from '../services/api';
 import { toast } from 'react-toastify';
 
-export const AuthModal = ({ onClose, onAuthSuccess }) => {
-  const [isLoginMode, setIsLoginMode] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('talent'); // 'talent', 'client', 'admin'
+export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', initialMode = 'login' }) => {
+  const [isLoginMode, setIsLoginMode] = useState(initialMode === 'login');
+  const [selectedRole, setSelectedRole] = useState(initialRole); // 'talent', 'client', 'admin'
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,6 +27,14 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
     email: '',
     password: ''
   });
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'client': return 'Client';
+      case 'admin': return 'Admin';
+      default: return 'Freelancer';
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,27 +50,49 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
     setIsSubmitting(true);
 
     if (isLoginMode) {
-      // 1. Authoritative Backend MongoDB Atlas Login
+      // 1. Authoritative Backend MongoDB Atlas Login with Strict Role Portal Checking
       try {
-        const apiRes = await apiLogin(email, password);
+        const apiRes = await apiLogin(email, password, selectedRole);
         if (apiRes && apiRes.success && apiRes.user) {
           const user = {
             ...apiRes.user,
             id: apiRes.user.id || apiRes.user._id
           };
+          toast.success('🎉 Logged in successfully!');
           onAuthSuccess(user);
           onClose();
           return;
         }
       } catch (apiErr) {
-        // Fallback check if server offline
-        const localRes = loginUser(email, password);
+        const errMsg = apiErr.message || apiErr.data?.message || '';
+
+        // If backend server replied with an HTTP status (Authoritative MongoDB Atlas response)
+        if (apiErr.status) {
+          if (apiErr.status === 404 || errMsg.toLowerCase().includes('no account found') || errMsg.toLowerCase().includes('sign up first')) {
+            toast.error('❌ No account found with this email. Please sign up first.');
+          } else if (apiErr.status === 401 || errMsg.toLowerCase().includes('invalid')) {
+            toast.error('❌ Invalid email or password. Please check your credentials and try again.');
+          } else {
+            toast.error(errMsg || '❌ Authentication failed. Please try again.');
+          }
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Fallback check ONLY if MongoDB server is offline (Network error / fetch failed)
+        const localRes = loginUser(email, password, selectedRole);
         if (localRes.success) {
+          toast.success('🎉 Logged in successfully!');
           onAuthSuccess(localRes.user);
           onClose();
           return;
         }
-        toast.error('Invalid email or password. Please check your credentials and try again.');
+        
+        if (localRes.message && localRes.message.includes('No account found')) {
+          toast.error('❌ No account found with this email. Please sign up first.');
+        } else {
+          toast.error(localRes.message || '❌ Invalid email or password. Please check your credentials and try again.');
+        }
         setIsSubmitting(false);
         return;
       }
@@ -95,18 +125,18 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
           ...regRes.user,
           id: regRes.user.id || regRes.user._id
         };
-        toast.success('🎉 Account registered successfully in MongoDB database!');
+        toast.success(`🎉 ${getRoleDisplayName(user.role)} account created successfully!`);
         onAuthSuccess(user);
         onClose();
         return;
       }
     } catch (apiErr) {
-      const errMsg = apiErr.message || '';
+      const errMsg = apiErr.message || apiErr.data?.message || '';
       if (errMsg.toLowerCase().includes('already exists') || apiErr.status === 400) {
-        toast.warning('⚠️ An account with this email already exists in the database! Please log in instead.');
+        toast.warning(errMsg || '⚠️ An account with this email already exists! Please log in instead.');
         setIsLoginMode(true);
       } else {
-        toast.error(errMsg || 'Registration failed. Please check your database connection.');
+        toast.error(errMsg || 'Registration failed. Please check your connection.');
       }
       setIsSubmitting(false);
       return;
@@ -138,24 +168,13 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
           </h2>
           <p className="text-xs text-slate-400">
             {isLoginMode 
-              ? 'Access your personalized dashboard, contracts & messages' 
-              : 'Sign up to start hiring or offering your skills'}
+              ? `Select your portal and log in to your ${getRoleDisplayName(selectedRole)} account` 
+              : `Join as a ${getRoleDisplayName(selectedRole)} to start your journey`}
           </p>
         </div>
 
         {/* Mode Switcher Tabs */}
         <div className="flex p-1 rounded-2xl bg-slate-800/80 border border-slate-700/60 mb-5">
-          <button 
-            type="button"
-            className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer ${
-              !isLoginMode 
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
-                : 'text-slate-400 hover:text-white'
-            }`}
-            onClick={() => setIsLoginMode(false)}
-          >
-            Create Account
-          </button>
           <button 
             type="button"
             className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer ${
@@ -167,54 +186,77 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
           >
             Log In
           </button>
+          <button 
+            type="button"
+            className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer ${
+              !isLoginMode 
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+            onClick={() => setIsLoginMode(false)}
+          >
+            Create Account
+          </button>
         </div>
 
-        {/* Role Selection (For Registration) */}
-        {!isLoginMode && (
-          <div className="space-y-2 mb-5">
-            <label className="text-xs font-semibold text-slate-300">Choose Account Type:</label>
-            <div className="grid grid-cols-3 gap-2.5">
-              <div 
-                className={`p-3 rounded-2xl border text-center transition-all cursor-pointer space-y-1 ${
-                  selectedRole === 'talent' 
-                    ? 'bg-indigo-950/60 border-indigo-500 shadow-md ring-1 ring-indigo-500/30' 
-                    : 'bg-slate-800/40 border-slate-700/80 hover:border-slate-600'
-                }`}
-                onClick={() => setSelectedRole('talent')}
-              >
-                <div className="text-xl">🧑‍💻</div>
-                <div className="text-xs font-bold text-white">Freelancer</div>
-                <div className="text-[10px] text-slate-400 leading-tight">Offer Skills</div>
-              </div>
+        {/* Role Selection (Available for BOTH Login and Registration) */}
+        <div className="space-y-2 mb-5">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-slate-300">
+              {isLoginMode ? 'Select Account Portal to Log In:' : 'Choose Account Type to Register:'}
+            </label>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 uppercase tracking-wider">
+              {getRoleDisplayName(selectedRole)}
+            </span>
+          </div>
 
-              <div 
-                className={`p-3 rounded-2xl border text-center transition-all cursor-pointer space-y-1 ${
-                  selectedRole === 'client' 
-                    ? 'bg-indigo-950/60 border-indigo-500 shadow-md ring-1 ring-indigo-500/30' 
-                    : 'bg-slate-800/40 border-slate-700/80 hover:border-slate-600'
-                }`}
-                onClick={() => setSelectedRole('client')}
-              >
-                <div className="text-xl">🏢</div>
-                <div className="text-xs font-bold text-white">Client</div>
-                <div className="text-[10px] text-slate-400 leading-tight">Hire & Post</div>
+          <div className="grid grid-cols-3 gap-2.5">
+            <div 
+              className={`p-3 rounded-2xl border text-center transition-all cursor-pointer space-y-1 ${
+                selectedRole === 'talent' 
+                  ? 'bg-indigo-950/70 border-indigo-500 shadow-md ring-2 ring-indigo-500/40' 
+                  : 'bg-slate-800/40 border-slate-700/80 hover:border-slate-600'
+              }`}
+              onClick={() => setSelectedRole('talent')}
+            >
+              <div className="text-xl">🧑‍💻</div>
+              <div className="text-xs font-bold text-white">Freelancer</div>
+              <div className="text-[10px] text-slate-400 leading-tight">
+                {isLoginMode ? 'Talent Portal' : 'Offer Skills'}
               </div>
+            </div>
 
-              <div 
-                className={`p-3 rounded-2xl border text-center transition-all cursor-pointer space-y-1 ${
-                  selectedRole === 'admin' 
-                    ? 'bg-rose-950/60 border-rose-500 shadow-md ring-1 ring-rose-500/30' 
-                    : 'bg-slate-800/40 border-slate-700/80 hover:border-slate-600'
-                }`}
-                onClick={() => setSelectedRole('admin')}
-              >
-                <div className="text-xl">🛡️</div>
-                <div className="text-xs font-bold text-white">Admin</div>
-                <div className="text-[10px] text-slate-400 leading-tight">Manage All</div>
+            <div 
+              className={`p-3 rounded-2xl border text-center transition-all cursor-pointer space-y-1 ${
+                selectedRole === 'client' 
+                  ? 'bg-purple-950/70 border-purple-500 shadow-md ring-2 ring-purple-500/40' 
+                  : 'bg-slate-800/40 border-slate-700/80 hover:border-slate-600'
+              }`}
+              onClick={() => setSelectedRole('client')}
+            >
+              <div className="text-xl">🏢</div>
+              <div className="text-xs font-bold text-white">Client</div>
+              <div className="text-[10px] text-slate-400 leading-tight">
+                {isLoginMode ? 'Employer Portal' : 'Hire & Post'}
+              </div>
+            </div>
+
+            <div 
+              className={`p-3 rounded-2xl border text-center transition-all cursor-pointer space-y-1 ${
+                selectedRole === 'admin' 
+                  ? 'bg-rose-950/70 border-rose-500 shadow-md ring-2 ring-rose-500/40' 
+                  : 'bg-slate-800/40 border-slate-700/80 hover:border-slate-600'
+              }`}
+              onClick={() => setSelectedRole('admin')}
+            >
+              <div className="text-xl">🛡️</div>
+              <div className="text-xs font-bold text-white">Admin</div>
+              <div className="text-[10px] text-slate-400 leading-tight">
+                {isLoginMode ? 'Admin Portal' : 'Platform Staff'}
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Clean Auth Form Body */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -242,7 +284,7 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
               <input 
                 type="email"
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
-                placeholder="name@example.com"
+                placeholder={selectedRole === 'admin' ? 'admin@talentx.pk' : 'name@example.com'}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
@@ -288,7 +330,9 @@ export const AuthModal = ({ onClose, onAuthSuccess }) => {
               </span>
             ) : (
               <>
-                <span>{isLoginMode ? 'Log In' : `Create ${selectedRole === 'talent' ? 'Freelancer' : selectedRole === 'client' ? 'Client' : 'Admin'} Account`}</span>
+                <span>
+                  {isLoginMode ? 'Log In' : 'Create Account'}
+                </span>
                 <ArrowRight size={16} />
               </>
             )}

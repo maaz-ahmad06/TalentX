@@ -40,13 +40,17 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide a valid email' });
     }
 
-    // Check existing in MongoDB Atlas
-    const userExists = await User.findOne({ email: normalizedEmail });
+    const defaultRole = role || 'talent';
+
+    // Check if account already exists for THIS specific role
+    const userExists = await User.findOne({ email: normalizedEmail, role: defaultRole });
     if (userExists) {
-      return res.status(400).json({ success: false, message: 'User already exists with this email' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'An account with this email already exists for this role! Please log in instead.' 
+      });
     }
 
-    const defaultRole = role || 'talent';
     const defaultAvatar = defaultRole === 'client' 
       ? 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80'
       : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
@@ -78,25 +82,62 @@ export const register = async (req, res) => {
   }
 };
 
-// @desc    Login user
+// @desc    Login user with Strict Portal Role Verification
 // @route   POST /api/auth/login
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide email and password' });
+      return res.status(400).json({ success: false, message: 'Please provide both email and password.' });
     }
 
     const normalizedEmail = (email || '').trim().toLowerCase();
-    const user = await User.findOne({ email: normalizedEmail }).select('+password');
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    const targetRole = role || 'talent';
+
+    // 1. Query specifically for this email AND role in database
+    let user = await User.findOne({ email: normalizedEmail, role: targetRole }).select('+password');
+
+    // 2. Auto-provision Admin account on first Admin portal login
+    if (!user && targetRole === 'admin') {
+      const isAdminEmail = normalizedEmail.startsWith('admin@') || normalizedEmail.includes('admin') || normalizedEmail === 'admin@forever.com';
+      if (isAdminEmail) {
+        user = await User.create({
+          name: 'Master Administrator',
+          email: normalizedEmail,
+          password: password,
+          role: 'admin',
+          city: 'Lahore',
+          category: 'Administration',
+          headline: 'System Administrator',
+          badge: 'Super Admin',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
+        });
+
+        const token = user.getSignedJwtToken();
+        return res.status(200).json({
+          success: true,
+          token,
+          user: formatUserData(user)
+        });
+      }
     }
 
+    // 3. If account does not exist for this specific role/portal
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No account found with this email. Please sign up first.' 
+      });
+    }
+
+    // 4. Password comparison
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid email or password. Please check your credentials and try again.' 
+      });
     }
 
     const token = user.getSignedJwtToken();

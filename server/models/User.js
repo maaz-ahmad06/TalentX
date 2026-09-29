@@ -20,7 +20,6 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Please provide an email'],
-    unique: true,
     lowercase: true,
     match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
   },
@@ -67,6 +66,9 @@ const UserSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Compound Unique Index: Each email can have one account per role (Freelancer, Client, Admin)
+UserSchema.index({ email: 1, role: 1 }, { unique: true });
 
 // Encrypt password before save
 UserSchema.pre('save', async function (next) {

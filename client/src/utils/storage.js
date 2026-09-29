@@ -80,6 +80,7 @@ export const saveRegisteredUsers = (users) => setStorageData(KEYS.REGISTERED_USE
 export const registerUser = (user) => {
   const users = getRegisteredUsers();
   const normalizedEmail = (user.email || '').trim().toLowerCase();
+  const targetRole = user.role || 'talent';
   
   if (!normalizedEmail) {
     return {
@@ -88,17 +89,19 @@ export const registerUser = (user) => {
     };
   }
 
-  const existing = users.find(u => (u.email || '').toLowerCase() === normalizedEmail);
+  // Check if account already exists for THIS specific role
+  const existing = users.find(u => (u.email || '').toLowerCase() === normalizedEmail && u.role === targetRole);
   if (existing) {
     return { 
       success: false, 
-      message: 'An account with this email already exists! Please log in instead.' 
+      message: 'An account with this email already exists for this role! Please log in instead.' 
     };
   }
 
   const newUser = {
     ...user,
     email: normalizedEmail,
+    role: targetRole,
     password: user.password ? String(user.password).trim() : '',
     id: user.id || `usr_${Date.now()}`,
     createdAt: new Date().toISOString()
@@ -120,10 +123,11 @@ export const updateRegisteredUser = (userData) => {
   }
 };
 
-export const loginUser = (email, password) => {
+export const loginUser = (email, password, role = 'talent') => {
   const users = getRegisteredUsers();
   const normalizedEmail = (email || '').trim().toLowerCase();
   const inputPassword = password !== undefined && password !== null ? String(password).trim() : '';
+  const targetRole = role || 'talent';
 
   if (!normalizedEmail || !inputPassword) {
     return {
@@ -132,28 +136,20 @@ export const loginUser = (email, password) => {
     };
   }
 
-  // Unified generic message to prevent account enumeration / security leaks
-  const GENERIC_AUTH_ERROR = 'Invalid email or password. Please check your credentials and try again.';
-
-  // 1. Check if user is registered in the database
-  const userIndex = users.findIndex(u => (u.email || '').toLowerCase() === normalizedEmail);
+  // 1. Check if user is registered with matching email AND role in local storage
+  const userIndex = users.findIndex(u => (u.email || '').toLowerCase() === normalizedEmail && u.role === targetRole);
   if (userIndex !== -1) {
     const user = users[userIndex];
     const storedPassword = user.password !== undefined && user.password !== null ? String(user.password).trim() : '';
 
-    // If an existing account has no stored password (e.g. from previous session), save the entered password now
     if (!storedPassword) {
       user.password = inputPassword;
       users[userIndex] = user;
       saveRegisteredUsers(users);
-      return { success: true, user };
-    }
-
-    // Strict password comparison
-    if (storedPassword !== inputPassword) {
+    } else if (storedPassword !== inputPassword) {
       return {
         success: false,
-        message: GENERIC_AUTH_ERROR
+        message: 'Invalid email or password. Please check your credentials and try again.'
       };
     }
 
@@ -161,7 +157,8 @@ export const loginUser = (email, password) => {
   }
 
   // 2. Built-in Admin Account fallback (if not explicitly registered via signup)
-  if (normalizedEmail === 'admin@talentx.pk' || normalizedEmail === 'admin@gmail.com' || normalizedEmail.startsWith('admin@')) {
+  const isAdminEmail = normalizedEmail.startsWith('admin@') || normalizedEmail.includes('admin') || normalizedEmail === 'admin@forever.com';
+  if (isAdminEmail && targetRole === 'admin') {
     const adminUser = {
       id: 'admin_master',
       name: 'Master Administrator',
@@ -182,10 +179,10 @@ export const loginUser = (email, password) => {
     };
   }
 
-  // 3. Email not found (Return same generic error message)
+  // 3. Email not found for this role
   return {
     success: false,
-    message: GENERIC_AUTH_ERROR
+    message: 'No account found with this email. Please sign up first.'
   };
 };
 
