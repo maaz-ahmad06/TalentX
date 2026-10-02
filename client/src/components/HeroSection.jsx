@@ -25,11 +25,11 @@ export const HeroSection = ({
   onOpenAIMatcher
 }) => {
   const quickTags = [
-    { label: '📷 Fashion Photographers', cat: 'Photography' },
-    { label: '💻 MERN Developers', cat: 'Web Development' },
-    { label: '🎨 Figma UI/UX Designers', cat: 'UI/UX Design' },
-    { label: '📱 Mobile App Engineers', cat: 'Mobile Apps' },
-    { label: '📈 Meta Ads Experts', cat: 'Digital Marketing' }
+    { label: 'Fashion Photographers', cat: 'Photography' },
+    { label: 'MERN Developers', cat: 'Web Development' },
+    { label: 'Figma UI/UX Designers', cat: 'UI/UX Design' },
+    { label: 'Mobile App Engineers', cat: 'Mobile Apps' },
+    { label: 'Meta Ads Experts', cat: 'Digital Marketing' }
   ];
 
   return (
@@ -42,7 +42,7 @@ export const HeroSection = ({
         {/* Top Tag Pill */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/80 backdrop-blur-xl shadow-lg shadow-indigo-500/5">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span className="text-xs font-semibold text-slate-200">🇵🇰 Pakistan's First AI-Powered Local Talent Network</span>
+          <span className="text-xs font-semibold text-slate-200">Pakistan's First AI-Powered Local Talent Network</span>
           <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
             LIVE
           </span>

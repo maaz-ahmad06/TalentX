@@ -66,11 +66,11 @@ export const calculateAIMatch = (job, talent) => {
   // Generate Humanized AI Explanation
   let reasoning = '';
   if (totalScore >= 90) {
-    reasoning = `🌟 Exceptional match! ${talent.name} is based in ${talent.city} with a stellar ${talent.rating}★ rating. Possesses ${matchingSkills.length} of ${jobSkills.length} required skills including ${matchingSkills.slice(0, 2).join(', ')} with verified local experience.`;
+    reasoning = `Exceptional match! ${talent.name} is based in ${talent.city} with a stellar ${talent.rating} rating. Possesses ${matchingSkills.length} of ${jobSkills.length} required skills including ${matchingSkills.slice(0, 2).join(', ')} with verified local experience.`;
   } else if (totalScore >= 75) {
-    reasoning = `👍 Strong contender! Great portfolio depth in ${talent.category} (${talent.experience} exp). Well-aligned budget and quick availability for ${job.city || 'local'} projects.`;
+    reasoning = `Strong contender! Great portfolio depth in ${talent.category} (${talent.experience} exp). Well-aligned budget and quick availability for ${job.city || 'local'} projects.`;
   } else {
-    reasoning = `📌 Good potential match based on transferable skills in ${talent.category}. Rate estimates fit within expected boundaries.`;
+    reasoning = `Good potential match based on transferable skills in ${talent.category}. Rate estimates fit within expected boundaries.`;
   }
 
   return {

@@ -1159,7 +1159,7 @@ export const AdminDashboardPage = ({
                               onClick={() => handleToggleJobStatus(j.id, j.status)}
                               title="Click to toggle Open / Suspended"
                             >
-                              {j.status === 'Open' ? '● Live / Open' : '✕ Suspended'}
+                              {j.status === 'Open' ? 'Live / Open' : 'Suspended'}
                             </button>
                           </td>
                           <td className="py-3.5 px-4 text-right">
@@ -1257,9 +1257,9 @@ export const AdminDashboardPage = ({
                           </div>
                           <h4 className="text-base font-bold text-white">{c.jobTitle}</h4>
                           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                            <span>🏢 Client: <strong className="text-slate-200">{c.clientName}</strong></span>
+                            <span>Client: <strong className="text-slate-200">{c.clientName}</strong></span>
                             <span>&bull;</span>
-                            <span>🧑‍💻 Hired Talent: <strong className="text-slate-200">{c.talentName}</strong></span>
+                            <span>Hired Talent: <strong className="text-slate-200">{c.talentName}</strong></span>
                           </div>
                         </div>
 
@@ -1439,7 +1439,7 @@ export const AdminDashboardPage = ({
                       <textarea 
                         className="w-full p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-purple-500 transition-colors" 
                         rows="3"
-                        placeholder="e.g. ⚡ Eid Special: 0% platform fee on all mobile app contracts this week."
+                        placeholder="e.g. Eid Special: 0% platform fee on all mobile app contracts this week."
                         value={announcementText}
                         onChange={(e) => setAnnouncementText(e.target.value)}
                       />
@@ -1558,7 +1558,7 @@ export const AdminDashboardPage = ({
                   <button 
                     className="w-full flex items-center justify-between p-3.5 rounded-xl bg-rose-950/20 hover:bg-rose-950/40 border border-rose-500/30 text-rose-300 transition-colors cursor-pointer"
                     onClick={() => {
-                      if (window.confirm('⚠️ WARNING: This will reset all mock talents, jobs, contracts and settings to default seed values. Proceed?')) {
+                      if (window.confirm('WARNING: This will reset all mock talents, jobs, contracts and settings to default seed values. Proceed?')) {
                         onResetDatabase();
                         showToast('Database reset to default seed data!', 'success');
                       }

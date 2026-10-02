@@ -93,7 +93,7 @@ export const Preloader = ({ onFinish }) => {
             Talent<span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">X</span>
           </h1>
           <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">
-            🇵🇰 PAKISTAN LOCAL TALENT NETWORK
+            PAKISTAN LOCAL TALENT NETWORK
           </span>
         </div>
 

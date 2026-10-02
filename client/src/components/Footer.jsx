@@ -48,10 +48,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-display font-bold text-white text-sm uppercase tracking-wider mb-4">Portals & Workspaces</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><Link to="/dashboard/client" className="hover:text-indigo-400 transition-colors">🏢 Client / Business Portal</Link></li>
-              <li><Link to="/dashboard/freelancer" className="hover:text-indigo-400 transition-colors">🧑‍💻 Freelancer Career Hub</Link></li>
-              <li><Link to="/admin" className="hover:text-indigo-400 transition-colors">🛡️ Admin Command Center</Link></li>
-              <li><Link to="/messages" className="hover:text-indigo-400 transition-colors">💬 Live Chat Suite</Link></li>
+              <li><Link to="/dashboard/client" className="hover:text-indigo-400 transition-colors">Client / Business Portal</Link></li>
+              <li><Link to="/dashboard/freelancer" className="hover:text-indigo-400 transition-colors">Freelancer Career Hub</Link></li>
+              <li><Link to="/admin" className="hover:text-indigo-400 transition-colors">Admin Command Center</Link></li>
+              <li><Link to="/messages" className="hover:text-indigo-400 transition-colors">Live Chat Suite</Link></li>
             </ul>
           </div>
 

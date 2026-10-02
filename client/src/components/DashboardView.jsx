@@ -200,7 +200,7 @@ export const DashboardView = ({
                           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                           : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
                       }`}>
-                        {contract.status === 'Completed' ? '✓ Completed' : '● In Progress'}
+                        {contract.status === 'Completed' ? 'Completed' : 'In Progress'}
                       </span>
                       <h3 className="text-base font-bold text-white">{contract.jobTitle}</h3>
                       <div className="flex items-center gap-2 text-xs text-slate-400">
@@ -240,7 +240,9 @@ export const DashboardView = ({
 
                           <div>
                             {m.isPaid ? (
-                              <span className="text-xs font-semibold text-emerald-400">✓ Paid & Escrow Released</span>
+                              <span className="text-xs font-semibold text-emerald-400 inline-flex items-center gap-1">
+                                <CheckCircle2 size={12} /> Paid & Escrow Released
+                              </span>
                             ) : (
                               <button 
                                 className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white text-xs font-bold shadow transition-all cursor-pointer"

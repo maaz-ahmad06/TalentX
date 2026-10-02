@@ -1,4 +1,4 @@
-# 🏛️ TalentX — System Architecture & Technical Specification
+# TalentX — System Architecture & Technical Specification
 
 > **TalentX** is an AI-powered local talent marketplace connecting local businesses and clients with skilled developers, designers, photographers, videographers, marketers, and other local professionals.
 
@@ -63,10 +63,10 @@ graph TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Business as 🏢 Local Business (Client)
-    actor Talent as 🧑‍💻 Talent / Freelancer
-    participant App as ⚡ TalentX Platform
-    participant AI as 🤖 AI Engine
+    actor Business as Local Business (Client)
+    actor Talent as Talent / Freelancer
+    participant App as TalentX Platform
+    participant AI as AI Engine
 
     %% Flow 1: Job Posting & AI Matching
     Business->>App: Posts a Job (e.g. "Fashion Photographer in Lahore - PKR 35,000")
@@ -94,7 +94,7 @@ sequenceDiagram
 
 ## 3. Database Schema & Data Models
 
-### 👤 User & Profile Schema (`User`)
+### User & Profile Schema (`User`)
 ```json
 {
   "id": "usr_001",
@@ -131,7 +131,7 @@ sequenceDiagram
 }
 ```
 
-### 💼 Job Schema (`Job`)
+### Job Schema (`Job`)
 ```json
 {
   "id": "job_101",
@@ -154,7 +154,7 @@ sequenceDiagram
 }
 ```
 
-### 📝 Proposal Schema (`Proposal`)
+### Proposal Schema (`Proposal`)
 ```json
 {
   "id": "prop_201",
@@ -169,7 +169,7 @@ sequenceDiagram
 }
 ```
 
-### 🤝 Contract / Hiring Schema (`Contract`)
+### Contract / Hiring Schema (`Contract`)
 ```json
 {
   "id": "cnt_301",

@@ -21,7 +21,7 @@ const KEYS = {
 
 const DEFAULT_SETTINGS = {
   commissionRate: 5,
-  announcement: '🚀 Welcome to TalentX Pakistan! Real marketplace mode is active.',
+  announcement: 'Welcome to TalentX Pakistan! Real marketplace mode is active.',
   isAnnouncementActive: true,
   aiMatcherOnline: true,
   mongoDbOnline: true,

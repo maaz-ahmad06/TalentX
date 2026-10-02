@@ -585,7 +585,8 @@ export const FreelancerDashboardPage = ({
               </div>
               <div className="text-2xl font-black text-white font-display mb-1">PKR {totalEarnings.toLocaleString()}</div>
               <div className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
-                <span>✓ Secured via Escrow</span>
+                <CheckCircle2 size={13} />
+                <span>Secured via Escrow</span>
               </div>
             </div>
 
@@ -661,7 +662,7 @@ export const FreelancerDashboardPage = ({
                                 ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' 
                                 : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
                             }`}>
-                              {contract.status === 'Completed' ? '✓ Completed' : '● In Progress'}
+                              {contract.status === 'Completed' ? 'Completed' : 'In Progress'}
                             </span>
                             <h3 className="text-xl font-bold text-white mb-1.5 font-display">{contract.jobTitle}</h3>
                             <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -722,11 +723,11 @@ export const FreelancerDashboardPage = ({
                                 <div>
                                   {m.isPaid ? (
                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-                                      ✓ Escrow Released
+                                      <CheckCircle2 size={12} /> Escrow Released
                                     </span>
                                   ) : (
                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold">
-                                      ● Work In Progress
+                                      <Clock size={12} /> Work In Progress
                                     </span>
                                   )}
                                 </div>
@@ -847,7 +848,7 @@ export const FreelancerDashboardPage = ({
                       onClick={handleLoadSampleProjects}
                     >
                       <Wand2 size={16} />
-                      <span>⚡ Load 3 Sample Projects</span>
+                      <span>Load 3 Sample Projects</span>
                     </button>
                   </div>
                 </div>

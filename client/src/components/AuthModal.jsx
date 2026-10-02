@@ -219,7 +219,7 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
               }`}
               onClick={() => setSelectedRole('talent')}
             >
-              <div className="text-xl">🧑‍💻</div>
+              <div className="flex items-center justify-center h-6"><User size={20} className="text-indigo-400" /></div>
               <div className="text-xs font-bold text-white">Freelancer</div>
               <div className="text-[10px] text-slate-400 leading-tight">
                 {isLoginMode ? 'Talent Portal' : 'Offer Skills'}
@@ -234,7 +234,7 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
               }`}
               onClick={() => setSelectedRole('client')}
             >
-              <div className="text-xl">🏢</div>
+              <div className="flex items-center justify-center h-6"><Building2 size={20} className="text-purple-400" /></div>
               <div className="text-xs font-bold text-white">Client</div>
               <div className="text-[10px] text-slate-400 leading-tight">
                 {isLoginMode ? 'Employer Portal' : 'Hire & Post'}
@@ -249,7 +249,7 @@ export const AuthModal = ({ onClose, onAuthSuccess, initialRole = 'talent', init
               }`}
               onClick={() => setSelectedRole('admin')}
             >
-              <div className="text-xl">🛡️</div>
+              <div className="flex items-center justify-center h-6"><ShieldCheck size={20} className="text-rose-400" /></div>
               <div className="text-xs font-bold text-white">Admin</div>
               <div className="text-[10px] text-slate-400 leading-tight">
                 {isLoginMode ? 'Admin Portal' : 'Platform Staff'}

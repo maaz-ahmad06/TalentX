@@ -42,7 +42,7 @@ export const matchCandidates = async (req, res) => {
         talent,
         score: totalScore,
         matchingSkills,
-        reasoning: `Matched ${matchingSkills.length} key skills. Based in ${talent.city} with verified ${talent.rating}★ rating.`,
+        reasoning: `Matched ${matchingSkills.length} key skills. Based in ${talent.city} with verified ${talent.rating} rating.`,
         breakdown: {
           skills: skillScore,
           location: locScore,

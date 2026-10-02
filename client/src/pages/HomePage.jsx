@@ -15,7 +15,11 @@ import {
   Layers, 
   Award, 
   DollarSign, 
-  Check 
+  Check,
+  Camera,
+  Code,
+  Palette,
+  Film
 } from 'lucide-react';
 import { CATEGORIES, CITIES } from '../data/mockData';
 
@@ -30,10 +34,10 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
   };
 
   const categoryHighlights = [
-    { title: 'Fashion & Commercial Photography', icon: '📷', count: '140+ Photographers', cat: 'Photography', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80' },
-    { title: 'Full-Stack MERN & Next.js Web Dev', icon: '💻', count: '210+ Developers', cat: 'Web Development', img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80' },
-    { title: 'Figma UI/UX & Mobile App Design', icon: '🎨', count: '95+ Designers', cat: 'UI/UX Design', img: 'https://images.unsplash.com/photo-1581291518655-9523c932edcf?auto=format&fit=crop&w=600&q=80' },
-    { title: 'TikTok Ads & 4K Video Editing', icon: '🎬', count: '115+ Video Editors', cat: 'Photography', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80' }
+    { title: 'Fashion & Commercial Photography', icon: Camera, count: '140+ Photographers', cat: 'Photography', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80' },
+    { title: 'Full-Stack MERN & Next.js Web Dev', icon: Code, count: '210+ Developers', cat: 'Web Development', img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80' },
+    { title: 'Figma UI/UX & Mobile App Design', icon: Palette, count: '95+ Designers', cat: 'UI/UX Design', img: 'https://images.unsplash.com/photo-1581291518655-9523c932edcf?auto=format&fit=crop&w=600&q=80' },
+    { title: 'TikTok Ads & 4K Video Editing', icon: Film, count: '115+ Video Editors', cat: 'Photography', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80' }
   ];
 
   return (
@@ -47,7 +51,7 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center space-y-8">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/80 backdrop-blur-xl shadow-lg">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="text-xs font-semibold text-slate-200">🇵🇰 Pakistan's #1 AI-Powered Local Marketplace</span>
+            <span className="text-xs font-semibold text-slate-200">Pakistan's #1 AI-Powered Local Marketplace</span>
             <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               VERIFIED
             </span>
@@ -235,7 +239,9 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
                 </span>
               </div>
               <div className="p-5 space-y-2">
-                <div className="text-2xl">{cat.icon}</div>
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 w-fit">
+                  <cat.icon size={20} className="text-indigo-400" />
+                </div>
                 <h4 className="font-bold text-sm text-white group-hover:text-indigo-300 transition-colors">{cat.title}</h4>
                 <div className="text-xs font-semibold text-indigo-400 flex items-center gap-1 pt-1">
                   <span>Browse Portfolios</span>
@@ -337,7 +343,7 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
         <div className="p-8 sm:p-12 rounded-3xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-2xl shadow-2xl space-y-8">
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold border border-indigo-500/20">
-              🇵🇰 Built for Pakistan
+              Built for Pakistan
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
               Why Choose <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">TalentX</span> over Fiverr or Upwork?

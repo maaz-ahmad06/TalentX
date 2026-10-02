@@ -132,7 +132,9 @@ export const TalentModal = ({
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Featured Portfolio Projects ({talent.portfolio.length})</h3>
-                <span className="text-xs text-emerald-400 font-medium">✓ Verified Deliverables</span>
+                <span className="text-xs text-emerald-400 font-medium inline-flex items-center gap-1">
+                  <CheckCircle2 size={13} /> Verified Deliverables
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

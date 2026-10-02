@@ -172,7 +172,9 @@ export const TalentProfilePage = ({
           <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg space-y-5">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Featured Portfolio Works ({talent.portfolio?.length || 0})</h3>
-              <span className="text-xs text-emerald-400 font-medium">✓ Verified Deliverables</span>
+              <span className="text-xs text-emerald-400 font-medium inline-flex items-center gap-1">
+                <CheckCircle2 size={13} /> Verified Deliverables
+              </span>
             </div>
 
             <div className="space-y-6">

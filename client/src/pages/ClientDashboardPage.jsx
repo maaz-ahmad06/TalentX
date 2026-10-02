@@ -512,7 +512,7 @@ export const ClientDashboardPage = ({
                               ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' 
                               : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
                           }`}>
-                            {contract.status === 'Completed' ? '✓ Completed' : '● In Progress'}
+                            {contract.status === 'Completed' ? 'Completed' : 'In Progress'}
                           </span>
                           <h3 className="text-xl font-bold text-white mb-1.5 font-display">{contract.jobTitle}</h3>
                           <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -575,7 +575,7 @@ export const ClientDashboardPage = ({
                               <div>
                                 {m.isPaid ? (
                                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-                                    ✓ Paid & Escrow Released
+                                    <CheckCircle2 size={12} /> Paid & Escrow Released
                                   </span>
                                 ) : (
                                   <button 
