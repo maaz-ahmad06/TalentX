@@ -4,6 +4,8 @@ import './App.css';
 
 // Storage & Data helpers
 import {
+  getRegisteredUsers,
+  saveRegisteredUsers,
   getTalents,
   saveTalents,
   getJobs,
@@ -25,6 +27,7 @@ import {
 
 // Full-Stack MongoDB API Services
 import {
+  apiGetAllUsers,
   apiGetTalents,
   apiGetJobs,
   apiCreateJob,
@@ -112,6 +115,7 @@ function AppContent() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Data Collections
+  const [allUsers, setAllUsers] = useState(() => getRegisteredUsers());
   const [talents, setTalents] = useState(() => getTalents());
   const [jobs, setJobs] = useState(() => getJobs());
   const [proposals, setProposals] = useState(() => getProposals());
@@ -163,6 +167,21 @@ function AppContent() {
 
     // 2. Fetch Live Records from MongoDB Atlas Backend
     const fetchAtlasData = async () => {
+      try {
+        const liveUsers = await apiGetAllUsers();
+        if (Array.isArray(liveUsers) && liveUsers.length > 0) {
+          setAllUsers(liveUsers);
+          saveRegisteredUsers(liveUsers);
+          const onlyTalents = liveUsers.filter(u => u.role === 'talent');
+          if (onlyTalents.length > 0) {
+            setTalents(onlyTalents);
+            saveTalents(onlyTalents);
+          }
+        }
+      } catch (err) {
+        console.warn('Atlas all users fetch notice:', err.message);
+      }
+
       try {
         const liveTalents = await apiGetTalents();
         if (Array.isArray(liveTalents)) {
@@ -319,6 +338,16 @@ function AppContent() {
   };
 
   // Admin Data Updaters
+  const handleUpdateUsers = (newUsers) => {
+    setAllUsers(newUsers);
+    saveRegisteredUsers(newUsers);
+    const onlyTalents = newUsers.filter(u => u.role === 'talent');
+    if (onlyTalents.length > 0) {
+      setTalents(onlyTalents);
+      saveTalents(onlyTalents);
+    }
+  };
+
   const handleUpdateTalents = (newTalents) => {
     setTalents(newTalents);
     saveTalents(newTalents);
@@ -827,6 +856,7 @@ function AppContent() {
             path="/admin" 
             element={
               <AdminDashboardPage 
+                allUsers={allUsers}
                 talents={talents}
                 jobs={jobs}
                 contracts={contracts}
@@ -834,6 +864,7 @@ function AppContent() {
                 unreadMessagesCount={unreadMessagesCount}
                 currentUser={currentUser}
                 onLogout={handleLogout}
+                onUpdateUsers={handleUpdateUsers}
                 onUpdateTalents={handleUpdateTalents}
                 onUpdateJobs={handleUpdateJobs}
                 onUpdateContracts={handleUpdateContracts}

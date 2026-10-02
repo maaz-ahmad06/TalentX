@@ -43,7 +43,7 @@ app.use('/api/ai', aiRoutes);
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'online',
-    message: 'TalentX Backend REST API (MERN) is Running ⚡',
+    message: 'TalentX Backend REST API (MERN) is Running',
     version: '1.0.0',
     endpoints: [
       '/api/auth/register',
@@ -61,12 +61,12 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = (port) => {
   const server = app.listen(port, () => {
-    console.log(`🚀 TalentX Server running in ${process.env.NODE_ENV || 'development'} mode on http://localhost:${port}`);
+    console.log(`TalentX Server running in ${process.env.NODE_ENV || 'development'} mode on http://localhost:${port}`);
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.warn(`⚠️ Port ${port} is already in use, trying port ${Number(port) + 1}...`);
+      console.warn(`Port ${port} is already in use, trying port ${Number(port) + 1}...`);
       startServer(Number(port) + 1);
     } else {
       console.error('Server error:', err);

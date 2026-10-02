@@ -78,6 +78,25 @@ export const apiUpdateProfile = async (profileData) => {
   });
 };
 
+export const apiGetAllUsers = async () => {
+  const res = await request('/auth/users', { method: 'GET' });
+  return res.data || [];
+};
+
+export const apiUpdateUser = async (userId, updateData) => {
+  const res = await request(`/auth/users/${userId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updateData)
+  });
+  return res.data;
+};
+
+export const apiDeleteUser = async (userId) => {
+  return await request(`/auth/users/${userId}`, {
+    method: 'DELETE'
+  });
+};
+
 // -------------------------------------------------------------
 // TALENTS / FREELANCERS (MongoDB Atlas)
 // -------------------------------------------------------------

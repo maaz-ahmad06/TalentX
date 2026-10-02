@@ -42,13 +42,16 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
+import { apiUpdateUser, apiDeleteUser } from '../services/api';
 
 export const AdminDashboardPage = ({ 
-  talents, 
-  jobs, 
-  contracts, 
+  allUsers = [],
+  talents = [], 
+  jobs = [], 
+  contracts = [], 
   currentUser,
   onLogout,
+  onUpdateUsers,
   onUpdateTalents,
   onUpdateJobs,
   onUpdateContracts,
@@ -62,6 +65,7 @@ export const AdminDashboardPage = ({
 
   // Search & Filter States
   const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('All');
   const [userCityFilter, setUserCityFilter] = useState('All');
   const [userStatusFilter, setUserStatusFilter] = useState('All');
   const [userVerifyFilter, setUserVerifyFilter] = useState('All');
@@ -92,6 +96,8 @@ export const AdminDashboardPage = ({
   // New User Form State
   const [newUserForm, setNewUserForm] = useState({
     name: '',
+    email: '',
+    role: 'talent',
     headline: '',
     category: 'Web Development',
     city: 'Lahore',
@@ -128,39 +134,72 @@ export const AdminDashboardPage = ({
     milestoneCount: 2
   });
 
-  // Financial Calculations
+  // Authoritative Registered Users List
+  const userList = (allUsers && allUsers.length > 0) ? allUsers : (talents || []);
+
+  // Real Financial & Growth Calculations (Authoritative Live Data)
   const commissionPercent = platformSettings?.commissionRate || localCommission || 5;
-  const totalGMV = contracts.reduce((sum, c) => sum + (Number(c.amount) || 0), 0) + 18500000;
+  const totalGMV = (contracts || []).reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
   const platformRevenue = Math.round(totalGMV * (commissionPercent / 100));
 
+  const totalUsersCount = userList.length;
+  const freelancersCount = userList.filter(u => u.role === 'talent' || !u.role).length;
+  const clientsCount = userList.filter(u => u.role === 'client').length;
+  const adminsCount = userList.filter(u => u.role === 'admin').length;
+  const activeDisputesCount = (contracts || []).filter(c => c.status === 'Frozen (Dispute)').length;
+
   // -------------------------------------------------------------
-  // USER MANAGEMENT HANDLERS
+  // USER MANAGEMENT HANDLERS (MongoDB Atlas Synced)
   // -------------------------------------------------------------
-  const handleToggleVerify = (talentId) => {
-    const talent = talents.find(t => t.id === talentId);
-    if (!talent) return;
-    const isCurrentlyVerified = talent.badge && talent.badge !== 'Unverified';
+  const handleToggleVerify = async (userId) => {
+    const user = userList.find(u => (u._id || u.id) === userId);
+    if (!user) return;
+    const isCurrentlyVerified = user.badge && user.badge !== 'Unverified';
     const newBadge = isCurrentlyVerified ? 'Unverified' : 'Verified Pro';
     
-    const updated = talents.map(t => t.id === talentId ? { ...t, badge: newBadge } : t);
-    onUpdateTalents(updated);
-    showToast(`User ${talent.name} status changed to: ${newBadge}`, 'success');
+    const updated = userList.map(u => (u._id || u.id) === userId ? { ...u, badge: newBadge } : u);
+    if (onUpdateUsers) onUpdateUsers(updated);
+    else if (onUpdateTalents) onUpdateTalents(updated.filter(u => u.role === 'talent'));
+
+    try {
+      await apiUpdateUser(user._id || user.id, { badge: newBadge });
+    } catch (err) {
+      console.warn('API User badge update error:', err.message);
+    }
+
+    showToast(`User ${user.name} status changed to: ${newBadge}`, 'success');
   };
 
-  const handleToggleSuspend = (talentId) => {
-    const talent = talents.find(t => t.id === talentId);
-    if (!talent) return;
-    const newSuspendedState = !talent.isSuspended;
+  const handleToggleSuspend = async (userId) => {
+    const user = userList.find(u => (u._id || u.id) === userId);
+    if (!user) return;
+    const newSuspendedState = !user.isSuspended;
     
-    const updated = talents.map(t => t.id === talentId ? { ...t, isSuspended: newSuspendedState } : t);
-    onUpdateTalents(updated);
-    showToast(`Account for ${talent.name} is now ${newSuspendedState ? 'SUSPENDED' : 'ACTIVE'}`, newSuspendedState ? 'warning' : 'success');
+    const updated = userList.map(u => (u._id || u.id) === userId ? { ...u, isSuspended: newSuspendedState } : u);
+    if (onUpdateUsers) onUpdateUsers(updated);
+    else if (onUpdateTalents) onUpdateTalents(updated.filter(u => u.role === 'talent'));
+
+    try {
+      await apiUpdateUser(user._id || user.id, { isSuspended: newSuspendedState });
+    } catch (err) {
+      console.warn('API User suspend update error:', err.message);
+    }
+
+    showToast(`Account for ${user.name} is now ${newSuspendedState ? 'SUSPENDED' : 'ACTIVE'}`, newSuspendedState ? 'warning' : 'success');
   };
 
-  const handleDeleteUser = (talentId, name) => {
+  const handleDeleteUser = async (userId, name) => {
     if (window.confirm(`Are you sure you want to permanently delete "${name}" from the platform? This action cannot be undone.`)) {
-      const updated = talents.filter(t => t.id !== talentId);
-      onUpdateTalents(updated);
+      const updated = userList.filter(u => (u._id || u.id) !== userId);
+      if (onUpdateUsers) onUpdateUsers(updated);
+      else if (onUpdateTalents) onUpdateTalents(updated.filter(u => u.role === 'talent'));
+
+      try {
+        await apiDeleteUser(userId);
+      } catch (err) {
+        console.warn('API User delete error:', err.message);
+      }
+
       showToast(`User ${name} has been permanently deleted from TalentX.`, 'warning');
     }
   };
@@ -181,16 +220,20 @@ export const AdminDashboardPage = ({
       reviewCount: 0,
       completedJobs: 0,
       isSuspended: false,
-      skills: newUserForm.skills.split(',').map(s => s.trim()).filter(Boolean),
+      skills: typeof newUserForm.skills === 'string' ? newUserForm.skills.split(',').map(s => s.trim()).filter(Boolean) : (newUserForm.skills || []),
       portfolio: [],
       reviews: []
     };
 
-    const updated = [newTalent, ...talents];
-    onUpdateTalents(updated);
+    const updated = [newTalent, ...userList];
+    if (onUpdateUsers) onUpdateUsers(updated);
+    else if (onUpdateTalents) onUpdateTalents(updated.filter(u => u.role === 'talent'));
+
     setIsAddUserModalOpen(false);
     setNewUserForm({
       name: '',
+      email: '',
+      role: 'talent',
       headline: '',
       category: 'Web Development',
       city: 'Lahore',
@@ -205,33 +248,43 @@ export const AdminDashboardPage = ({
     });
 
     confetti({ particleCount: 70, spread: 50, origin: { y: 0.6 } });
-    showToast(`New professional "${newTalent.name}" added to marketplace!`, 'ai');
+    showToast(`New ${newUserForm.role === 'client' ? 'client' : 'professional'} "${newTalent.name}" added to marketplace!`, 'ai');
   };
 
-  const handleSaveEditUser = (e) => {
+  const handleSaveEditUser = async (e) => {
     e.preventDefault();
     if (!editingUser) return;
 
-    const updated = talents.map(t => {
-      if (t.id === editingUser.id) {
+    const updated = userList.map(u => {
+      if ((u._id || u.id) === (editingUser._id || editingUser.id)) {
         return {
-          ...t,
+          ...u,
           name: editingUser.name,
+          email: editingUser.email || u.email,
+          role: editingUser.role || u.role,
           headline: editingUser.headline,
           category: editingUser.category,
           city: editingUser.city,
           area: editingUser.area,
-          hourlyRate: Number(editingUser.hourlyRate),
+          hourlyRate: Number(editingUser.hourlyRate) || u.hourlyRate,
           badge: editingUser.badge,
           skills: typeof editingUser.skills === 'string' 
             ? editingUser.skills.split(',').map(s => s.trim()).filter(Boolean) 
             : editingUser.skills
         };
       }
-      return t;
+      return u;
     });
 
-    onUpdateTalents(updated);
+    if (onUpdateUsers) onUpdateUsers(updated);
+    else if (onUpdateTalents) onUpdateTalents(updated.filter(u => u.role === 'talent'));
+
+    try {
+      await apiUpdateUser(editingUser._id || editingUser.id, editingUser);
+    } catch (err) {
+      console.warn('API User update error:', err.message);
+    }
+
     setIsEditUserModalOpen(false);
     setEditingUser(null);
     showToast(`User details updated successfully!`, 'success');
@@ -463,22 +516,27 @@ export const AdminDashboardPage = ({
   // -------------------------------------------------------------
   // FILTERING LOGIC
   // -------------------------------------------------------------
-  const filteredTalents = talents.filter(t => {
+  const filteredUsers = userList.filter(u => {
     const matchesSearch = 
-      t.name.toLowerCase().includes(userSearch.toLowerCase()) || 
-      t.city.toLowerCase().includes(userSearch.toLowerCase()) ||
-      (t.category && t.category.toLowerCase().includes(userSearch.toLowerCase())) ||
-      (t.skills && t.skills.some(s => s.toLowerCase().includes(userSearch.toLowerCase())));
+      (u.name && u.name.toLowerCase().includes(userSearch.toLowerCase())) || 
+      (u.email && u.email.toLowerCase().includes(userSearch.toLowerCase())) ||
+      (u.city && u.city.toLowerCase().includes(userSearch.toLowerCase())) ||
+      (u.category && u.category.toLowerCase().includes(userSearch.toLowerCase())) ||
+      (u.skills && Array.isArray(u.skills) && u.skills.some(s => s.toLowerCase().includes(userSearch.toLowerCase())));
 
-    const matchesCity = userCityFilter === 'All' || t.city.toLowerCase() === userCityFilter.toLowerCase();
+    const matchesRole = userRoleFilter === 'All' 
+      ? true 
+      : (userRoleFilter === 'talent' ? (u.role === 'talent' || !u.role) : u.role === userRoleFilter);
+
+    const matchesCity = userCityFilter === 'All' || (u.city && u.city.toLowerCase() === userCityFilter.toLowerCase());
     const matchesStatus = userStatusFilter === 'All' 
       ? true 
-      : userStatusFilter === 'Suspended' ? t.isSuspended : !t.isSuspended;
+      : userStatusFilter === 'Suspended' ? u.isSuspended : !u.isSuspended;
     const matchesVerify = userVerifyFilter === 'All'
       ? true
-      : userVerifyFilter === 'Verified' ? (t.badge && t.badge !== 'Unverified') : (!t.badge || t.badge === 'Unverified');
+      : userVerifyFilter === 'Verified' ? (u.badge && u.badge !== 'Unverified') : (!u.badge || u.badge === 'Unverified');
 
-    return matchesSearch && matchesCity && matchesStatus && matchesVerify;
+    return matchesSearch && matchesRole && matchesCity && matchesStatus && matchesVerify;
   });
 
   const filteredJobs = jobs.filter(j => {
@@ -551,7 +609,7 @@ export const AdminDashboardPage = ({
                 <span>User Management</span>
               </div>
               <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'users' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
-                {talents.length}
+                {userList.length}
               </span>
             </button>
 
@@ -700,9 +758,9 @@ export const AdminDashboardPage = ({
 
         {/* Body Content */}
         <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
-          {/* KPI Stats Overview Cards */}
+          {/* KPI Stats Overview Cards (Authoritative Real Metrics) */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* Stat 1 */}
+            {/* Stat 1: Real GMV */}
             <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-emerald-500/30 transition-all">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Platform GMV</span>
@@ -712,11 +770,11 @@ export const AdminDashboardPage = ({
               </div>
               <div className="text-2xl font-black text-white tracking-tight">PKR {totalGMV.toLocaleString()}</div>
               <div className="mt-2 text-xs font-medium text-emerald-400 flex items-center gap-1.5">
-                <span>↑ 18.4% this month</span> &bull; <span>100% PKR Escrow</span>
+                <span>{contracts.length} Active Contract{contracts.length === 1 ? '' : 's'}</span> &bull; <span>100% PKR Escrow</span>
               </div>
             </div>
 
-            {/* Stat 2 */}
+            {/* Stat 2: Real Platform Commission */}
             <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-indigo-500/30 transition-all">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Platform Revenue ({commissionPercent}%)</span>
@@ -726,11 +784,11 @@ export const AdminDashboardPage = ({
               </div>
               <div className="text-2xl font-black text-white tracking-tight">PKR {platformRevenue.toLocaleString()}</div>
               <div className="mt-2 text-xs font-medium text-indigo-400">
-                Calculated at {commissionPercent}% take-rate
+                Calculated at {commissionPercent}% platform commission
               </div>
             </div>
 
-            {/* Stat 3 */}
+            {/* Stat 3: Real User Counts (Freelancers + Clients) */}
             <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Registered Pros & Clients</span>
@@ -738,13 +796,13 @@ export const AdminDashboardPage = ({
                   <Users size={20} />
                 </div>
               </div>
-              <div className="text-2xl font-black text-white tracking-tight">{talents.length} Verified Pros</div>
+              <div className="text-2xl font-black text-white tracking-tight">{totalUsersCount} Registered Users</div>
               <div className="mt-2 text-xs font-medium text-purple-400">
-                {talents.filter(t => !t.isSuspended).length} Active Accounts
+                {freelancersCount} Freelancer{freelancersCount === 1 ? '' : 's'} &bull; {clientsCount} Client{clientsCount === 1 ? '' : 's'}
               </div>
             </div>
 
-            {/* Stat 4 */}
+            {/* Stat 4: Real Escrow & Disputes */}
             <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-amber-500/30 transition-all">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Escrow Secured</span>
@@ -754,13 +812,13 @@ export const AdminDashboardPage = ({
               </div>
               <div className="text-2xl font-black text-white tracking-tight">{contracts.length} Contracts</div>
               <div className="mt-2 text-xs font-medium text-amber-400">
-                0 Active Disputes &bull; 100% Safe
+                {activeDisputesCount} Active Disputes &bull; 100% Safe
               </div>
             </div>
           </section>
 
           {/* ============================================================
-              TAB 1: USERS & TALENT MANAGEMENT
+              TAB 1: USERS & TALENT MANAGEMENT (ALL ROLES)
               ============================================================ */}
           {activeTab === 'users' && (
             <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-6">
@@ -771,13 +829,24 @@ export const AdminDashboardPage = ({
                   <input 
                     type="text" 
                     className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
-                    placeholder="Search by name, skill, city, category..."
+                    placeholder="Search by name, email, skill, city, category..."
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                   />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  <select 
+                    className="px-3.5 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    value={userRoleFilter}
+                    onChange={(e) => setUserRoleFilter(e.target.value)}
+                  >
+                    <option value="All">All Account Roles</option>
+                    <option value="talent">Freelancers ({freelancersCount})</option>
+                    <option value="client">Clients ({clientsCount})</option>
+                    <option value="admin">Admins ({adminsCount})</option>
+                  </select>
+
                   <select 
                     className="px-3.5 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
                     value={userCityFilter}
@@ -814,7 +883,7 @@ export const AdminDashboardPage = ({
                     onClick={() => setIsAddUserModalOpen(true)}
                   >
                     <Plus size={16} />
-                    <span>Add Talent</span>
+                    <span>Add User</span>
                   </button>
                 </div>
               </div>
@@ -824,56 +893,80 @@ export const AdminDashboardPage = ({
                 <table className="w-full text-left border-collapse text-xs sm:text-sm">
                   <thead>
                     <tr className="bg-slate-800/60 text-slate-400 font-semibold uppercase text-[11px] tracking-wider border-b border-slate-800">
-                      <th className="py-3.5 px-4">Professional Talent</th>
-                      <th className="py-3.5 px-4">Category / Field</th>
-                      <th className="py-3.5 px-4">City & Area</th>
+                      <th className="py-3.5 px-4">User Profile</th>
+                      <th className="py-3.5 px-4">Account Role</th>
+                      <th className="py-3.5 px-4">Category / Company</th>
+                      <th className="py-3.5 px-4">City</th>
                       <th className="py-3.5 px-4">Hourly Rate</th>
                       <th className="py-3.5 px-4">Verification</th>
-                      <th className="py-3.5 px-4">Account Status</th>
+                      <th className="py-3.5 px-4">Status</th>
                       <th className="py-3.5 px-4 text-right">Admin Controls</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {filteredTalents.length === 0 ? (
+                    {filteredUsers.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="text-center py-10 text-slate-400">
-                          No talents found matching the current search and filters.
+                        <td colSpan="8" className="text-center py-10 text-slate-400">
+                          No users found matching the current search and filters.
                         </td>
                       </tr>
                     ) : (
-                      filteredTalents.map((t) => {
-                        const isVerified = t.badge && t.badge !== 'Unverified';
+                      filteredUsers.map((u) => {
+                        const uid = u._id || u.id;
+                        const isVerified = u.badge && u.badge !== 'Unverified';
+                        const isClient = u.role === 'client';
+                        const isAdmin = u.role === 'admin';
+
                         return (
-                          <tr key={t.id} className={`hover:bg-slate-800/30 transition-colors ${t.isSuspended ? 'bg-rose-950/10' : ''}`}>
+                          <tr key={uid} className={`hover:bg-slate-800/30 transition-colors ${u.isSuspended ? 'bg-rose-950/10' : ''}`}>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-3">
-                                <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-700" />
+                                <img src={u.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"} alt={u.name} className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-700" />
                                 <div>
                                   <div className="font-semibold text-slate-100 flex items-center gap-2">
-                                    {t.name}
-                                    {t.isSuspended && (
+                                    {u.name}
+                                    {u.isSuspended && (
                                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">
                                         Suspended
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-xs text-slate-400 truncate max-w-xs">{t.headline}</div>
+                                  <div className="text-xs text-slate-400 truncate max-w-xs">{u.email || u.headline}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 font-medium text-xs border border-indigo-500/20">
-                                {t.category}
+                              {isAdmin ? (
+                                <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 font-bold text-xs border border-rose-500/25">
+                                  Admin
+                                </span>
+                              ) : isClient ? (
+                                <span className="px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-400 font-bold text-xs border border-purple-500/25">
+                                  Client
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 font-bold text-xs border border-indigo-500/25">
+                                  Freelancer
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="font-medium text-xs text-slate-300">
+                                {u.companyName || u.category || (isClient ? 'Employer' : 'General')}
                               </span>
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-1.5 text-slate-300">
                                 <MapPin size={13} className="text-slate-400" />
-                                <span>{t.city} ({t.area || 'Main'})</span>
+                                <span>{u.city || 'Lahore'}</span>
                               </div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <strong className="text-emerald-400 font-bold">PKR {Number(t.hourlyRate).toLocaleString()}/hr</strong>
+                              {u.hourlyRate ? (
+                                <strong className="text-emerald-400 font-bold">PKR {Number(u.hourlyRate).toLocaleString()}/hr</strong>
+                              ) : (
+                                <span className="text-slate-500">-</span>
+                              )}
                             </td>
                             <td className="py-3.5 px-4">
                               <button 
@@ -882,13 +975,13 @@ export const AdminDashboardPage = ({
                                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30' 
                                     : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'
                                 }`}
-                                onClick={() => handleToggleVerify(t.id)}
+                                onClick={() => handleToggleVerify(uid)}
                                 title="Click to toggle verification status"
                               >
                                 {isVerified ? (
                                   <>
                                     <CheckCircle2 size={13} />
-                                    <span>{t.badge || 'Verified'}</span>
+                                    <span>{u.badge || 'Verified'}</span>
                                   </>
                                 ) : (
                                   <>
@@ -901,14 +994,14 @@ export const AdminDashboardPage = ({
                             <td className="py-3.5 px-4">
                               <button 
                                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
-                                  t.isSuspended 
+                                  u.isSuspended 
                                     ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30' 
                                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
                                 }`}
-                                onClick={() => handleToggleSuspend(t.id)}
+                                onClick={() => handleToggleSuspend(uid)}
                                 title="Click to Suspend / Activate account"
                               >
-                                {t.isSuspended ? (
+                                {u.isSuspended ? (
                                   <>
                                     <UserX size={13} />
                                     <span>Suspended</span>
@@ -927,7 +1020,7 @@ export const AdminDashboardPage = ({
                                   className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-indigo-600 transition-colors cursor-pointer"
                                   title="Edit User Details"
                                   onClick={() => {
-                                    setEditingUser(t);
+                                    setEditingUser(u);
                                     setIsEditUserModalOpen(true);
                                   }}
                                 >
@@ -937,7 +1030,7 @@ export const AdminDashboardPage = ({
                                 <button 
                                   className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
                                   title="Delete User Permanently"
-                                  onClick={() => handleDeleteUser(t.id, t.name)}
+                                  onClick={() => handleDeleteUser(uid, u.name)}
                                 >
                                   <Trash2 size={15} />
                                 </button>

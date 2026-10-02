@@ -180,3 +180,51 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Get All Registered Users (Freelancers, Clients, Admins)
+// @route   GET /api/auth/users
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users.map(formatUserData)
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update Any User (Admin Control: status, badge, details)
+// @route   PUT /api/auth/users/:id
+export const updateUserByAdmin = async (req, res) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.status(200).json({ success: true, data: formatUserData(updatedUser) });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete User by Admin
+// @route   DELETE /api/auth/users/:id
+export const deleteUserByAdmin = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.status(200).json({ success: true, message: 'User removed from platform' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
