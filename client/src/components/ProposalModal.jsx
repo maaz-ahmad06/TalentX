@@ -10,6 +10,7 @@ import {
   Wand2 
 } from 'lucide-react';
 import { generateAIProposal } from '../utils/aiMatcher';
+import { apiGenerateProposalWithAI } from '../services/api';
 import { toast } from 'react-toastify';
 
 export const ProposalModal = ({ 
@@ -35,15 +36,35 @@ export const ProposalModal = ({
 
   if (!job) return null;
 
-  // Handle AI Auto-pitch generation
-  const handleAIPitch = () => {
+  // Handle AI Auto-pitch generation via Gemini AI
+  const handleAIPitch = async () => {
     setIsGenerating(true);
+    try {
+      const res = await apiGenerateProposalWithAI({
+        jobTitle: job.title,
+        jobDescription: job.description,
+        jobSkills: job.requiredSkills || [],
+        talentName: activeTalent.name || currentUser?.name,
+        talentSkills: activeTalent.skills || [],
+        customNotes: `Delivery in ${deliveryDays} days with high attention to quality.`
+      });
+
+      if (res && res.success && res.data?.coverLetter) {
+        setCoverLetter(res.data.coverLetter);
+        setIsGenerating(false);
+        toast.info(res.provider === 'gemini-2.5-flash' ? 'Google Gemini AI drafted a customized, high-converting proposal!' : 'AI Generated proposal pitch tailored to job requirements!');
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend AI Proposal generation notice, using local generator:', err.message);
+    }
+
     setTimeout(() => {
       const generatedPitch = generateAIProposal(job, activeTalent);
       setCoverLetter(generatedPitch);
       setIsGenerating(false);
       toast.info('AI Generated proposal pitch tailored to job requirements!');
-    }, 500);
+    }, 400);
   };
 
   const handleSubmit = (e) => {

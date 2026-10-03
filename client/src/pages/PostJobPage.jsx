@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { CATEGORIES, CITIES } from '../data/mockData';
 import { generateAIJobBrief } from '../utils/aiMatcher';
+import { apiGenerateJobWithAI } from '../services/api';
 import { toast } from 'react-toastify';
 
 export const PostJobPage = ({ onJobCreated, currentUser, onOpenAuth }) => {
@@ -78,8 +79,35 @@ export const PostJobPage = ({ onJobCreated, currentUser, onOpenAuth }) => {
     skillsInput: 'React, Node.js, Next.js, Tailwind CSS'
   });
 
-  const handleAIGenerate = () => {
+  const handleAIGenerate = async () => {
     setIsAIGenerating(true);
+    const promptInput = formData.title || `${formData.category} project for my business in ${formData.city}`;
+    
+    try {
+      const res = await apiGenerateJobWithAI({
+        prompt: promptInput,
+        category: formData.category,
+        city: formData.city,
+        budget: formData.budget
+      });
+
+      if (res && res.success && res.data) {
+        const jobData = res.data;
+        setFormData(prev => ({
+          ...prev,
+          title: jobData.title || prev.title,
+          description: jobData.description || prev.description,
+          budget: jobData.suggestedBudget || prev.budget,
+          skillsInput: Array.isArray(jobData.requiredSkills) ? jobData.requiredSkills.join(', ') : prev.skillsInput
+        }));
+        setIsAIGenerating(false);
+        toast.info(res.provider === 'gemini-2.5-flash' ? 'Google Gemini AI generated a structured project brief & budget!' : 'AI Generated tailored project brief & estimated market budget!');
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend AI Job generation notice, using local generator:', err.message);
+    }
+
     setTimeout(() => {
       const aiBrief = generateAIJobBrief(formData.category, formData.title);
       setFormData(prev => ({
@@ -91,7 +119,7 @@ export const PostJobPage = ({ onJobCreated, currentUser, onOpenAuth }) => {
       }));
       setIsAIGenerating(false);
       toast.info('AI Generated tailored project brief & estimated market budget!');
-    }, 600);
+    }, 500);
   };
 
   const handleSubmit = (e) => {

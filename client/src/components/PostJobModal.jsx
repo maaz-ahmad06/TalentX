@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { CATEGORIES, CITIES } from '../data/mockData';
 import { generateAIJobBrief } from '../utils/aiMatcher';
+import { apiGenerateJobWithAI } from '../services/api';
 import { toast } from 'react-toastify';
 
 export const PostJobModal = ({ onClose, onJobCreated }) => {
@@ -29,9 +30,36 @@ export const PostJobModal = ({ onClose, onJobCreated }) => {
 
   const [isAIGenerating, setIsAIGenerating] = useState(false);
 
-  // Trigger AI Auto-fill
-  const handleAIGenerate = () => {
+  // Trigger AI Auto-fill via Gemini AI
+  const handleAIGenerate = async () => {
     setIsAIGenerating(true);
+    const promptInput = formData.title || `${formData.category} project in ${formData.city}`;
+
+    try {
+      const res = await apiGenerateJobWithAI({
+        prompt: promptInput,
+        category: formData.category,
+        city: formData.city,
+        budget: formData.budget
+      });
+
+      if (res && res.success && res.data) {
+        const jobData = res.data;
+        setFormData(prev => ({
+          ...prev,
+          title: jobData.title || prev.title,
+          description: jobData.description || prev.description,
+          budget: jobData.suggestedBudget || prev.budget,
+          skillsInput: Array.isArray(jobData.requiredSkills) ? jobData.requiredSkills.join(', ') : prev.skillsInput
+        }));
+        setIsAIGenerating(false);
+        toast.info(res.provider === 'gemini-2.5-flash' ? 'Google Gemini AI generated a structured project brief!' : 'AI Generated comprehensive project brief & rates!');
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend AI Job generation notice, using fallback:', err.message);
+    }
+
     setTimeout(() => {
       const aiBrief = generateAIJobBrief(formData.category, formData.title);
       setFormData(prev => ({
@@ -43,7 +71,7 @@ export const PostJobModal = ({ onClose, onJobCreated }) => {
       }));
       setIsAIGenerating(false);
       toast.info('AI Generated comprehensive project brief & rates!');
-    }, 600);
+    }, 500);
   };
 
   const handleSubmit = (e) => {

@@ -12,13 +12,15 @@ import {
   ArrowRight, 
   Sliders, 
   CheckCircle2, 
-  RefreshCw 
+  RefreshCw,
+  Cpu
 } from 'lucide-react';
 import { calculateAIMatch } from '../utils/aiMatcher';
+import { apiMatchTalentWithAI } from '../services/api';
 
 export const AIMatchPage = ({ 
-  jobs, 
-  talents, 
+  jobs = [], 
+  talents = [], 
   onHireTalent, 
   onChatWithTalent 
 }) => {
@@ -29,25 +31,44 @@ export const AIMatchPage = ({
   const [customPrompt, setCustomPrompt] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [rankedResults, setRankedResults] = useState([]);
+  const [aiProvider, setAiProvider] = useState('Gemini 2.5 Flash');
 
-  const currentJob = jobs.find(j => j.id === selectedJobId) || jobs[0];
+  const currentJob = jobs.find(j => (j._id || j.id) === selectedJobId) || jobs[0];
 
-  const runAIMatching = () => {
+  const runAIMatching = async () => {
     setIsScanning(true);
-    setTimeout(() => {
-      let targetJob = currentJob;
-      if (customPrompt.trim()) {
-        targetJob = {
-          title: customPrompt,
-          category: 'Photography',
-          city: customPrompt.toLowerCase().includes('lahore') ? 'Lahore' : (customPrompt.toLowerCase().includes('karachi') ? 'Karachi' : 'Islamabad'),
-          requiredSkills: customPrompt.split(' '),
-          budget: 60000,
-          locationType: 'On-site'
-        };
-      }
+    let targetJob = currentJob;
+    if (customPrompt.trim()) {
+      targetJob = {
+        title: customPrompt,
+        category: 'Photography',
+        city: customPrompt.toLowerCase().includes('lahore') ? 'Lahore' : (customPrompt.toLowerCase().includes('karachi') ? 'Karachi' : 'Islamabad'),
+        requiredSkills: customPrompt.split(' '),
+        budget: 60000,
+        locationType: 'On-site'
+      };
+    }
 
-      const matches = talents.map(talent => {
+    try {
+      const response = await apiMatchTalentWithAI({
+        jobId: currentJob?._id || currentJob?.id,
+        customQuery: customPrompt.trim() || undefined,
+        city: targetJob?.city
+      });
+
+      if (response && response.success && Array.isArray(response.data) && response.data.length > 0) {
+        setRankedResults(response.data);
+        setAiProvider(response.provider === 'gemini-2.5-flash' ? 'Google Gemini 2.5 Flash' : 'TalentX Neural Engine');
+        setIsScanning(false);
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend AI Match notice, fallback to local neural match:', err.message);
+    }
+
+    // Fallback calculation
+    setTimeout(() => {
+      const matches = (Array.isArray(talents) ? talents : []).map(talent => {
         const matchData = calculateAIMatch(targetJob, talent);
         return {
           talent,
@@ -57,8 +78,9 @@ export const AIMatchPage = ({
 
       matches.sort((a, b) => b.score - a.score);
       setRankedResults(matches);
+      setAiProvider('TalentX Neural Engine');
       setIsScanning(false);
-    }, 700);
+    }, 400);
   };
 
   useEffect(() => {
@@ -70,7 +92,7 @@ export const AIMatchPage = ({
       {/* Studio Header */}
       <div className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-xl text-center space-y-3">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 text-xs font-semibold border border-purple-500/20">
-          <Sparkles size={13} /> Neural Match Engine v2.6
+          <Sparkles size={13} /> Powered by {aiProvider}
         </div>
         <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
           AI Candidate <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">Match Studio</span>

@@ -212,11 +212,32 @@ export const apiMarkMessagesRead = async (senderIds, receiverIds) => {
 };
 
 // -------------------------------------------------------------
-// AI MATCHER (Backend AI Endpoint)
+// AI MATCHER & GEMINI AI ASSISTANT (Backend AI Endpoints)
 // -------------------------------------------------------------
 export const apiMatchTalentWithAI = async (jobData) => {
   return await request('/ai/match', {
     method: 'POST',
     body: JSON.stringify(jobData)
+  });
+};
+
+export const apiGenerateJobWithAI = async (payload) => {
+  return await request('/ai/generate-job', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+};
+
+export const apiGenerateProposalWithAI = async (payload) => {
+  return await request('/ai/generate-proposal', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+};
+
+export const apiAskAICopilot = async (payload) => {
+  return await request('/ai/copilot', {
+    method: 'POST',
+    body: JSON.stringify(payload)
   });
 };
