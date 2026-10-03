@@ -42,6 +42,16 @@ import {
   apiGetMe
 } from './services/api';
 
+// Socket.io Real-Time Services
+import {
+  connectSocket,
+  disconnectSocket,
+  getSocket,
+  emitDirectMessage,
+  emitMarkRead,
+  playNotificationChime
+} from './services/socket';
+
 // Global Layout Components
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -105,11 +115,20 @@ function AppContent() {
   // Route check: Hide public Navbar & Footer on all dashboard routes and logged-in messages workspace
   const isDashboardRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard') || (Boolean(currentUser) && location.pathname === '/messages');
 
-  // Preloader State: Runs on initial page load / refresh
-  const [isLoading, setIsLoading] = useState(true);
+  // Preloader State: Runs on initial session load
+  const [isLoading, setIsLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem('talentx_preloader_completed');
+    } catch {
+      return false;
+    }
+  });
 
   const handlePreloaderFinish = () => {
     setIsLoading(false);
+    try {
+      sessionStorage.setItem('talentx_preloader_completed', 'true');
+    } catch {}
   };
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -122,6 +141,7 @@ function AppContent() {
   const [contracts, setContracts] = useState(() => getContracts());
   const [messages, setMessages] = useState(() => getMessages());
   const [platformSettings, setPlatformSettings] = useState(() => getPlatformSettings());
+  const [onlineUserIds, setOnlineUserIds] = useState([]);
 
   // Active Modals
   const [selectedTalentModal, setSelectedTalentModal] = useState(null);
@@ -236,56 +256,92 @@ function AppContent() {
     fetchAtlasData();
   }, []);
 
-  // Real-time polling for live messages & notifications when user is logged in
+  // Socket.io Real-Time Live Messaging & Presence Connection
   useEffect(() => {
-    if (!currentUser) return;
+    if (currentUser) {
+      const myId = String(currentUser._id || currentUser.id || currentUser.userId || '');
+      const socket = connectSocket(myId);
 
-    const interval = setInterval(async () => {
-      try {
-        const liveMessages = await apiGetMessages();
-        if (Array.isArray(liveMessages)) {
-          setMessages(prev => {
-            if (!Array.isArray(prev)) return liveMessages;
+      socket.on('online_users_updated', (userIds) => {
+        setOnlineUserIds(Array.isArray(userIds) ? userIds : []);
+      });
+
+      socket.on('receive_direct_message', (liveMsg) => {
+        if (!liveMsg) return;
+        
+        setMessages(prev => {
+          const list = Array.isArray(prev) ? prev : [];
+          // Deduplicate by _id, id, clientMsgId, or matching sender+receiver+text+time
+          const existingIndex = list.findIndex(m => {
+            if (!m) return false;
+            if (m._id && liveMsg._id && String(m._id) === String(liveMsg._id)) return true;
+            if (m.id && liveMsg.id && String(m.id) === String(liveMsg.id)) return true;
+            if (m.clientMsgId && liveMsg.clientMsgId && m.clientMsgId === liveMsg.clientMsgId) return true;
+            if (m.id && liveMsg.clientMsgId && m.id === liveMsg.clientMsgId) return true;
             
-            // Build a deduplicated map by _id and signature
-            const mergedMap = new Map();
-            
-            // First add live messages from MongoDB
-            liveMessages.forEach(m => {
-              if (m && m._id) {
-                mergedMap.set(String(m._id), m);
-              }
-            });
-
-            // Retain any pending optimistic messages not yet assigned an _id
-            prev.forEach(localMsg => {
-              if (localMsg && !localMsg._id && localMsg.id) {
-                const alreadySynced = liveMessages.some(lm => 
-                  String(lm.senderId) === String(localMsg.senderId) && 
-                  String(lm.receiverId) === String(localMsg.receiverId) && 
-                  lm.text === localMsg.text
-                );
-                if (!alreadySynced) {
-                  mergedMap.set(String(localMsg.id), localMsg);
-                }
-              }
-            });
-
-            const merged = Array.from(mergedMap.values());
-            // Only update state if message content or length actually changed
-            if (JSON.stringify(prev) !== JSON.stringify(merged)) {
-              saveMessages(merged);
-              return merged;
-            }
-            return prev;
+            // Also match by identical message payload if temporary id differed
+            const sameSender = String(m.senderId || '').trim().toLowerCase() === String(liveMsg.senderId || '').trim().toLowerCase();
+            const sameReceiver = String(m.receiverId || '').trim().toLowerCase() === String(liveMsg.receiverId || '').trim().toLowerCase();
+            const sameText = String(m.text || '').trim() === String(liveMsg.text || '').trim();
+            return sameSender && sameReceiver && sameText;
           });
-        }
-      } catch (err) {
-        // silent background sync
-      }
-    }, 4000);
 
-    return () => clearInterval(interval);
+          let updated;
+          if (existingIndex !== -1) {
+            updated = [...list];
+            updated[existingIndex] = { ...list[existingIndex], ...liveMsg, id: String(liveMsg._id || liveMsg.id) };
+          } else {
+            updated = [...list, liveMsg];
+          }
+          saveMessages(updated);
+          return updated;
+        });
+
+        // If incoming message is from someone else, play sweet chime and show alert
+        const sId = String(liveMsg.senderId || '').trim().toLowerCase();
+        const currentMyId = String(myId).trim().toLowerCase();
+        if (sId !== currentMyId) {
+          playNotificationChime();
+          const senderName = liveMsg.senderName || 'A user';
+          const snippet = liveMsg.text ? (liveMsg.text.length > 35 ? `${liveMsg.text.slice(0, 35)}...` : liveMsg.text) : 'New message';
+          showToast(`${senderName}: "${snippet}"`, 'info');
+        }
+      });
+
+      socket.on('messages_marked_read', ({ senderIds, receiverIds }) => {
+        const sSet = new Set((senderIds || []).map(String));
+        const rSet = new Set((receiverIds || []).map(String));
+
+        setMessages(prev => {
+          if (!Array.isArray(prev)) return prev;
+          let changed = false;
+          const updated = prev.map(m => {
+            if (!m || m.isRead) return m;
+            const senderMatches = sSet.has(String(m.senderId));
+            const receiverMatches = rSet.has(String(m.receiverId));
+            if (senderMatches && receiverMatches) {
+              changed = true;
+              return { ...m, isRead: true };
+            }
+            return m;
+          });
+          if (changed) {
+            saveMessages(updated);
+            return updated;
+          }
+          return prev;
+        });
+      });
+
+      return () => {
+        socket.off('online_users_updated');
+        socket.off('receive_direct_message');
+        socket.off('messages_marked_read');
+      };
+    } else {
+      disconnectSocket();
+      setOnlineUserIds([]);
+    }
   }, [currentUser]);
 
   const showToast = (message, type = 'success') => {
@@ -465,48 +521,66 @@ function AppContent() {
     showToast(`Contract activated with ${contractData.talentName}! Escrow funded.`, 'success');
   };
 
-  // Real-Time Messaging Handlers (MongoDB Atlas Synced)
+  // Real-Time Messaging Handlers (Socket.io & MongoDB Atlas Synced)
   const handleSendMessage = async (msgData) => {
+    const tempId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const formatted = {
       ...msgData,
-      id: msgData.id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      id: msgData.id || tempId,
+      clientMsgId: tempId,
       time: msgData.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       createdAt: new Date().toISOString(),
       isRead: false
     };
 
-    // 1. Optimistic Local State & Cache Update
-    addMessage(formatted);
+    // 1. Optimistic Local State & Cache Update (Instant 0ms UI render)
     setMessages(prev => {
       const list = Array.isArray(prev) ? prev : [];
-      return [...list, formatted];
+      const updated = [...list, formatted];
+      saveMessages(updated);
+      return updated;
     });
 
-    // 2. Direct Sync with MongoDB Cloud
+    // 2. Instant WebSocket Emission with Server ACK
+    try {
+      const socketRes = await emitDirectMessage(formatted);
+      if (socketRes && socketRes.success && socketRes.data) {
+        const savedDoc = socketRes.data;
+        // Reconcile optimistic message with authoritative MongoDB document
+        setMessages(prev => {
+          if (!Array.isArray(prev)) return [savedDoc];
+          const updated = prev.map(m => {
+            if (!m) return m;
+            if (m.id === formatted.id || m.clientMsgId === tempId || (m._id && savedDoc._id && String(m._id) === String(savedDoc._id))) {
+              return { ...m, ...savedDoc, id: String(savedDoc._id || savedDoc.id) };
+            }
+            return m;
+          });
+          saveMessages(updated);
+          return updated;
+        });
+        return; // Success via Real-Time Socket! No need to hit REST endpoint.
+      }
+    } catch (socketErr) {
+      console.warn('Socket emit notice, falling back to REST:', socketErr);
+    }
+
+    // 3. Fallback: REST API sync if WebSocket was disconnected
     try {
       const liveMsg = await apiSendMessage(formatted);
       if (liveMsg) {
         setMessages(prev => {
           if (!Array.isArray(prev)) return [liveMsg];
-          return prev.map(m => {
+          const updated = prev.map(m => {
             if (!m) return m;
-            if (m.id === formatted.id || (m._id && liveMsg._id && String(m._id) === String(liveMsg._id))) {
-              return { ...liveMsg, id: formatted.id };
+            if (m.id === formatted.id || m.clientMsgId === tempId || (m._id && liveMsg._id && String(m._id) === String(liveMsg._id))) {
+              return { ...m, ...liveMsg, id: String(liveMsg._id || liveMsg.id) };
             }
             return m;
           });
+          saveMessages(updated);
+          return updated;
         });
-        const currentSaved = getMessages();
-        if (Array.isArray(currentSaved)) {
-          const synced = currentSaved.map(m => {
-            if (!m) return m;
-            if (m.id === formatted.id || (m._id && liveMsg._id && String(m._id) === String(liveMsg._id))) {
-              return { ...liveMsg, id: formatted.id };
-            }
-            return m;
-          });
-          saveMessages(synced);
-        }
       }
     } catch (err) {
       console.warn('MongoDB Message cloud sync notice:', err.message);
@@ -591,7 +665,14 @@ function AppContent() {
       console.warn('Storage sync notice:', err);
     }
 
-    // 3. Sync with MongoDB Cloud
+    // 3. Emit real-time read receipt via Socket.io
+    try {
+      emitMarkRead(contactIds, myIds);
+    } catch (sErr) {
+      console.warn('Socket mark_read notice:', sErr);
+    }
+
+    // 4. Sync with MongoDB Cloud
     try {
       await apiMarkMessagesRead(contactIds, myIds);
     } catch (err) {
@@ -886,6 +967,7 @@ function AppContent() {
                 proposals={proposals}
                 jobs={jobs}
                 currentUser={currentUser}
+                onlineUserIds={onlineUserIds}
                 onLogout={handleLogout}
                 onSendMessage={handleSendMessage}
                 onMarkMessagesRead={handleMarkMessagesRead}

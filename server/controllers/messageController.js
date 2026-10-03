@@ -26,6 +26,7 @@ export const getMessages = async (req, res) => {
 export const sendMessage = async (req, res) => {
   try {
     const { 
+      clientMsgId,
       senderId, 
       senderName, 
       senderAvatar, 
@@ -42,18 +43,22 @@ export const sendMessage = async (req, res) => {
     }
 
     const message = await Message.create({
-      senderId,
+      senderId: String(senderId),
       senderName: senderName || 'User',
       senderAvatar: senderAvatar || '',
-      receiverId,
+      receiverId: String(receiverId),
       receiverName: receiverName || 'User',
       receiverAvatar: receiverAvatar || '',
-      text,
+      text: String(text).trim(),
       isClient: Boolean(isClient),
       time: time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
 
-    res.status(201).json({ success: true, data: message });
+    const formatted = message.toObject();
+    formatted.id = String(message._id);
+    formatted.clientMsgId = clientMsgId || null;
+
+    res.status(201).json({ success: true, data: formatted });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

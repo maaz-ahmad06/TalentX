@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Plus
 } from 'lucide-react';
+import { emitTyping, emitStopTyping, getSocket } from '../services/socket';
 
 const FALLBACK_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80";
 
@@ -35,6 +36,7 @@ export const MessagesPage = ({
   proposals = [],
   jobs = [],
   currentUser = null,
+  onlineUserIds = [],
   onLogout,
   onHireTalent 
 }) => {
@@ -92,6 +94,7 @@ export const MessagesPage = ({
   const [newChatSearch, setNewChatSearch] = useState('');
   const [threadSearch, setThreadSearch] = useState('');
   const [inputText, setInputText] = useState('');
+  const [typingUsersMap, setTypingUsersMap] = useState({});
 
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -99,6 +102,42 @@ export const MessagesPage = ({
   const isUserNearBottomRef = useRef(true);
   const lastContactIdRef = useRef(null);
   const lastMessageCountRef = useRef(0);
+  const typingTimeoutRef = useRef(null);
+
+  // Helper to check if a user is currently online via Socket.io
+  const isContactOnline = React.useCallback((contact) => {
+    if (!contact || !Array.isArray(onlineUserIds) || onlineUserIds.length === 0) return false;
+    const candidateIds = [contact._id, contact.id, contact.userId, contact.email].filter(Boolean).map(s => String(s).trim().toLowerCase());
+    return candidateIds.some(id => onlineUserIds.some(onlineId => String(onlineId).trim().toLowerCase() === id));
+  }, [onlineUserIds]);
+
+  // Socket.io Typing listeners
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleUserTyping = ({ senderId, senderName }) => {
+      if (!senderId) return;
+      setTypingUsersMap(prev => ({ ...prev, [String(senderId).toLowerCase()]: senderName || 'Contact' }));
+    };
+
+    const handleUserStopTyping = ({ senderId }) => {
+      if (!senderId) return;
+      setTypingUsersMap(prev => {
+        const copy = { ...prev };
+        delete copy[String(senderId).toLowerCase()];
+        return copy;
+      });
+    };
+
+    socket.on('user_typing', handleUserTyping);
+    socket.on('user_stop_typing', handleUserStopTyping);
+
+    return () => {
+      socket.off('user_typing', handleUserTyping);
+      socket.off('user_stop_typing', handleUserStopTyping);
+    };
+  }, []);
 
   // 1. Build dynamic contacts list:
   const contacts = React.useMemo(() => {
@@ -390,14 +429,21 @@ export const MessagesPage = ({
       return (isSenderMe && isReceiverContact) || (isSenderContact && isReceiverMe);
     });
 
-    // Deduplicate messages
+    // Deduplicate messages in active thread
     const seen = new Set();
     const deduplicated = [];
     thread.forEach(m => {
       if (!m) return;
-      const key = m._id ? String(m._id) : (m.id ? String(m.id) : `${m.senderId}_${m.receiverId}_${m.text}_${m.time || ''}`);
-      if (!seen.has(key)) {
-        seen.add(key);
+      const primaryId = m._id ? String(m._id) : (m.id ? String(m.id) : null);
+      const textTrim = String(m.text || '').trim();
+      const contentSignature = `${m.senderId}_${m.receiverId}_${textTrim}_${m.time || ''}`;
+      const generalSignature = `${m.senderId}_${m.receiverId}_${textTrim}`;
+
+      const isSeen = (primaryId && seen.has(primaryId)) || seen.has(contentSignature);
+      if (!isSeen) {
+        if (primaryId) seen.add(primaryId);
+        seen.add(contentSignature);
+        seen.add(generalSignature);
         deduplicated.push(m);
       }
     });
@@ -451,6 +497,25 @@ export const MessagesPage = ({
     }
   }, [activeThreadMessages, selectedContactId]);
 
+  // Typing and Message send handlers via Socket.io
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setInputText(val);
+
+    if (selectedContact && currentUser) {
+      const primaryContactId = String(selectedContact?._id || selectedContact?.id || selectedContact?.userId || selectedContactId || '');
+      const primaryMyId = String(currentUser?._id || currentUser?.id || currentUser?.userId || '');
+      if (primaryContactId && primaryMyId) {
+        emitTyping(primaryMyId, primaryContactId, currentUser.name);
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+          emitStopTyping(primaryMyId, primaryContactId);
+        }, 1500);
+      }
+    }
+  };
+
   // Send real manual message — NO fake auto-replies!
   const handleSend = () => {
     const trimmed = (inputText || '').trim();
@@ -458,6 +523,10 @@ export const MessagesPage = ({
 
     const primaryContactId = String(selectedContact?._id || selectedContact?.id || selectedContact?.userId || selectedContactId || '');
     const primaryMyId = String(currentUser?._id || currentUser?.id || currentUser?.userId || 'guest');
+
+    if (primaryContactId && primaryMyId) {
+      emitStopTyping(primaryMyId, primaryContactId);
+    }
 
     if (onSendMessage) {
       onSendMessage({
@@ -616,7 +685,11 @@ export const MessagesPage = ({
                 >
                   <div className="relative w-10 h-10 flex-shrink-0">
                     <img src={c.avatar || FALLBACK_AVATAR} alt={c.name || 'User'} className="w-full h-full rounded-full object-cover border border-white/10" />
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900"></span>
+                    <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-slate-900 transition-colors ${
+                      isContactOnline(c) 
+                        ? 'bg-emerald-400 shadow-sm shadow-emerald-400' 
+                        : 'bg-slate-600'
+                    }`} title={isContactOnline(c) ? 'Online Now' : 'Offline'}></span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
@@ -658,6 +731,14 @@ export const MessagesPage = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="font-bold text-white text-sm">{selectedContact.name || 'TalentX Member'}</h4>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      isContactOnline(selectedContact)
+                        ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                        : 'bg-slate-800/60 border-slate-700/60 text-slate-400'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isContactOnline(selectedContact) ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
+                      {isContactOnline(selectedContact) ? 'Online Now' : 'Offline'}
+                    </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold">
                       <ShieldCheck size={11} /> {selectedContact.role === 'client' ? 'Client' : 'Verified Pro'}
                     </span>
@@ -743,6 +824,18 @@ export const MessagesPage = ({
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Real-Time Typing Animation Indicator */}
+            {selectedContact && Object.keys(typingUsersMap).some(id => selectedContactIds.has(id.toLowerCase())) && (
+              <div className="flex items-center gap-2 text-xs text-indigo-300 font-semibold px-6 py-2 bg-indigo-950/40 border-t border-indigo-500/20 backdrop-blur-sm transition-all animate-pulse">
+                <span className="flex gap-1 items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                </span>
+                <span>{selectedContact.name || 'Contact'} is typing...</span>
+              </div>
+            )}
+
             {/* Input Bar — Pure div container, zero form submissions */}
             <div className="p-4 px-6 bg-slate-900 border-t border-white/10 flex items-center gap-3 flex-shrink-0">
               <input 
@@ -751,7 +844,7 @@ export const MessagesPage = ({
                 className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-sm outline-none transition-all"
                 placeholder={`Message ${selectedContact?.name || 'member'}...`}
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     if (e.preventDefault) e.preventDefault();
@@ -1036,7 +1129,7 @@ export const MessagesPage = ({
             </Link>
 
             {onLogout && (
-              <button className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl hover:bg-rose-500/15 text-rose-400 hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer" onClick={onLogout}>
+              <button type="button" className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl hover:bg-rose-500/15 text-rose-400 hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer" onClick={onLogout}>
                 <LogOut size={16} />
                 <span>Log Out</span>
               </button>

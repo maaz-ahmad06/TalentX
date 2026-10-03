@@ -315,8 +315,36 @@ export const updateContract = (contractId, updatedFields) => {
 };
 
 // Messages CRUD
-export const getMessages = () => getStorageData(KEYS.MESSAGES, INITIAL_MESSAGES);
-export const saveMessages = (msgs) => setStorageData(KEYS.MESSAGES, msgs);
+export const getMessages = () => {
+  const raw = getStorageData(KEYS.MESSAGES, []);
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const cleaned = [];
+  raw.forEach(m => {
+    if (!m) return;
+    const key = m._id ? String(m._id) : (m.id ? String(m.id) : `${m.senderId}_${m.receiverId}_${(m.text || '').trim()}`);
+    if (!seen.has(key)) {
+      seen.add(key);
+      cleaned.push(m);
+    }
+  });
+  return cleaned;
+};
+
+export const saveMessages = (msgs) => {
+  if (!Array.isArray(msgs)) return;
+  const seen = new Set();
+  const deduplicated = [];
+  msgs.forEach(m => {
+    if (!m) return;
+    const key = m._id ? String(m._id) : (m.id ? String(m.id) : `${m.senderId}_${m.receiverId}_${(m.text || '').trim()}`);
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduplicated.push(m);
+    }
+  });
+  setStorageData(KEYS.MESSAGES, deduplicated);
+};
 
 export const addMessage = (msg) => {
   const msgs = getMessages();
