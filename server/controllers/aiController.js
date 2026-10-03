@@ -16,6 +16,27 @@ const getGeminiClient = () => {
   }
 };
 
+const GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-3.5-flash'];
+
+const callGeminiGenerate = async (ai, prompt) => {
+  if (!ai) return null;
+  for (const model of GEMINI_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt
+      });
+      if (response && response.text) {
+        return { text: response.text, model };
+      }
+    } catch (err) {
+      // Try next model if Google API gives 503 high demand or temporary rate limit
+      console.warn(`Gemini model ${model} notice:`, err.message);
+    }
+  }
+  return null;
+};
+
 /**
  * @desc    Calculate Real-Time AI Matches for a Job or Custom Prompt
  * @route   POST /api/ai/match
@@ -78,47 +99,45 @@ Return a strict JSON array containing ranking objects for all candidates, format
 ]
 Only return the valid JSON array, no markdown fences or other text.`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt
-        });
+        const geminiRes = await callGeminiGenerate(ai, prompt);
 
-        const rawText = response.text || '';
-        const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedScores = JSON.parse(cleanJson);
+        if (geminiRes && geminiRes.text) {
+          const cleanJson = geminiRes.text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsedScores = JSON.parse(cleanJson);
 
-        if (Array.isArray(parsedScores) && parsedScores.length > 0) {
-          const scoreMap = new Map(parsedScores.map(item => [String(item.id), item]));
-          
-          const results = talents.map(talent => {
-            const tId = String(talent._id);
-            const aiScoreObj = scoreMap.get(tId);
+          if (Array.isArray(parsedScores) && parsedScores.length > 0) {
+            const scoreMap = new Map(parsedScores.map(item => [String(item.id), item]));
             
-            const reqSkills = targetSkills;
-            const matchingSkills = aiScoreObj?.matchingSkills || reqSkills.filter(rs => 
-              (talent.skills || []).some(ts => ts.toLowerCase().includes(rs.toLowerCase()) || rs.toLowerCase().includes(ts.toLowerCase()))
-            );
+            const results = talents.map(talent => {
+              const tId = String(talent._id);
+              const aiScoreObj = scoreMap.get(tId);
+              
+              const reqSkills = targetSkills;
+              const matchingSkills = aiScoreObj?.matchingSkills || reqSkills.filter(rs => 
+                (talent.skills || []).some(ts => ts.toLowerCase().includes(rs.toLowerCase()) || rs.toLowerCase().includes(ts.toLowerCase()))
+              );
 
-            const score = aiScoreObj?.score || Math.min(98, Math.max(50, Math.round(
-              (matchingSkills.length / Math.max(1, reqSkills.length)) * 50 + (talent.city.toLowerCase() === targetCity.toLowerCase() ? 25 : 10) + ((talent.rating || 5) / 5) * 20
-            )));
+              const score = aiScoreObj?.score || Math.min(98, Math.max(50, Math.round(
+                (matchingSkills.length / Math.max(1, reqSkills.length)) * 50 + (talent.city.toLowerCase() === targetCity.toLowerCase() ? 25 : 10) + ((talent.rating || 5) / 5) * 20
+              )));
 
-            return {
-              talent,
-              score,
-              matchingSkills,
-              reasoning: aiScoreObj?.reasoning || `Gemini AI matched verified skills and ${talent.rating} rating in ${talent.city}.`,
-              breakdown: {
-                skills: Math.min(100, Math.round((matchingSkills.length / Math.max(1, reqSkills.length)) * 100)),
-                location: talent.city.toLowerCase() === targetCity.toLowerCase() ? 100 : 50,
-                rating: Math.min(100, Math.round(((talent.rating || 5) / 5) * 100)),
-                budget: 90
-              }
-            };
-          });
+              return {
+                talent,
+                score,
+                matchingSkills,
+                reasoning: aiScoreObj?.reasoning || `Gemini AI matched verified skills and ${talent.rating} rating in ${talent.city}.`,
+                breakdown: {
+                  skills: Math.min(100, Math.round((matchingSkills.length / Math.max(1, reqSkills.length)) * 100)),
+                  location: talent.city.toLowerCase() === targetCity.toLowerCase() ? 100 : 50,
+                  rating: Math.min(100, Math.round(((talent.rating || 5) / 5) * 100)),
+                  budget: 90
+                }
+              };
+            });
 
-          results.sort((a, b) => b.score - a.score);
-          return res.status(200).json({ success: true, count: results.length, data: results, provider: 'gemini-2.5-flash' });
+            results.sort((a, b) => b.score - a.score);
+            return res.status(200).json({ success: true, count: results.length, data: results, provider: geminiRes.model });
+          }
         }
       } catch (geminiErr) {
         console.warn('Gemini Match evaluation notice, using intelligent fallback:', geminiErr.message);
@@ -201,20 +220,18 @@ Generate a structured, professional, and appealing Job Posting. Return ONLY a va
 }
 Do not wrap in markdown quotes. Return pure JSON.`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: geminiPrompt
-        });
+        const geminiRes = await callGeminiGenerate(ai, geminiPrompt);
 
-        const rawText = response.text || '';
-        const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedJob = JSON.parse(cleanJson);
+        if (geminiRes && geminiRes.text) {
+          const cleanJson = geminiRes.text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsedJob = JSON.parse(cleanJson);
 
-        return res.status(200).json({
-          success: true,
-          data: parsedJob,
-          provider: 'gemini-2.5-flash'
-        });
+          return res.status(200).json({
+            success: true,
+            data: parsedJob,
+            provider: geminiRes.model
+          });
+        }
       } catch (geminiErr) {
         console.warn('Gemini Job Generation notice, using fallback builder:', geminiErr.message);
       }
@@ -303,18 +320,17 @@ FREELANCER PROFILE:
 
 Write a confident, 2-3 paragraph proposal that directly addresses the client's needs, highlights relevant skills, and outlines a smooth milestone delivery approach. Return pure text without placeholders or markdown quotation marks.`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: geminiPrompt
-        });
+        const geminiRes = await callGeminiGenerate(ai, geminiPrompt);
 
-        return res.status(200).json({
-          success: true,
-          data: {
-            coverLetter: (response.text || '').trim()
-          },
-          provider: 'gemini-2.5-flash'
-        });
+        if (geminiRes && geminiRes.text) {
+          return res.status(200).json({
+            success: true,
+            data: {
+              coverLetter: geminiRes.text.trim()
+            },
+            provider: geminiRes.model
+          });
+        }
       } catch (geminiErr) {
         console.warn('Gemini Proposal Generation notice, using fallback builder:', geminiErr.message);
       }
@@ -371,18 +387,17 @@ Assist the user with their question or inquiry. Be concise, professional, and he
 User Query: "${prompt}"
 Context: ${JSON.stringify(context || {})}`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: copilotPrompt
-        });
+        const geminiRes = await callGeminiGenerate(ai, copilotPrompt);
 
-        return res.status(200).json({
-          success: true,
-          data: {
-            reply: (response.text || '').trim()
-          },
-          provider: 'gemini-2.5-flash'
-        });
+        if (geminiRes && geminiRes.text) {
+          return res.status(200).json({
+            success: true,
+            data: {
+              reply: geminiRes.text.trim()
+            },
+            provider: geminiRes.model
+          });
+        }
       } catch (geminiErr) {
         console.warn('Gemini Copilot notice:', geminiErr.message);
       }
