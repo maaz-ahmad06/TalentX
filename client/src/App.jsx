@@ -115,20 +115,11 @@ function AppContent() {
   // Route check: Hide public Navbar & Footer on all dashboard routes and logged-in messages workspace
   const isDashboardRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard') || (Boolean(currentUser) && location.pathname === '/messages');
 
-  // Preloader State: Runs on initial session load
-  const [isLoading, setIsLoading] = useState(() => {
-    try {
-      return !sessionStorage.getItem('talentx_preloader_completed');
-    } catch {
-      return false;
-    }
-  });
+  // Preloader State: Runs on every page reload / initial visit
+  const [isLoading, setIsLoading] = useState(true);
 
   const handlePreloaderFinish = () => {
     setIsLoading(false);
-    try {
-      sessionStorage.setItem('talentx_preloader_completed', 'true');
-    } catch {}
   };
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);

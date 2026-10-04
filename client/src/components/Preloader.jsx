@@ -25,7 +25,7 @@ export const Preloader = ({ onFinish }) => {
   };
 
   useEffect(() => {
-    // Progress counter timer: smooth 2.5 - 3.0 seconds duration
+    // Progress counter timer: smooth ~1.4 - 1.7 seconds duration
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
@@ -33,8 +33,8 @@ export const Preloader = ({ onFinish }) => {
           handleComplete();
           return 100;
         }
-        // Smooth increment between 1.0% and 1.8% every 35ms -> ~2.7 seconds total
-        const increment = Math.random() * 0.8 + 1.1;
+        // Smooth increment between 1.5% and 2.8% every 25ms -> ~1.4 seconds total
+        const increment = Math.random() * 1.3 + 1.6;
         const next = Math.min(100, Math.round(prev + increment));
         if (next >= 100) {
           clearInterval(interval);
@@ -42,12 +42,12 @@ export const Preloader = ({ onFinish }) => {
         }
         return next;
       });
-    }, 35);
+    }, 25);
 
-    // Absolute fallback: Auto-dismiss after 3.2s
+    // Absolute fallback: Auto-dismiss after 2.0s
     const fallbackTimer = setTimeout(() => {
       handleComplete();
-    }, 3200);
+    }, 2000);
 
     return () => {
       clearInterval(interval);
