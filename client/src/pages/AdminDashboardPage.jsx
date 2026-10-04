@@ -798,28 +798,56 @@ export const AdminDashboardPage = ({
               {activeTab === 'users' && 'User & Talent Management'}
               {activeTab === 'jobs' && 'Job Posts Moderation'}
               {activeTab === 'escrow' && 'Milestone Escrow Vault'}
+              {activeTab === 'disputes' && 'Disputes & Mediation Center'}
               {activeTab === 'settings' && 'Platform Governance & Controls'}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <button 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
-              onClick={() => {
-                if (activeTab === 'users') setIsAddUserModalOpen(true);
-                else if (activeTab === 'jobs') setIsAddJobModalOpen(true);
-                else if (activeTab === 'escrow') setIsAddContractModalOpen(true);
-                else setIsAddUserModalOpen(true);
-              }}
-            >
-              <Plus size={16} />
-              <span>
-                {activeTab === 'users' && 'Add New Talent'}
-                {activeTab === 'jobs' && 'Post Job as Admin'}
-                {activeTab === 'escrow' && 'New Escrow Contract'}
-                {activeTab === 'settings' && 'Add User'}
-              </span>
-            </button>
+            {activeTab === 'disputes' ? (
+              <button 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-rose-600 via-amber-600 to-rose-700 hover:opacity-95 shadow-md shadow-rose-500/20 active:scale-95 transition-all cursor-pointer"
+                onClick={() => {
+                  apiGetDisputes().then(res => {
+                    if (Array.isArray(res)) {
+                      setDisputesList(res);
+                      saveDisputes(res);
+                      if (showToast) showToast('Disputes synced from database!', 'ai');
+                    }
+                  }).catch(() => {
+                    setDisputesList(getDisputes());
+                    if (showToast) showToast('Disputes list refreshed!', 'ai');
+                  });
+                }}
+              >
+                <RefreshCw size={16} />
+                <span>Refresh Disputes</span>
+              </button>
+            ) : activeTab === 'settings' ? (
+              <button 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                onClick={handleExportDataJSON}
+              >
+                <Download size={16} />
+                <span>Export Backup</span>
+              </button>
+            ) : (
+              <button 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                onClick={() => {
+                  if (activeTab === 'users') setIsAddUserModalOpen(true);
+                  else if (activeTab === 'jobs') setIsAddJobModalOpen(true);
+                  else if (activeTab === 'escrow') setIsAddContractModalOpen(true);
+                }}
+              >
+                <Plus size={16} />
+                <span>
+                  {activeTab === 'users' && 'Add New Talent'}
+                  {activeTab === 'jobs' && 'Post Job as Admin'}
+                  {activeTab === 'escrow' && 'New Escrow Contract'}
+                </span>
+              </button>
+            )}
           </div>
         </header>
 
