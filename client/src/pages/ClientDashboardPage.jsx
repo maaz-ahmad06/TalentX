@@ -29,7 +29,13 @@ import {
   Lock,
   Receipt,
   Printer,
-  X
+  X,
+  CreditCard,
+  Wallet,
+  Landmark,
+  Smartphone,
+  Download,
+  FileText
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES } from '../data/mockData';
@@ -74,6 +80,19 @@ export const ClientDashboardPage = ({
   // Escrow & Receipt States
   const [fundingContract, setFundingContract] = useState(null);
   const [viewingReceipt, setViewingReceipt] = useState(null);
+  const [checkoutInitialMethod, setCheckoutInitialMethod] = useState('jazzcash');
+
+  const handleOpenGatewayCheckout = (gatewayKey) => {
+    setCheckoutInitialMethod(gatewayKey);
+    const targetContract = contracts[0] || {
+      id: `cnt-${Date.now()}`,
+      jobTitle: 'TalentX MERN Platform Milestone Deposit',
+      talentName: 'Maaz (Specialist)',
+      amount: 60000,
+      clientName: currentUser?.name || 'Client Employer'
+    };
+    setFundingContract(targetContract);
+  };
 
   // Client Company Form State
   const [companyForm, setCompanyForm] = useState(() => ({
@@ -366,6 +385,21 @@ export const ClientDashboardPage = ({
 
             <button 
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
+                activeSubTab === 'billing' 
+                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+              }`}
+              onClick={() => setActiveSubTab('billing')}
+            >
+              <div className="flex items-center gap-3">
+                <CreditCard size={18} />
+                <span>Billing & Payments</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-300">PKR</span>
+            </button>
+
+            <button 
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                 activeSubTab === 'company-settings' 
                   ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
@@ -430,6 +464,7 @@ export const ClientDashboardPage = ({
               {activeSubTab === 'contracts' && 'Active Contracts & Milestone Escrow'}
               {activeSubTab === 'my-jobs' && 'My Posted Project Listings'}
               {activeSubTab === 'proposals' && 'Proposals Received from Verified Pros'}
+              {activeSubTab === 'billing' && 'Pakistani Payment Gateways & Escrow Receipts'}
               {activeSubTab === 'company-settings' && 'Company Profile & Billing Preferences'}
             </span>
           </div>
@@ -537,6 +572,9 @@ export const ClientDashboardPage = ({
                             </span>
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
                               <Lock size={11} /> {contract.escrowStatus || 'Funded in Escrow'}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
+                              <CreditCard size={11} /> {contract.paymentMethod || 'JazzCash'}
                             </span>
                           </div>
                           <h3 className="text-xl font-bold text-white mb-1.5 font-display">{contract.jobTitle}</h3>
@@ -864,7 +902,250 @@ export const ClientDashboardPage = ({
           )}
 
           {/* ============================================================
-              TAB 4: COMPANY & PROFILE SETTINGS
+              TAB 4: BILLING & PAKISTANI PAYMENT GATEWAYS
+              ============================================================ */}
+          {activeSubTab === 'billing' && (
+            <div className="space-y-8 animate-fadeIn">
+              {/* Header Info */}
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-xl">
+                <div className="flex flex-wrap items-center justify-between gap-6">
+                  <div className="space-y-2 max-w-xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                      <ShieldCheck size={14} /> 100% Milestone Escrow Vault Protected
+                    </div>
+                    <h2 className="text-2xl font-black text-white font-display">Pakistani Payment Methods & Escrow Hub</h2>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      All milestone deposits are securely vaulted until you inspect and approve deliverables. Deposit funds via JazzCash, EasyPaisa, PayFast Card, or Raast below.
+                    </p>
+                    <div className="pt-2">
+                      <button 
+                        type="button"
+                        onClick={() => handleOpenGatewayCheckout('jazzcash')}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-600 to-indigo-600 hover:from-emerald-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                      >
+                        <CreditCard size={15} />
+                        <span>Make Quick Escrow Deposit (Test Checkout)</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="bg-slate-950/80 border border-white/10 p-5 rounded-2xl text-right">
+                    <div className="text-xs text-slate-400 font-medium mb-1">Total Active Escrow Lock</div>
+                    <div className="text-2xl font-black text-emerald-400 font-display">PKR {totalEscrow.toLocaleString()}</div>
+                    <div className="text-[11px] text-slate-500 mt-1">Across {contracts.length} active contracts</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4 Supported Pakistani Payment Gateways */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white font-display flex items-center gap-2">
+                    <CreditCard size={20} className="text-indigo-400" />
+                    <span>Supported Pakistani Payment Gateways</span>
+                  </h3>
+                  <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                    Live 3D-Secure Integration
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {/* JazzCash */}
+                  <div className="bg-slate-900/80 border border-white/10 hover:border-red-500/50 rounded-2xl p-5 backdrop-blur-xl shadow-lg transition-all group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 flex items-center justify-center font-black text-xs">
+                          JC
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
+                          Ready
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mb-1">JazzCash Wallet</h4>
+                      <p className="text-xs text-slate-400 mb-3">Instant mobile account deposit via MPIN prompt.</p>
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-slate-300">
+                        <span className="text-slate-500">Speed:</span>
+                        <span className="font-semibold text-emerald-400">Instant (Real-time)</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenGatewayCheckout('jazzcash')}
+                      className="w-full mt-4 py-2 px-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Smartphone size={13} />
+                      <span>Deposit via JazzCash</span>
+                    </button>
+                  </div>
+
+                  {/* EasyPaisa */}
+                  <div className="bg-slate-900/80 border border-white/10 hover:border-emerald-500/50 rounded-2xl p-5 backdrop-blur-xl shadow-lg transition-all group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-black text-xs">
+                          EP
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
+                          Ready
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mb-1">EasyPaisa Wallet</h4>
+                      <p className="text-xs text-slate-400 mb-3">Instant push authorization via EasyPaisa App.</p>
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-slate-300">
+                        <span className="text-slate-500">Speed:</span>
+                        <span className="font-semibold text-emerald-400">Instant (Real-time)</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenGatewayCheckout('easypaisa')}
+                      className="w-full mt-4 py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Smartphone size={13} />
+                      <span>Deposit via EasyPaisa</span>
+                    </button>
+                  </div>
+
+                  {/* PayFast 3D Card */}
+                  <div className="bg-slate-900/80 border border-white/10 hover:border-indigo-500/50 rounded-2xl p-5 backdrop-blur-xl shadow-lg transition-all group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-11 h-11 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                          <CreditCard size={20} />
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
+                          Ready
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mb-1">PayFast 3D Card</h4>
+                      <p className="text-xs text-slate-400 mb-3">Pakistani Visa / MasterCard / PayPak with OTP.</p>
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-slate-300">
+                        <span className="text-slate-500">Security:</span>
+                        <span className="font-semibold text-indigo-400">3D Secure OTP</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenGatewayCheckout('card')}
+                      className="w-full mt-4 py-2 px-3 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <CreditCard size={13} />
+                      <span>Pay with 3D Card</span>
+                    </button>
+                  </div>
+
+                  {/* Raast / 1Link */}
+                  <div className="bg-slate-900/80 border border-white/10 hover:border-cyan-500/50 rounded-2xl p-5 backdrop-blur-xl shadow-lg transition-all group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
+                          <Landmark size={20} />
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
+                          SBP Verified
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mb-1">Raast / 1Link</h4>
+                      <p className="text-xs text-slate-400 mb-3">State Bank of Pakistan instant inter-bank settlement.</p>
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-slate-300">
+                        <span className="text-slate-500">Fee:</span>
+                        <span className="font-semibold text-cyan-400">0% Bank Charges</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenGatewayCheckout('raast')}
+                      className="w-full mt-4 py-2 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Landmark size={13} />
+                      <span>Pay with Raast</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Escrow Transaction History & Invoices Table */}
+              <div className="bg-slate-900/70 border border-white/10 rounded-3xl p-7 backdrop-blur-xl shadow-xl space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white font-display flex items-center gap-2">
+                      <Receipt size={20} className="text-emerald-400" />
+                      <span>Official Escrow Tax Receipts & Invoices</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">Electronic invoices with reference numbers for all your funded contracts.</p>
+                  </div>
+                </div>
+
+                {contracts.length === 0 ? (
+                  <div className="py-12 text-center text-slate-500 text-sm">
+                    No payment deposits recorded yet. Hire a specialist to fund an escrow milestone.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-950/70 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-white/10">
+                        <tr>
+                          <th className="py-3.5 px-4">Reference ID</th>
+                          <th className="py-3.5 px-4">Project Title</th>
+                          <th className="py-3.5 px-4">Hired Talent</th>
+                          <th className="py-3.5 px-4">Payment Gateway</th>
+                          <th className="py-3.5 px-4 text-right">Amount</th>
+                          <th className="py-3.5 px-4 text-center">Escrow Status</th>
+                          <th className="py-3.5 px-4 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {contracts.map((c) => (
+                          <tr key={c.id || c._id} className="hover:bg-white/5 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-bold text-emerald-400">
+                              {c.transactionRef || `TX-ESC-${Math.floor(100000 + Math.random() * 900000)}`}
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-white max-w-[200px] truncate">
+                              {c.jobTitle}
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-300">{c.talentName}</td>
+                            <td className="py-3.5 px-4">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-amber-300 font-semibold text-[11px]">
+                                {c.paymentMethod || 'JazzCash'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-bold text-white">
+                              PKR {Number(c.amount).toLocaleString()}
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                                <Lock size={10} /> {c.escrowStatus || 'Funded in Escrow'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setViewingReceipt({
+                                  transactionRef: c.transactionRef || `TX-ESC-${Math.floor(100000 + Math.random() * 900000)}`,
+                                  contractTitle: c.jobTitle,
+                                  clientName: c.clientName,
+                                  talentName: c.talentName,
+                                  amount: Number(c.amount),
+                                  method: c.paymentMethod || 'JazzCash',
+                                  date: new Date().toLocaleDateString()
+                                })}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 hover:text-white font-bold transition-all cursor-pointer"
+                              >
+                                <Receipt size={13} />
+                                <span>Tax Receipt</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
+              TAB 5: COMPANY & PROFILE SETTINGS
               ============================================================ */}
           {activeSubTab === 'company-settings' && (
             <div className="bg-slate-900/70 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl space-y-6">
@@ -1138,6 +1419,7 @@ export const ClientDashboardPage = ({
         <PaymentCheckoutModal 
           contractData={fundingContract}
           currentUser={currentUser}
+          initialMethod={checkoutInitialMethod}
           onClose={() => setFundingContract(null)}
           onPaymentSuccess={(receipt) => {
             if (showToast) showToast('Milestone successfully funded into Escrow!', 'success');

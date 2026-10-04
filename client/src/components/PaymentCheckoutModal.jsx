@@ -13,7 +13,9 @@ import {
   Printer, 
   Sparkles,
   Receipt,
-  FileText
+  FileText,
+  Copy,
+  Check
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -21,12 +23,20 @@ export const PaymentCheckoutModal = ({
   contractData,
   talent,
   currentUser,
+  initialMethod = 'jazzcash',
   onClose,
   onPaymentSuccess
 }) => {
-  const [selectedMethod, setSelectedMethod] = useState('jazzcash'); // 'jazzcash' | 'easypaisa' | 'card' | 'raast'
+  const [selectedMethod, setSelectedMethod] = useState(initialMethod || 'jazzcash');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccessData, setPaymentSuccessData] = useState(null);
+  const [copiedField, setCopiedField] = useState(null);
+
+  const handleCopy = (text, fieldName) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   // Form states for Pakistani payment methods
   const [mobileNumber, setMobileNumber] = useState('03001234567');
@@ -310,25 +320,72 @@ export const PaymentCheckoutModal = ({
               )}
 
               {selectedMethod === 'raast' && (
-                <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/30 space-y-3">
-                  <div className="flex items-center gap-2 text-xs text-amber-300 font-bold">
-                    <Building2 size={14} /> 1Link & Raast Instant Pakistani Transfer
-                  </div>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-white/10 space-y-1.5 text-xs text-slate-300">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Beneficiary Bank:</span>
-                      <strong className="text-white">Meezan Bank Ltd</strong>
+                <div className="p-4 rounded-2xl bg-amber-950/25 border border-amber-500/40 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-amber-300 font-bold">
+                      <Building2 size={15} /> 1Link (1Bill) & SBP Raast Direct Bank Transfer
                     </div>
-                    <div className="flex justify-between">
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      0% Bank Fee
+                    </span>
+                  </div>
+
+                  {/* Account / Invoice Details */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/90 border border-white/10 space-y-2 text-xs text-slate-300">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
+                      <span className="text-slate-400">Beneficiary Bank:</span>
+                      <strong className="text-white">Meezan Bank Ltd (Pakistan)</strong>
+                    </div>
+                    <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
                       <span className="text-slate-400">Account Title:</span>
                       <strong className="text-white">TalentX Pakistan Escrow Treasury</strong>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">1Bill Invoice Ref:</span>
-                      <strong className="text-amber-400 font-mono">1009823908123</strong>
+
+                    {/* Option A: 1Bill Invoice Number */}
+                    <div className="flex items-center justify-between pt-1">
+                      <div>
+                        <div className="text-[10px] text-slate-400 font-semibold">1Bill Invoice / Voucher No:</div>
+                        <div className="text-amber-400 font-mono font-black text-sm">1009823908123</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy('1009823908123', '1bill')}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-[11px] font-bold border border-amber-500/30 transition-all cursor-pointer"
+                      >
+                        {copiedField === '1bill' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        <span>{copiedField === '1bill' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+
+                    {/* Option B: Raast IBAN */}
+                    <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
+                      <div>
+                        <div className="text-[10px] text-slate-400 font-semibold">Raast IBAN (Instant Transfer):</div>
+                        <div className="text-emerald-400 font-mono font-bold text-xs">PK36MEZN0001009823908123</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy('PK36MEZN0001009823908123', 'iban')}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 transition-all cursor-pointer"
+                      >
+                        {copiedField === 'iban' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        <span>{copiedField === 'iban' ? 'Copied' : 'Copy'}</span>
+                      </button>
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-400">Instant automatic detection via Raast / 1Link within 15 seconds.</p>
+
+                  {/* 3 Step Instruction Guide */}
+                  <div className="p-3 rounded-xl bg-slate-900/90 border border-amber-500/20 text-[11px] text-slate-300 space-y-1.5">
+                    <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                      <span>📌 How to pay via your Bank App:</span>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-1 text-slate-400 leading-relaxed text-[11px]">
+                      <li>Open any Bank App (<em className="text-slate-200">Meezan, HBL, Alfalah, SadaPay, NayaPay, JazzCash</em>).</li>
+                      <li>Go to <strong className="text-white">Bill Payments &rarr; 1Bill / Invoices</strong> (or <strong className="text-white">Raast Instant Transfer</strong>).</li>
+                      <li>Enter the <strong className="text-amber-300">1Bill Ref</strong> or <strong className="text-emerald-300">Raast IBAN</strong> above. Your bill of <strong className="text-white">PKR {depositAmount.toLocaleString()}</strong> will auto-fetch.</li>
+                      <li>Click the button below to confirm escrow lock!</li>
+                    </ol>
+                  </div>
                 </div>
               )}
 

@@ -15,7 +15,8 @@ import {
   Receipt,
   ArrowRight,
   Printer,
-  Check
+  Check,
+  Copy
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -46,6 +47,7 @@ export const HiringModal = ({
   const [cardHolder, setCardHolder] = useState(currentUser?.name || 'Maaz Ahmad');
   const [isProcessing, setIsProcessing] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [copiedField, setCopiedField] = useState(null);
 
   if (!talent) return null;
 
@@ -482,20 +484,79 @@ export const HiringModal = ({
               )}
 
               {selectedMethod === 'raast' && (
-                <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/30 space-y-3">
-                  <div className="flex items-center gap-2 text-xs text-amber-300 font-bold">
-                    <Building2 size={14} /> State Bank Raast P2M Direct Payment
+                <div className="p-4 rounded-2xl bg-amber-950/25 border border-amber-500/40 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-amber-300 font-bold">
+                      <Building2 size={15} /> 1Link (1Bill) & SBP Raast Direct Bank Transfer
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      0% Bank Fee
+                    </span>
                   </div>
-                  <div>
-                    <label className="text-[11px] text-slate-300 font-semibold block mb-1">Raast ID / Registered IBAN</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/15 focus:border-amber-500 text-sm text-white font-mono outline-none"
-                      placeholder="PK36MEZN0001234567890101"
-                      value={mobileNumber}
-                      onChange={(e) => setMobileNumber(e.target.value)}
-                      required
-                    />
+
+                  {/* Account / Invoice Details */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/90 border border-white/10 space-y-2 text-xs text-slate-300">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
+                      <span className="text-slate-400">Beneficiary Bank:</span>
+                      <strong className="text-white">Meezan Bank Ltd (Pakistan)</strong>
+                    </div>
+                    <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
+                      <span className="text-slate-400">Account Title:</span>
+                      <strong className="text-white">TalentX Pakistan Escrow Treasury</strong>
+                    </div>
+
+                    {/* Option A: 1Bill Invoice Number */}
+                    <div className="flex items-center justify-between pt-1">
+                      <div>
+                        <div className="text-[10px] text-slate-400 font-semibold">1Bill Invoice / Voucher No:</div>
+                        <div className="text-amber-400 font-mono font-black text-sm">1009823908123</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText('1009823908123');
+                          setCopiedField('1bill');
+                          setTimeout(() => setCopiedField(null), 2000);
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-[11px] font-bold border border-amber-500/30 transition-all cursor-pointer"
+                      >
+                        {copiedField === '1bill' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        <span>{copiedField === '1bill' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+
+                    {/* Option B: Raast IBAN */}
+                    <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
+                      <div>
+                        <div className="text-[10px] text-slate-400 font-semibold">Raast IBAN (Instant Transfer):</div>
+                        <div className="text-emerald-400 font-mono font-bold text-xs">PK36MEZN0001009823908123</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText('PK36MEZN0001009823908123');
+                          setCopiedField('iban');
+                          setTimeout(() => setCopiedField(null), 2000);
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 transition-all cursor-pointer"
+                      >
+                        {copiedField === 'iban' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        <span>{copiedField === 'iban' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 3 Step Instruction Guide */}
+                  <div className="p-3 rounded-xl bg-slate-900/90 border border-amber-500/20 text-[11px] text-slate-300 space-y-1.5">
+                    <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                      <span>📌 How to pay via your Bank App:</span>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-1 text-slate-400 leading-relaxed text-[11px]">
+                      <li>Open any Bank App (<em className="text-slate-200">Meezan, HBL, Alfalah, SadaPay, NayaPay, JazzCash</em>).</li>
+                      <li>Go to <strong className="text-white">Bill Payments &rarr; 1Bill / Invoices</strong> (or <strong className="text-white">Raast Instant Transfer</strong>).</li>
+                      <li>Enter the <strong className="text-amber-300">1Bill Ref</strong> or <strong className="text-emerald-300">Raast IBAN</strong> above. Your bill of <strong className="text-white">PKR {depositAmount.toLocaleString()}</strong> will auto-fetch.</li>
+                      <li>Click the button below to confirm escrow lock!</li>
+                    </ol>
                   </div>
                 </div>
               )}
