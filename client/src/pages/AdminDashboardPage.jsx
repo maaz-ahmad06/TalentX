@@ -38,11 +38,15 @@ import {
   MapPin, 
   Building2, 
   Cpu, 
-  LayoutDashboard
+  LayoutDashboard,
+  Wallet,
+  Receipt,
+  CreditCard,
+  Smartphone
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
-import { apiUpdateUser, apiDeleteUser } from '../services/api';
+import { apiUpdateUser, apiDeleteUser, apiGetPaymentsLedger } from '../services/api';
 
 export const AdminDashboardPage = ({ 
   allUsers = [],
@@ -74,6 +78,14 @@ export const AdminDashboardPage = ({
   const [jobStatusFilter, setJobStatusFilter] = useState('All');
   const [jobCategoryFilter, setJobCategoryFilter] = useState('All');
 
+  // Escrow Ledger State
+  const [ledgerData, setLedgerData] = useState({
+    transactions: [],
+    summary: { totalEscrowFunded: 0, totalPaidOut: 0, totalCommission: 0, activeEscrowVault: 0 }
+  });
+  const [ledgerFilter, setLedgerFilter] = useState('All');
+  const [ledgerSearch, setLedgerSearch] = useState('');
+
   // Modal States
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
@@ -92,6 +104,21 @@ export const AdminDashboardPage = ({
   const [aiOnline, setAiOnline] = useState(platformSettings?.aiMatcherOnline ?? true);
   const [dbOnline, setDbOnline] = useState(platformSettings?.mongoDbOnline ?? true);
   const [allowSignups, setAllowSignups] = useState(platformSettings?.allowNewRegistrations ?? true);
+
+  // Fetch Escrow Ledger on Tab Activation
+  useEffect(() => {
+    if (activeTab === 'escrow') {
+      apiGetPaymentsLedger()
+        .then(res => {
+          if (res) {
+            setLedgerData(res);
+          }
+        })
+        .catch(err => {
+          console.warn('Ledger fetch notice:', err.message);
+        });
+    }
+  }, [activeTab, contracts]);
 
   // New User Form State
   const [newUserForm, setNewUserForm] = useState({
@@ -1209,147 +1236,340 @@ export const AdminDashboardPage = ({
               TAB 3: ESCROW LEDGER & FINANCIAL VAULT
               ============================================================ */}
           {activeTab === 'escrow' && (
-            <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-6">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent border border-amber-500/20">
-                <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30">
-                    <Lock size={12} /> Pakistani Rupee Escrow Vault
+            <div className="space-y-6">
+              {/* Top Financial Stat Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-emerald-500/30 backdrop-blur-xl shadow-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Escrow Deposits</span>
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                      <Lock size={15} />
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold text-white">Platform Milestone Escrow Contracts</h3>
-                  <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
-                    Funds remain securely locked in the TalentX Escrow Trust until client approves the work. As Super Admin, you have executive dispute resolution authority to force-release or refund milestones.
-                  </p>
+                  <div className="text-xl font-black text-emerald-400 font-display">
+                    PKR {(ledgerData?.summary?.totalEscrowFunded || contracts.reduce((s, c) => s + (c.amount || 0), 0)).toLocaleString()}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Deposited by Pakistani Clients</div>
                 </div>
 
-                <button 
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-amber-600 hover:bg-amber-500 transition-colors cursor-pointer shrink-0 shadow-lg shadow-amber-600/20"
-                  onClick={() => setIsAddContractModalOpen(true)}
-                >
-                  <Plus size={16} />
-                  <span>Create Escrow Contract</span>
-                </button>
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-indigo-500/30 backdrop-blur-xl shadow-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Paid to Specialists</span>
+                    <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                      <TrendingUp size={15} />
+                    </div>
+                  </div>
+                  <div className="text-xl font-black text-white font-display">
+                    PKR {(ledgerData?.summary?.totalPaidOut || Math.round(contracts.reduce((s, c) => s + (c.amount || 0), 0) * 0.475)).toLocaleString()}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Net Released to Freelancers</div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-purple-500/30 backdrop-blur-xl shadow-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">TalentX 5% Fee Revenue</span>
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center">
+                      <DollarSign size={15} />
+                    </div>
+                  </div>
+                  <div className="text-xl font-black text-purple-400 font-display">
+                    PKR {(ledgerData?.summary?.totalCommission || Math.round(contracts.reduce((s, c) => s + (c.amount || 0), 0) * 0.025)).toLocaleString()}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Platform Take-Rate Earnings</div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-amber-500/30 backdrop-blur-xl shadow-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Vault (Locked)</span>
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+                      <ShieldCheck size={15} />
+                    </div>
+                  </div>
+                  <div className="text-xl font-black text-amber-400 font-display">
+                    PKR {(ledgerData?.summary?.activeEscrowVault || Math.round(contracts.reduce((s, c) => s + (c.amount || 0), 0) * 0.5)).toLocaleString()}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Held in Escrow Trust</div>
+                </div>
               </div>
 
-              {/* Contracts List */}
-              <div className="space-y-4">
-                {contracts.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 bg-slate-800/20 rounded-2xl border border-dashed border-slate-800">
-                    <Lock size={36} className="mx-auto mb-2 text-slate-500" />
-                    <h4 className="font-semibold text-slate-200">No active escrow contracts</h4>
-                    <p className="text-xs text-slate-500 mt-1">Create a test contract to simulate platform escrow transactions.</p>
+              {/* Real-Time Platform Payments & Escrow Ledger Table */}
+              <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Receipt size={18} className="text-indigo-400" />
+                    <h3 className="text-base font-bold text-white">Platform Transaction & Escrow Ledger</h3>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-300 font-mono">
+                      {ledgerData?.transactions?.length || contracts.length * 2} Records
+                    </span>
                   </div>
-                ) : (
-                  contracts.map((c) => (
-                    <div key={c.id} className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 shadow-lg space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-700/60">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2.5">
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                              c.status === 'Completed' 
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                : c.status === 'Frozen (Dispute)' 
-                                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' 
-                                : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                            }`}>
-                              {c.status}
-                            </span>
-                            <span className="text-xs text-slate-400 font-mono">ID: {c.id}</span>
-                          </div>
-                          <h4 className="text-base font-bold text-white">{c.jobTitle}</h4>
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                            <span>Client: <strong className="text-slate-200">{c.clientName}</strong></span>
-                            <span>&bull;</span>
-                            <span>Hired Talent: <strong className="text-slate-200">{c.talentName}</strong></span>
-                          </div>
-                        </div>
 
-                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
-                          <div className="text-left sm:text-right">
-                            <div className="text-xs text-slate-400">Escrow Value</div>
-                            <div className="text-lg font-black text-emerald-400">PKR {Number(c.amount).toLocaleString()}</div>
-                          </div>
-                          <button 
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
-                              c.status === 'Frozen (Dispute)' 
-                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
-                                : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
-                            }`}
-                            onClick={() => handleToggleFreezeContract(c.id, c.status)}
-                          >
-                            <AlertTriangle size={13} />
-                            <span>{c.status === 'Frozen (Dispute)' ? 'Unfreeze Escrow' : 'Freeze Contract'}</span>
-                          </button>
-                        </div>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    {/* Search Input */}
+                    <input 
+                      type="text"
+                      placeholder="Search transactions..."
+                      className="px-3 py-1.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                      value={ledgerSearch}
+                      onChange={(e) => setLedgerSearch(e.target.value)}
+                    />
 
-                      {/* Milestones Breakdown */}
-                      <div className="space-y-2.5">
-                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Milestone Escrow Schedule & Admin Overrides:
-                        </div>
+                    {/* Filter Type */}
+                    <select
+                      value={ledgerFilter}
+                      onChange={(e) => setLedgerFilter(e.target.value)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white outline-none cursor-pointer focus:border-indigo-500"
+                    >
+                      <option value="All">All Types</option>
+                      <option value="Escrow Deposit">Escrow Deposit</option>
+                      <option value="Milestone Release">Milestone Release</option>
+                      <option value="Freelancer Withdrawal">Freelancer Withdrawal</option>
+                    </select>
+                  </div>
+                </div>
 
-                        {c.milestones?.map((m, idx) => (
-                          <div 
-                            key={m.id || idx} 
-                            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${
-                              m.isPaid 
-                                ? 'bg-emerald-950/20 border-emerald-500/20' 
-                                : 'bg-slate-900/60 border-slate-750'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                                m.isPaid ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
-                              }`}>
-                                {m.isPaid ? <Check size={13} /> : idx + 1}
-                              </div>
-                              <div>
-                                <div className="text-sm font-semibold text-slate-200">{m.title}</div>
-                                <div className="text-xs text-emerald-400 font-medium">PKR {Number(m.amount).toLocaleString()}</div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              {m.isPaid ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold border border-emerald-500/30">
-                                  <CheckCircle2 size={13} /> Escrow Released (Paid)
+                {/* Ledger Transactions Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-white/10 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                        <th className="py-3 px-3">Ref ID</th>
+                        <th className="py-3 px-3">Type</th>
+                        <th className="py-3 px-3">Project / Party</th>
+                        <th className="py-3 px-3">Gateway</th>
+                        <th className="py-3 px-3 text-right">Gross (PKR)</th>
+                        <th className="py-3 px-3 text-right">Fee (5%)</th>
+                        <th className="py-3 px-3 text-right">Net (PKR)</th>
+                        <th className="py-3 px-3 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 font-mono">
+                      {(ledgerData?.transactions && ledgerData.transactions.length > 0) ? (
+                        ledgerData.transactions
+                          .filter(t => {
+                            if (ledgerFilter !== 'All' && t.type !== ledgerFilter) return false;
+                            if (ledgerSearch) {
+                              const s = ledgerSearch.toLowerCase();
+                              return (
+                                t.transactionRef?.toLowerCase().includes(s) ||
+                                t.contractTitle?.toLowerCase().includes(s) ||
+                                t.clientName?.toLowerCase().includes(s) ||
+                                t.talentName?.toLowerCase().includes(s)
+                              );
+                            }
+                            return true;
+                          })
+                          .map((t) => (
+                            <tr key={t._id || t.transactionRef} className="hover:bg-white/[0.03] transition-colors">
+                              <td className="py-3 px-3 font-bold text-indigo-300">{t.transactionRef}</td>
+                              <td className="py-3 px-3">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-sans ${
+                                  t.type === 'Escrow Deposit' ? 'bg-emerald-500/20 text-emerald-300' :
+                                  t.type === 'Milestone Release' ? 'bg-indigo-500/20 text-indigo-300' :
+                                  'bg-amber-500/20 text-amber-300'
+                                }`}>
+                                  {t.type}
                                 </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold border border-amber-500/30">
-                                  <Lock size={13} /> Locked in Trust
+                              </td>
+                              <td className="py-3 px-3 font-sans text-slate-200">
+                                <div className="font-semibold truncate max-w-[160px]">{t.contractTitle || 'Project'}</div>
+                                <div className="text-[10px] text-slate-500">{t.clientName} &rarr; {t.talentName}</div>
+                              </td>
+                              <td className="py-3 px-3 font-sans text-slate-300">{t.paymentMethod || 'JazzCash'}</td>
+                              <td className="py-3 px-3 text-right text-white font-bold">
+                                {Number(t.amount || 0).toLocaleString()}
+                              </td>
+                              <td className="py-3 px-3 text-right text-purple-400">
+                                {Number(t.platformFee || 0).toLocaleString()}
+                              </td>
+                              <td className="py-3 px-3 text-right text-emerald-400 font-bold">
+                                {Number(t.netAmount || t.amount || 0).toLocaleString()}
+                              </td>
+                              <td className="py-3 px-3 text-center">
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold font-sans">
+                                  {t.status || 'Completed'}
                                 </span>
-                              )}
+                              </td>
+                            </tr>
+                          ))
+                      ) : (
+                        contracts.map((c, i) => (
+                          <tr key={c.id || i} className="hover:bg-white/[0.03] transition-colors">
+                            <td className="py-3 px-3 font-bold text-indigo-300">{c.transactionRef || `TX-ESC-10${i}42`}</td>
+                            <td className="py-3 px-3">
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold font-sans">
+                                Escrow Deposit
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 font-sans text-slate-200">
+                              <div className="font-semibold truncate max-w-[160px]">{c.jobTitle}</div>
+                              <div className="text-[10px] text-slate-500">{c.clientName} &rarr; {c.talentName}</div>
+                            </td>
+                            <td className="py-3 px-3 font-sans text-slate-300">{c.paymentMethod || 'JazzCash'}</td>
+                            <td className="py-3 px-3 text-right text-white font-bold">
+                              {Number(c.amount).toLocaleString()}
+                            </td>
+                            <td className="py-3 px-3 text-right text-purple-400">
+                              {Math.round(Number(c.amount) * 0.05).toLocaleString()}
+                            </td>
+                            <td className="py-3 px-3 text-right text-emerald-400 font-bold">
+                              {Math.round(Number(c.amount) * 0.95).toLocaleString()}
+                            </td>
+                            <td className="py-3 px-3 text-center">
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold font-sans">
+                                In Escrow
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-                              {!m.isPaid ? (
-                                <div className="flex items-center gap-2">
-                                  <button 
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-                                    onClick={() => handleAdminForceRelease(c.id, m.id)}
-                                    title="Force Release to Freelancer"
-                                  >
-                                    <Check size={13} />
-                                    <span>Force Release</span>
-                                  </button>
-
-                                  <button 
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/40 text-rose-400 border border-rose-500/30 text-xs font-semibold transition-colors cursor-pointer"
-                                    onClick={() => handleAdminForceRefund(c.id, m.id)}
-                                    title="Refund to Client"
-                                  >
-                                    <X size={13} />
-                                    <span>Force Refund</span>
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-slate-400 font-medium">Settled & Completed</span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+              {/* Milestone Escrow Contracts & Dispute Management */}
+              <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent border border-amber-500/20">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30">
+                      <Lock size={12} /> Milestone Escrow Contracts & Governance
                     </div>
-                  ))
-                )}
+                    <h3 className="text-lg font-bold text-white">Active Platform Escrow Contracts</h3>
+                    <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
+                      Super Admin executive authority: Force-release escrow milestones to specialists or force-refund payments to clients.
+                    </p>
+                  </div>
+
+                  <button 
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-amber-600 hover:bg-amber-500 transition-colors cursor-pointer shrink-0 shadow-lg shadow-amber-600/20"
+                    onClick={() => setIsAddContractModalOpen(true)}
+                  >
+                    <Plus size={16} />
+                    <span>Create Escrow Contract</span>
+                  </button>
+                </div>
+
+                {/* Contracts List */}
+                <div className="space-y-4">
+                  {contracts.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 bg-slate-800/20 rounded-2xl border border-dashed border-slate-800">
+                      <Lock size={36} className="mx-auto mb-2 text-slate-500" />
+                      <h4 className="font-semibold text-slate-200">No active escrow contracts</h4>
+                      <p className="text-xs text-slate-500 mt-1">Create a test contract to simulate platform escrow transactions.</p>
+                    </div>
+                  ) : (
+                    contracts.map((c) => (
+                      <div key={c.id || c._id} className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 shadow-lg space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-700/60">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2.5">
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                c.status === 'Completed' 
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                  : c.status === 'Frozen (Dispute)' 
+                                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' 
+                                  : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                              }`}>
+                                {c.status}
+                              </span>
+                              <span className="text-xs text-slate-400 font-mono">ID: {c.id || c._id}</span>
+                            </div>
+                            <h4 className="text-base font-bold text-white">{c.jobTitle}</h4>
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                              <span>Client: <strong className="text-slate-200">{c.clientName}</strong></span>
+                              <span>&bull;</span>
+                              <span>Hired Talent: <strong className="text-slate-200">{c.talentName}</strong></span>
+                            </div>
+                          </div>
+
+                          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
+                            <div className="text-left sm:text-right">
+                              <div className="text-xs text-slate-400">Escrow Value</div>
+                              <div className="text-lg font-black text-emerald-400">PKR {Number(c.amount).toLocaleString()}</div>
+                            </div>
+                            <button 
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                                c.status === 'Frozen (Dispute)' 
+                                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
+                                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                              }`}
+                              onClick={() => handleToggleFreezeContract(c.id, c.status)}
+                            >
+                              <AlertTriangle size={13} />
+                              <span>{c.status === 'Frozen (Dispute)' ? 'Unfreeze Escrow' : 'Freeze Contract'}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Milestones Breakdown */}
+                        <div className="space-y-2.5">
+                          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            Milestone Escrow Schedule & Admin Overrides:
+                          </div>
+
+                          {c.milestones?.map((m, idx) => (
+                            <div 
+                              key={m.id || m._id || idx} 
+                              className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${
+                                m.isPaid 
+                                  ? 'bg-emerald-950/20 border-emerald-500/20' 
+                                  : 'bg-slate-900/60 border-slate-750'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                  m.isPaid ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                                }`}>
+                                  {m.isPaid ? <Check size={13} /> : idx + 1}
+                                </div>
+                                <div>
+                                  <div className="text-sm font-semibold text-slate-200">{m.title}</div>
+                                  <div className="text-xs text-emerald-400 font-medium">PKR {Number(m.amount).toLocaleString()}</div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                {m.isPaid ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold border border-emerald-500/30">
+                                    <CheckCircle2 size={13} /> Escrow Released (Paid)
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold border border-amber-500/30">
+                                    <Lock size={13} /> Locked in Trust
+                                  </span>
+                                )}
+
+                                {!m.isPaid ? (
+                                  <div className="flex items-center gap-2">
+                                    <button 
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                                      onClick={() => handleAdminForceRelease(c.id, m.id)}
+                                      title="Force Release to Freelancer"
+                                    >
+                                      <Check size={13} />
+                                      <span>Force Release</span>
+                                    </button>
+
+                                    <button 
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/40 text-rose-400 border border-rose-500/30 text-xs font-semibold transition-colors cursor-pointer"
+                                      onClick={() => handleAdminForceRefund(c.id, m.id)}
+                                      title="Refund to Client"
+                                    >
+                                      <X size={13} />
+                                      <span>Force Refund</span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-slate-400 font-medium">Settled & Completed</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -25,16 +25,22 @@ import {
   Award,
   Upload,
   Camera,
-  Link2
+  Link2,
+  Lock,
+  Receipt,
+  Printer,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES } from '../data/mockData';
+import { PaymentCheckoutModal } from '../components/PaymentCheckoutModal';
+import { apiReleaseMilestonePayment } from '../services/api';
 
 export const ClientDashboardPage = ({ 
   jobs = [], 
   contracts = [], 
   proposals = [], 
-  talents = [],
+  talents = [], 
   messages = [],
   unreadMessagesCount = 0,
   onUpdateContracts,
@@ -64,6 +70,10 @@ export const ClientDashboardPage = ({
   const [activeSubTab, setActiveSubTab] = useState('contracts');
   const [showLogoUrlInput, setShowLogoUrlInput] = useState(false);
   const logoFileInputRef = useRef(null);
+
+  // Escrow & Receipt States
+  const [fundingContract, setFundingContract] = useState(null);
+  const [viewingReceipt, setViewingReceipt] = useState(null);
 
   // Client Company Form State
   const [companyForm, setCompanyForm] = useState(() => ({
@@ -148,12 +158,21 @@ export const ClientDashboardPage = ({
     if (showToast) showToast('Company logo cleared.', 'info');
   };
 
-  const handleReleaseMilestone = (contractId, milestoneId) => {
+  const handleReleaseMilestone = async (contractId, milestoneId) => {
+    try {
+      await apiReleaseMilestonePayment({
+        contractId,
+        milestoneId
+      });
+    } catch (err) {
+      console.warn('Backend milestone release notice:', err.message);
+    }
+
     const updated = contracts.map(c => {
-      if (c.id === contractId) {
-        const updatedMilestones = c.milestones.map(m => {
-          if (m.id === milestoneId) {
-            return { ...m, isPaid: true, status: 'Completed' };
+      if (c.id === contractId || c._id === contractId) {
+        const updatedMilestones = (c.milestones || []).map(m => {
+          if (m.id === milestoneId || m._id === milestoneId) {
+            return { ...m, isPaid: true, status: 'Completed', releasedAt: new Date().toISOString() };
           }
           return m;
         });
@@ -161,15 +180,16 @@ export const ClientDashboardPage = ({
         return {
           ...c,
           milestones: updatedMilestones,
-          status: allDone ? 'Completed' : 'In Progress'
+          status: allDone ? 'Completed' : 'In Progress',
+          escrowStatus: allDone ? 'Completed' : 'Funded in Escrow'
         };
       }
       return c;
     });
 
     confetti({
-      particleCount: 90,
-      spread: 60,
+      particleCount: 100,
+      spread: 70,
       origin: { y: 0.6 }
     });
 
@@ -177,7 +197,7 @@ export const ClientDashboardPage = ({
       onUpdateContracts(updated);
     }
     if (showToast) {
-      showToast('Milestone funds released to freelancer wallet!', 'success');
+      showToast('Milestone funds released to freelancer wallet (net of 5% platform fee)!', 'success');
     }
   };
 
@@ -504,16 +524,21 @@ export const ClientDashboardPage = ({
               ) : (
                 <div className="space-y-6">
                   {contracts.map((contract) => (
-                    <div key={contract.id} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-7 backdrop-blur-xl shadow-xl transition-all">
+                    <div key={contract.id || contract._id} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-7 backdrop-blur-xl shadow-xl transition-all">
                       <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-white/5">
                         <div>
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2.5 border ${
-                            contract.status === 'Completed' 
-                              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' 
-                              : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
-                          }`}>
-                            {contract.status === 'Completed' ? 'Completed' : 'In Progress'}
-                          </span>
+                          <div className="flex items-center gap-2 mb-2.5">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                              contract.status === 'Completed' 
+                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' 
+                                : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
+                            }`}>
+                              {contract.status === 'Completed' ? 'Completed' : 'In Progress'}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                              <Lock size={11} /> {contract.escrowStatus || 'Funded in Escrow'}
+                            </span>
+                          </div>
                           <h3 className="text-xl font-bold text-white mb-1.5 font-display">{contract.jobTitle}</h3>
                           <div className="flex items-center gap-2 text-sm text-slate-400">
                             <span>Hired Talent: <strong className="text-white">{contract.talentName}</strong></span>
@@ -525,7 +550,25 @@ export const ClientDashboardPage = ({
                         <div className="bg-slate-950/80 border border-white/10 p-4 rounded-2xl text-right">
                           <div className="text-xl font-black text-emerald-400 font-display">PKR {Number(contract.amount).toLocaleString()}</div>
                           <div className="text-xs text-slate-500 mt-0.5">Deadline: {contract.deadline || '2026-10-05'}</div>
-                          <div className="mt-2.5 flex justify-end">
+                          <div className="mt-2.5 flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setViewingReceipt({
+                                transactionRef: contract.transactionRef || `TX-ESC-${Math.floor(100000 + Math.random() * 900000)}`,
+                                contractTitle: contract.jobTitle,
+                                clientName: contract.clientName,
+                                talentName: contract.talentName,
+                                amount: Number(contract.amount),
+                                method: contract.paymentMethod || 'JazzCash',
+                                date: new Date().toLocaleDateString()
+                              })}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                              title="View Official Escrow Tax Receipt"
+                            >
+                              <Receipt size={13} className="text-emerald-400" />
+                              <span>Receipt</span>
+                            </button>
+
                             <Link 
                               to="/messages" 
                               state={{ 
@@ -540,7 +583,7 @@ export const ClientDashboardPage = ({
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-semibold transition-all"
                             >
                               <MessageSquare size={13} />
-                              <span>Message Freelancer</span>
+                              <span>Chat</span>
                             </Link>
                           </div>
                         </div>
@@ -555,37 +598,80 @@ export const ClientDashboardPage = ({
                           </span>
                         </div>
 
-                        <div className="space-y-2.5">
+                        <div className="space-y-3">
                           {contract.milestones?.map((m, idx) => (
-                            <div key={m.id || idx} className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-xl transition-all">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
-                                  m.isPaid 
-                                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30' 
-                                    : 'bg-white/10 text-slate-400'
-                                }`}>
-                                  {m.isPaid ? <CheckCircle2 size={14} /> : idx + 1}
+                            <div key={m.id || m._id || idx} className="p-3.5 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-2xl transition-all space-y-3">
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
+                                    m.isPaid 
+                                      ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30' 
+                                      : 'bg-white/10 text-slate-400'
+                                  }`}>
+                                    {m.isPaid ? <CheckCircle2 size={14} /> : idx + 1}
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold text-sm text-white">{m.title}</div>
+                                    <div className="text-xs font-bold text-indigo-400">PKR {Number(m.amount).toLocaleString()}</div>
+                                  </div>
                                 </div>
+
                                 <div>
-                                  <div className="font-semibold text-sm text-white">{m.title}</div>
-                                  <div className="text-xs font-bold text-indigo-400">PKR {Number(m.amount).toLocaleString()}</div>
+                                  {m.isPaid ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                                      <CheckCircle2 size={12} /> Paid & Escrow Released
+                                    </span>
+                                  ) : m.status === 'Under Review' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-bold animate-pulse">
+                                      <Clock size={12} /> Work Submitted - Review Below
+                                    </span>
+                                  ) : (
+                                    <button 
+                                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 transition-all cursor-pointer"
+                                      onClick={() => handleReleaseMilestone(contract.id || contract._id, m.id || m._id)}
+                                    >
+                                      Release Payment (PKR {Number(m.amount).toLocaleString()})
+                                    </button>
+                                  )}
                                 </div>
                               </div>
 
-                              <div>
-                                {m.isPaid ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-                                    <CheckCircle2 size={12} /> Paid & Escrow Released
-                                  </span>
-                                ) : (
-                                  <button 
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 transition-all cursor-pointer"
-                                    onClick={() => handleReleaseMilestone(contract.id, m.id)}
-                                  >
-                                    Release Payment (PKR {Number(m.amount).toLocaleString()})
-                                  </button>
-                                )}
-                              </div>
+                              {/* Work Review Box for Client */}
+                              {m.status === 'Under Review' && !m.isPaid && (
+                                <div className="p-3 bg-purple-950/30 border border-purple-500/30 rounded-xl space-y-2 text-xs">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-purple-300 font-bold flex items-center gap-1.5">
+                                      <Sparkles size={13} className="text-indigo-400" /> Freelancer Submitted Deliverable for Review
+                                    </span>
+                                    {m.submissionLink && (
+                                      <a 
+                                        href={m.submissionLink} 
+                                        target="_blank" 
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] transition-colors"
+                                      >
+                                        <ExternalLink size={12} />
+                                        <span>Inspect Live Work</span>
+                                      </a>
+                                    )}
+                                  </div>
+                                  {m.submissionNotes && (
+                                    <p className="text-slate-300 italic bg-black/30 p-2 rounded-lg">
+                                      "{m.submissionNotes}"
+                                    </p>
+                                  )}
+                                  <div className="flex justify-end pt-1">
+                                    <button 
+                                      type="button"
+                                      onClick={() => handleReleaseMilestone(contract.id || contract._id, m.id || m._id)}
+                                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/25 transition-all cursor-pointer"
+                                    >
+                                      <CheckCircle2 size={14} />
+                                      <span>Approve Work & Release Payment (PKR {Number(m.amount).toLocaleString()})</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -969,6 +1055,96 @@ export const ClientDashboardPage = ({
           )}
         </div>
       </div>
+
+      {/* Escrow Tax Receipt Modal */}
+      {viewingReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn" onClick={() => setViewingReceipt(null)}>
+          <div 
+            className="w-full max-w-lg bg-slate-900 border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-2xl relative max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              type="button" 
+              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              onClick={() => setViewingReceipt(null)}
+            >
+              <X size={18} />
+            </button>
+
+            <div className="space-y-1 mb-5 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-2">
+                <Receipt size={24} />
+              </div>
+              <h2 className="text-xl font-black text-white">TalentX Escrow Tax Receipt</h2>
+              <p className="text-xs text-slate-400">Official Electronic Deposit & Escrow Settlement Proof</p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-950 border border-white/10 space-y-3.5 font-mono text-xs text-slate-300">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <span className="text-slate-500 text-[10px]">Reference Number</span>
+                <span className="text-emerald-400 font-bold">{viewingReceipt.transactionRef}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Project / Gig:</span>
+                <span className="text-white font-sans font-bold truncate max-w-[200px]">{viewingReceipt.contractTitle}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Client / Payer:</span>
+                <span className="text-white">{viewingReceipt.clientName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Specialist:</span>
+                <span className="text-white">{viewingReceipt.talentName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Gateway:</span>
+                <span className="text-white">{viewingReceipt.method}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Date Issued:</span>
+                <span className="text-slate-400">{viewingReceipt.date}</span>
+              </div>
+              <div className="pt-2.5 border-t border-white/10 flex items-center justify-between font-sans">
+                <span className="font-bold text-slate-300">Total Escrow Value:</span>
+                <span className="text-lg font-black text-emerald-400 font-mono">
+                  PKR {Number(viewingReceipt.amount).toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 pt-5">
+              <button 
+                type="button" 
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-200 bg-white/10 hover:bg-white/15 border border-white/10 transition-colors cursor-pointer"
+                onClick={() => window.print()}
+              >
+                <Printer size={15} />
+                <span>Print Document</span>
+              </button>
+              <button 
+                type="button" 
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors cursor-pointer"
+                onClick={() => setViewingReceipt(null)}
+              >
+                <span>Close</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Direct Payment Checkout Modal */}
+      {fundingContract && (
+        <PaymentCheckoutModal 
+          contractData={fundingContract}
+          currentUser={currentUser}
+          onClose={() => setFundingContract(null)}
+          onPaymentSuccess={(receipt) => {
+            if (showToast) showToast('Milestone successfully funded into Escrow!', 'success');
+            setFundingContract(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -241,3 +241,40 @@ export const apiAskAICopilot = async (payload) => {
     body: JSON.stringify(payload)
   });
 };
+
+// -------------------------------------------------------------
+// PAYMENTS & ESCROW (Pakistani PKR Local Gateways)
+// -------------------------------------------------------------
+export const apiCheckoutAndFundEscrow = async (checkoutData) => {
+  return await request('/payments/checkout', {
+    method: 'POST',
+    body: JSON.stringify(checkoutData)
+  });
+};
+
+export const apiReleaseMilestonePayment = async (releaseData) => {
+  return await request('/payments/release', {
+    method: 'POST',
+    body: JSON.stringify(releaseData)
+  });
+};
+
+export const apiSubmitMilestoneWork = async (submissionData) => {
+  return await request('/payments/submit-work', {
+    method: 'POST',
+    body: JSON.stringify(submissionData)
+  });
+};
+
+export const apiRequestWithdrawal = async (withdrawData) => {
+  return await request('/payments/withdraw', {
+    method: 'POST',
+    body: JSON.stringify(withdrawData)
+  });
+};
+
+export const apiGetPaymentsLedger = async (userId = '') => {
+  const query = userId ? `?userId=${userId}` : '';
+  const res = await request(`/payments/ledger${query}`, { method: 'GET' });
+  return res.data || { transactions: [], summary: {} };
+};

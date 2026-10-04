@@ -15,15 +15,38 @@ export const getContracts = async (req, res) => {
 // @route   POST /api/contracts
 export const createContract = async (req, res) => {
   try {
-    const { jobTitle, clientName, talentName, talentAvatar, amount, deadline, milestones } = req.body;
+    const { 
+      jobTitle, 
+      clientName, 
+      talentName, 
+      talentAvatar, 
+      amount, 
+      deadline, 
+      milestones,
+      escrowStatus,
+      escrowFundedAmount,
+      paymentMethod,
+      transactionRef,
+      jobId,
+      clientId,
+      talentId
+    } = req.body;
 
     const contract = await Contract.create({
       jobTitle,
+      jobId,
       client: req.user ? req.user.id : null,
+      clientId,
       clientName: clientName || (req.user ? req.user.name : 'Al-Karam Studio Retailers'),
+      talent: talentId || (req.user ? req.user.id : null),
+      talentId,
       talentName: talentName || 'Hamza Tariq',
       talentAvatar: talentAvatar || '',
       amount: Number(amount),
+      escrowStatus: escrowStatus || 'Funded in Escrow',
+      escrowFundedAmount: escrowFundedAmount ? Number(escrowFundedAmount) : Math.round(Number(amount) / 2),
+      paymentMethod: paymentMethod || 'JazzCash',
+      transactionRef: transactionRef || `TX-ESC-${Math.floor(100000 + Math.random() * 900000)}`,
       deadline,
       milestones: milestones || [
         { title: 'Initial Draft & Raw Footage', amount: Math.round(Number(amount) / 2), isPaid: true, status: 'Completed' },

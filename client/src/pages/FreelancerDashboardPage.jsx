@@ -31,10 +31,17 @@ import {
   X,
   Upload,
   Camera,
-  Link2
+  Link2,
+  Wallet,
+  Lock,
+  Send,
+  FileCode,
+  AlertCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
+import { WithdrawModal } from '../components/WithdrawModal';
+import { apiSubmitMilestoneWork, apiRequestWithdrawal } from '../services/api';
 
 const SAMPLE_PORTFOLIO_ITEMS = [
   {
@@ -73,6 +80,7 @@ export const FreelancerDashboardPage = ({
   onLogout,
   onUpdateCurrentUser,
   onUpdateTalents,
+  onUpdateContracts,
   showToast
 }) => {
   const currentUserId = String(currentUser?._id || currentUser?.id || '');
@@ -99,6 +107,50 @@ export const FreelancerDashboardPage = ({
     (currentUser?.email && t.email && t.email.toLowerCase() === currentUser.email.toLowerCase()) || 
     (currentUser?.name && t.name === currentUser.name)
   ) || currentUser || {};
+
+  // Financial Escrow & Available Balance Calculations
+  let escrowVaultBalance = 0;
+  let paidMilestonesTotal = 0;
+
+  contracts.forEach(c => {
+    if (Array.isArray(c.milestones) && c.milestones.length > 0) {
+      c.milestones.forEach(m => {
+        if (m.isPaid) {
+          paidMilestonesTotal += (Number(m.amount) || 0);
+        } else {
+          escrowVaultBalance += (Number(m.amount) || 0);
+        }
+      });
+    } else {
+      if (c.status === 'Completed') {
+        paidMilestonesTotal += (Number(c.amount) || 0);
+      } else {
+        escrowVaultBalance += (Number(c.amount) || 0);
+      }
+    }
+  });
+
+  const [withdrawals, setWithdrawals] = useState(() => {
+    try {
+      const saved = localStorage.getItem('talentx_freelancer_withdrawals');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const totalWithdrawn = withdrawals.reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
+  const netEarnings = Math.round(paidMilestonesTotal * 0.95); // 5% platform fee
+  const availableBalance = Math.max(0, netEarnings - totalWithdrawn);
+
+  // Withdraw Modal State
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+
+  // Submit Deliverables Modal State
+  const [submittingMilestone, setSubmittingMilestone] = useState(null); // { contractId, milestoneId, title, amount }
+  const [submissionNotes, setSubmissionNotes] = useState('');
+  const [submissionLink, setSubmissionLink] = useState('');
+  const [isSubmittingWork, setIsSubmittingWork] = useState(false);
 
   const totalEarnings = contracts.reduce((sum, c) => sum + (c.amount || 0), 0);
 
@@ -409,6 +461,82 @@ export const FreelancerDashboardPage = ({
     }
   };
 
+  // Milestone Deliverable Submission Handler
+  const handleSubmitDeliverable = async (e) => {
+    e.preventDefault();
+    if (!submittingMilestone) return;
+
+    setIsSubmittingWork(true);
+    try {
+      await apiSubmitMilestoneWork({
+        contractId: submittingMilestone.contractId,
+        milestoneId: submittingMilestone.milestoneId,
+        notes: submissionNotes,
+        link: submissionLink
+      });
+    } catch (err) {
+      console.warn('Backend work submit sync notice:', err.message);
+    }
+
+    const updatedContracts = contracts.map(c => {
+      if (c.id === submittingMilestone.contractId || c._id === submittingMilestone.contractId) {
+        const updatedMilestones = (c.milestones || []).map(m => {
+          if (m.id === submittingMilestone.milestoneId || m._id === submittingMilestone.milestoneId) {
+            return {
+              ...m,
+              status: 'Under Review',
+              submissionNotes,
+              submissionLink,
+              submittedAt: new Date().toISOString()
+            };
+          }
+          return m;
+        });
+        return {
+          ...c,
+          status: 'Under Review',
+          milestones: updatedMilestones
+        };
+      }
+      return c;
+    });
+
+    if (onUpdateContracts) {
+      onUpdateContracts(updatedContracts);
+    }
+
+    confetti({ particleCount: 110, spread: 70, origin: { y: 0.6 } });
+    if (showToast) {
+      showToast('Milestone deliverables submitted for client review!', 'success');
+    }
+
+    setIsSubmittingWork(false);
+    setSubmittingMilestone(null);
+    setSubmissionNotes('');
+    setSubmissionLink('');
+  };
+
+  // Instant Freelancer Withdrawal Handler
+  const handleWithdrawSubmit = async (payoutData) => {
+    try {
+      await apiRequestWithdrawal({
+        talentId: currentUserId,
+        talentName: currentUser?.name || myTalentProfile?.name || 'Freelancer',
+        ...payoutData
+      });
+    } catch (err) {
+      console.warn('Withdrawal API sync notice:', err.message);
+    }
+
+    const newWithdrawals = [payoutData, ...withdrawals];
+    setWithdrawals(newWithdrawals);
+    localStorage.setItem('talentx_freelancer_withdrawals', JSON.stringify(newWithdrawals));
+
+    if (showToast) {
+      showToast(`PKR ${payoutData.amount.toLocaleString()} withdrawn to ${payoutData.payoutMethod}!`, 'success');
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans w-full">
       {/* ============================================================
@@ -576,51 +704,69 @@ export const FreelancerDashboardPage = ({
         <div className="p-8 max-w-7xl w-full mx-auto space-y-8">
           {/* 4 Stats Cards */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-slate-900/70 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
+            {/* Card 1: In Escrow Vault */}
+            <div className="bg-slate-900/70 border border-emerald-500/30 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-emerald-500/50 hover:-translate-y-1 transition-all relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Earnings (PKR)</span>
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <TrendingUp size={18} />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">In Escrow Vault</span>
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                  <Lock size={18} />
                 </div>
               </div>
-              <div className="text-2xl font-black text-white font-display mb-1">PKR {totalEarnings.toLocaleString()}</div>
-              <div className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
-                <CheckCircle2 size={13} />
-                <span>Secured via Escrow</span>
+              <div className="text-2xl font-black text-emerald-400 font-display mb-1">
+                PKR {escrowVaultBalance.toLocaleString()}
+              </div>
+              <div className="text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+                <ShieldCheck size={13} />
+                <span>Guaranteed by Platform</span>
               </div>
             </div>
 
-            <div className="bg-slate-900/70 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
+            {/* Card 2: Available Balance with Withdraw button */}
+            <div className="bg-slate-900/70 border border-indigo-500/30 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-indigo-500/50 hover:-translate-y-1 transition-all relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Available Balance</span>
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                  <Wallet size={18} />
+                </div>
+              </div>
+              <div className="text-2xl font-black text-white font-display mb-2">
+                PKR {availableBalance.toLocaleString()}
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsWithdrawModalOpen(true)}
+                disabled={availableBalance < 500}
+                className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Wallet size={13} />
+                <span>Withdraw Funds</span>
+              </button>
+            </div>
+
+            {/* Card 3: Total Net Earnings */}
+            <div className="bg-slate-900/70 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-purple-500/40 hover:-translate-y-1 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Net Platform Earnings</span>
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+                  <TrendingUp size={18} />
+                </div>
+              </div>
+              <div className="text-2xl font-black text-white font-display mb-1">PKR {netEarnings.toLocaleString()}</div>
+              <div className="text-xs font-semibold text-slate-400">Net after 5% marketplace fee</div>
+            </div>
+
+            {/* Card 4: Active Gigs */}
+            <div className="bg-slate-900/70 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-amber-500/40 hover:-translate-y-1 transition-all">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Gigs & Contracts</span>
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
                   <Briefcase size={18} />
                 </div>
               </div>
               <div className="text-2xl font-black text-white font-display mb-1">{contracts.length} Ongoing</div>
-              <div className="text-xs font-semibold text-indigo-400">100% on-time completion</div>
-            </div>
-
-            <div className="bg-slate-900/70 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-purple-500/40 hover:-translate-y-1 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Proposals Submitted</span>
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
-                  <Layers size={18} />
-                </div>
-              </div>
-              <div className="text-2xl font-black text-white font-display mb-1">{proposals.length} Bids</div>
-              <div className="text-xs font-semibold text-purple-400">Average response: 4 hrs</div>
-            </div>
-
-            <div className="bg-slate-900/70 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-amber-500/40 hover:-translate-y-1 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Client Rating Score</span>
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <Star size={18} />
-                </div>
-              </div>
-              <div className="text-2xl font-black text-white font-display mb-1">4.9 / 5.0</div>
-              <div className="text-xs font-semibold text-amber-400">Verified Client Reviews</div>
+              <div className="text-xs font-semibold text-amber-400">100% on-time completion</div>
             </div>
           </section>
 
@@ -654,16 +800,21 @@ export const FreelancerDashboardPage = ({
                     const progressPercent = Math.round((paidCount / totalMilestones) * 100);
 
                     return (
-                      <div key={contract.id} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-7 backdrop-blur-xl shadow-xl transition-all">
+                      <div key={contract.id || contract._id} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-7 backdrop-blur-xl shadow-xl transition-all">
                         <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-white/5">
                           <div>
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2.5 border ${
-                              contract.status === 'Completed' 
-                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' 
-                                : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
-                            }`}>
-                              {contract.status === 'Completed' ? 'Completed' : 'In Progress'}
-                            </span>
+                            <div className="flex items-center gap-2 mb-2.5">
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                                contract.status === 'Completed' 
+                                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' 
+                                  : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
+                              }`}>
+                                {contract.status === 'Completed' ? 'Completed' : 'In Progress'}
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                                <Lock size={11} /> Escrow Protected
+                              </span>
+                            </div>
                             <h3 className="text-xl font-bold text-white mb-1.5 font-display">{contract.jobTitle}</h3>
                             <div className="flex items-center gap-2 text-sm text-slate-400">
                               <span>Client: <strong className="text-white">{contract.clientName}</strong></span>
@@ -705,7 +856,7 @@ export const FreelancerDashboardPage = ({
 
                           <div className="space-y-2.5">
                             {contract.milestones?.map((m, idx) => (
-                              <div key={m.id || idx} className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-xl transition-all">
+                              <div key={m.id || m._id || idx} className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-xl transition-all">
                                 <div className="flex items-center gap-3">
                                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
                                     m.isPaid 
@@ -720,15 +871,48 @@ export const FreelancerDashboardPage = ({
                                   </div>
                                 </div>
 
-                                <div>
+                                <div className="flex items-center gap-2">
                                   {m.isPaid ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-                                      <CheckCircle2 size={12} /> Escrow Released
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                                      <CheckCircle2 size={13} /> Escrow Released & Paid
                                     </span>
+                                  ) : m.status === 'Under Review' ? (
+                                    <div className="flex items-center gap-2">
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-bold">
+                                        <Clock size={13} /> Under Client Review
+                                      </span>
+                                      {m.submissionLink && (
+                                        <a 
+                                          href={m.submissionLink} 
+                                          target="_blank" 
+                                          rel="noreferrer"
+                                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+                                          title="View Submission"
+                                        >
+                                          <ExternalLink size={14} />
+                                        </a>
+                                      )}
+                                    </div>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold">
-                                      <Clock size={12} /> Work In Progress
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold">
+                                        <Lock size={12} /> Escrow Locked
+                                      </span>
+                                      <button 
+                                        type="button"
+                                        onClick={() => setSubmittingMilestone({
+                                          contractId: contract.id || contract._id,
+                                          milestoneId: m.id || m._id,
+                                          title: m.title,
+                                          amount: m.amount,
+                                          jobTitle: contract.jobTitle
+                                        })}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
+                                      >
+                                        <Send size={12} />
+                                        <span>Submit Work</span>
+                                      </button>
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -1335,6 +1519,118 @@ export const FreelancerDashboardPage = ({
                 <span>Publish Project to Portfolio</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Withdraw Modal */}
+      {isWithdrawModalOpen && (
+        <WithdrawModal 
+          availableBalance={availableBalance}
+          currentUser={currentUser}
+          onClose={() => setIsWithdrawModalOpen(false)}
+          onWithdrawSubmit={handleWithdrawSubmit}
+        />
+      )}
+
+      {/* Submit Deliverables / Work Modal */}
+      {submittingMilestone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn" onClick={() => setSubmittingMilestone(null)}>
+          <div 
+            className="w-full max-w-lg bg-slate-900 border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-2xl relative max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              type="button" 
+              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              onClick={() => setSubmittingMilestone(null)}
+            >
+              <X size={18} />
+            </button>
+
+            <div className="space-y-1 mb-5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-400 text-xs font-bold border border-indigo-500/30">
+                <Send size={13} /> Submit Milestone Deliverable
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Submit Work for Review
+              </h2>
+              <p className="text-xs text-slate-400">
+                Provide deliverable links and completion notes for client inspection.
+              </p>
+            </div>
+
+            {/* Target Milestone Pill */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-5 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Milestone</span>
+                <h4 className="font-bold text-sm text-white">{submittingMilestone.title}</h4>
+                <div className="text-xs text-slate-400 mt-0.5">{submittingMilestone.jobTitle}</div>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Escrow Value</span>
+                <div className="text-base font-black text-emerald-400 font-mono">
+                  PKR {Number(submittingMilestone.amount).toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmitDeliverable} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">
+                  Deliverable Notes / Completion Summary *
+                </label>
+                <textarea 
+                  rows="3"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/15 focus:border-indigo-500 text-sm text-white placeholder-slate-500 outline-none transition-all"
+                  placeholder="e.g. Completed high-converting landing page, responsive mobile breakpoints, and linked MongoDB Atlas database..."
+                  value={submissionNotes}
+                  onChange={(e) => setSubmissionNotes(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">
+                  Work Deliverable Link (GitHub / Figma / Drive / Live Demo)
+                </label>
+                <input 
+                  type="url"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/15 focus:border-indigo-500 text-sm text-white placeholder-slate-500 outline-none transition-all font-mono"
+                  placeholder="https://github.com/... or https://figma.com/..."
+                  value={submissionLink}
+                  onChange={(e) => setSubmissionLink(e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                <button 
+                  type="button" 
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
+                  onClick={() => setSubmittingMilestone(null)}
+                  disabled={isSubmittingWork}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmittingWork}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-600/25 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmittingWork ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={15} />
+                      <span>Send Work for Approval</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

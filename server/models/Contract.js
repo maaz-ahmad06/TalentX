@@ -4,7 +4,16 @@ const MilestoneSchema = new mongoose.Schema({
   title: { type: String, required: true },
   amount: { type: Number, required: true },
   isPaid: { type: Boolean, default: false },
-  status: { type: String, enum: ['Pending', 'In Progress', 'Completed'], default: 'Pending' }
+  status: { 
+    type: String, 
+    enum: ['Pending', 'Funded in Escrow', 'Under Review', 'Completed', 'Released'], 
+    default: 'Funded in Escrow' 
+  },
+  fundedAt: { type: Date, default: Date.now },
+  releasedAt: { type: Date },
+  submissionNotes: { type: String, default: '' },
+  submissionLink: { type: String, default: '' },
+  submittedAt: { type: Date }
 });
 
 const ContractSchema = new mongoose.Schema({
@@ -12,24 +21,35 @@ const ContractSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Job'
   },
+  jobId: { type: String },
   jobTitle: { type: String, required: true },
   client: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  clientId: { type: String },
   clientName: { type: String, required: true },
   talent: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  talentId: { type: String },
   talentName: { type: String, required: true },
   talentAvatar: { type: String },
   amount: { type: Number, required: true },
   currency: { type: String, default: 'PKR' },
+  escrowStatus: {
+    type: String,
+    enum: ['Funded in Escrow', 'Partially Funded', 'Completed', 'Cancelled', 'Pending Deposit'],
+    default: 'Funded in Escrow'
+  },
+  escrowFundedAmount: { type: Number, default: 0 },
+  paymentMethod: { type: String, default: 'JazzCash' },
+  transactionRef: { type: String, default: '' },
   deadline: { type: String },
   status: {
     type: String,
-    enum: ['In Progress', 'Completed', 'Disputed', 'Cancelled'],
+    enum: ['In Progress', 'Under Review', 'Completed', 'Disputed', 'Cancelled'],
     default: 'In Progress'
   },
   milestones: [MilestoneSchema],
@@ -40,3 +60,4 @@ const ContractSchema = new mongoose.Schema({
 });
 
 export const Contract = mongoose.model('Contract', ContractSchema);
+
