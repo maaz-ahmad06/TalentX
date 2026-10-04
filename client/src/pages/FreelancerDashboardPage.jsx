@@ -36,11 +36,15 @@ import {
   Lock,
   Send,
   FileCode,
-  AlertCircle
+  AlertCircle,
+  Scale,
+  ShieldAlert
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
 import { WithdrawModal } from '../components/WithdrawModal';
+import { DisputeModal } from '../components/DisputeModal';
+import { MediationRoomModal } from '../components/MediationRoomModal';
 import { apiSubmitMilestoneWork, apiRequestWithdrawal } from '../services/api';
 
 const SAMPLE_PORTFOLIO_ITEMS = [
@@ -151,6 +155,18 @@ export const FreelancerDashboardPage = ({
   const [submissionNotes, setSubmissionNotes] = useState('');
   const [submissionLink, setSubmissionLink] = useState('');
   const [isSubmittingWork, setIsSubmittingWork] = useState(false);
+
+  // Dispute & Mediation States
+  const [disputingContract, setDisputingContract] = useState(null);
+  const [activeMediationDispute, setActiveMediationDispute] = useState(null);
+
+  const handleDisputeCreated = (newDispute) => {
+    setActiveMediationDispute(newDispute);
+  };
+
+  const handleDisputeResolved = (resolvedDispute) => {
+    // contract state updated
+  };
 
   const totalEarnings = contracts.reduce((sum, c) => sum + (c.amount || 0), 0);
 
@@ -826,7 +842,7 @@ export const FreelancerDashboardPage = ({
                           <div className="bg-slate-950/80 border border-white/10 p-4 rounded-2xl text-right">
                             <div className="text-xl font-black text-emerald-400 font-display">PKR {Number(contract.amount).toLocaleString()}</div>
                             <div className="text-xs text-slate-500 mt-0.5">Due: {contract.deadline || '2026-10-05'}</div>
-                            <div className="mt-2.5 flex justify-end">
+                            <div className="mt-2.5 flex items-center justify-end gap-2">
                               <Link 
                                 to="/messages" 
                                 state={{ 
@@ -834,7 +850,7 @@ export const FreelancerDashboardPage = ({
                                     id: contract.clientId, 
                                     _id: contract.clientId, 
                                     name: contract.clientName || 'Client Employer', 
-                                    avatar: contract.clientAvatar || '',
+                                    avatar: contract.clientAvatar || '', 
                                     role: 'client'
                                   } 
                                 }}
@@ -843,6 +859,36 @@ export const FreelancerDashboardPage = ({
                                 <MessageSquare size={13} />
                                 <span>Message Client</span>
                               </Link>
+
+                              {contract.status === 'Frozen (Dispute)' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveMediationDispute({
+                                    contractId: contract._id || contract.id,
+                                    contractTitle: contract.jobTitle,
+                                    disputedAmount: contract.amount,
+                                    initiatorName: contract.clientName || 'Client',
+                                    initiatorRole: 'client',
+                                    respondentName: currentUser?.name || contract.talentName,
+                                    respondentRole: 'talent',
+                                    status: 'Mediation In Progress'
+                                  })}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 text-xs font-bold transition-all cursor-pointer shadow-md shadow-rose-500/20 animate-pulse"
+                                >
+                                  <Scale size={13} />
+                                  <span>Mediation Room</span>
+                                </button>
+                              ) : contract.status === 'In Progress' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDisputingContract(contract)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer"
+                                  title="Raise formal dispute with Super Admin"
+                                >
+                                  <ShieldAlert size={13} />
+                                  <span>Dispute</span>
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1633,6 +1679,28 @@ export const FreelancerDashboardPage = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Dispute Filing Modal */}
+      {disputingContract && (
+        <DisputeModal 
+          contract={disputingContract}
+          currentUser={currentUser}
+          onClose={() => setDisputingContract(null)}
+          onDisputeCreated={handleDisputeCreated}
+          showToast={showToast}
+        />
+      )}
+
+      {/* 3-Way Arbitration Mediation Room Modal */}
+      {activeMediationDispute && (
+        <MediationRoomModal 
+          initialDispute={activeMediationDispute}
+          currentUser={currentUser}
+          onClose={() => setActiveMediationDispute(null)}
+          onDisputeResolved={handleDisputeResolved}
+          showToast={showToast}
+        />
       )}
     </div>
   );

@@ -15,6 +15,7 @@ import contractRoutes from './routes/contractRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import disputeRoutes from './routes/disputeRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -53,6 +54,7 @@ app.use('/api/contracts', contractRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/disputes', disputeRoutes);
 
 // Base Health Check
 app.get('/', (req, res) => {

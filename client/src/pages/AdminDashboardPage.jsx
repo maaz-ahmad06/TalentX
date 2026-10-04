@@ -42,11 +42,14 @@ import {
   Wallet,
   Receipt,
   CreditCard,
-  Smartphone
+  Smartphone,
+  Scale
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
-import { apiUpdateUser, apiDeleteUser, apiGetPaymentsLedger } from '../services/api';
+import { apiUpdateUser, apiDeleteUser, apiGetPaymentsLedger, apiGetDisputes } from '../services/api';
+import { getDisputes, saveDisputes } from '../utils/storage';
+import { MediationRoomModal } from '../components/MediationRoomModal';
 
 export const AdminDashboardPage = ({ 
   allUsers = [],
@@ -86,6 +89,12 @@ export const AdminDashboardPage = ({
   const [ledgerFilter, setLedgerFilter] = useState('All');
   const [ledgerSearch, setLedgerSearch] = useState('');
 
+  // Disputes & Arbitration State
+  const [disputesList, setDisputesList] = useState(() => getDisputes());
+  const [disputeFilter, setDisputeFilter] = useState('All');
+  const [disputeSearch, setDisputeSearch] = useState('');
+  const [activeMediationDispute, setActiveMediationDispute] = useState(null);
+
   // Modal States
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
@@ -105,7 +114,7 @@ export const AdminDashboardPage = ({
   const [dbOnline, setDbOnline] = useState(platformSettings?.mongoDbOnline ?? true);
   const [allowSignups, setAllowSignups] = useState(platformSettings?.allowNewRegistrations ?? true);
 
-  // Fetch Escrow Ledger on Tab Activation
+  // Fetch Escrow Ledger & Disputes on Tab Activation
   useEffect(() => {
     if (activeTab === 'escrow') {
       apiGetPaymentsLedger()
@@ -116,6 +125,17 @@ export const AdminDashboardPage = ({
         })
         .catch(err => {
           console.warn('Ledger fetch notice:', err.message);
+        });
+    } else if (activeTab === 'disputes') {
+      apiGetDisputes()
+        .then(res => {
+          if (Array.isArray(res) && res.length > 0) {
+            setDisputesList(res);
+            saveDisputes(res);
+          }
+        })
+        .catch(err => {
+          console.warn('Disputes fetch notice:', err.message);
         });
     }
   }, [activeTab, contracts]);
@@ -578,6 +598,28 @@ export const AdminDashboardPage = ({
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
+  const filteredDisputes = disputesList.filter(d => {
+    const q = disputeSearch.toLowerCase();
+    const matchesSearch = 
+      !q ||
+      (d.jobTitle && d.jobTitle.toLowerCase().includes(q)) ||
+      (d.clientName && d.clientName.toLowerCase().includes(q)) ||
+      (d.talentName && d.talentName.toLowerCase().includes(q)) ||
+      (d.reason && d.reason.toLowerCase().includes(q)) ||
+      (d.id && String(d.id).toLowerCase().includes(q));
+
+    const matchesStatus = 
+      disputeFilter === 'All' 
+        ? true 
+        : disputeFilter === 'Open'
+        ? d.status === 'Open' || d.status === 'Under Investigation'
+        : disputeFilter === 'Resolved'
+        ? d.status && d.status.startsWith('Resolved')
+        : d.status === disputeFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row antialiased selection:bg-indigo-500 selection:text-white">
       {/* ============================================================
@@ -671,6 +713,23 @@ export const AdminDashboardPage = ({
               </div>
               <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'escrow' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
                 {contracts.length}
+              </span>
+            </button>
+
+            <button 
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                activeTab === 'disputes' 
+                  ? 'bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-lg shadow-rose-500/25 font-semibold' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+              onClick={() => setActiveTab('disputes')}
+            >
+              <div className="flex items-center gap-3">
+                <Scale size={18} className={activeTab === 'disputes' ? 'text-white' : 'text-slate-400'} />
+                <span>Disputes & Mediation</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'disputes' ? 'bg-white/20 text-white' : 'bg-rose-500/20 text-rose-300'}`}>
+                {disputesList.filter(d => !d.status?.startsWith('Resolved')).length || 0}
               </span>
             </button>
 
@@ -1575,6 +1634,221 @@ export const AdminDashboardPage = ({
           )}
 
           {/* ============================================================
+              TAB: DISPUTE RESOLUTION & ESCROW ARBITRATION CENTER
+              ============================================================ */}
+          {activeTab === 'disputes' && (
+            <div className="space-y-6">
+              {/* Stat Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Disputes</span>
+                    <span className="text-2xl font-black text-white mt-1 block">{disputesList.length}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <Scale size={24} />
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-rose-500/30 bg-rose-950/10 backdrop-blur-xl shadow-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-rose-300 uppercase tracking-wider block">Under Mediation</span>
+                    <span className="text-2xl font-black text-rose-400 mt-1 block">
+                      {disputesList.filter(d => !d.status?.startsWith('Resolved')).length}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    <AlertTriangle size={24} />
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Resolved & Settled</span>
+                    <span className="text-2xl font-black text-emerald-400 mt-1 block">
+                      {disputesList.filter(d => d.status?.startsWith('Resolved')).length}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <CheckCircle2 size={24} />
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Frozen In Dispute</span>
+                    <span className="text-xl font-black text-amber-400 mt-1 block">
+                      PKR {disputesList.filter(d => !d.status?.startsWith('Resolved')).reduce((acc, d) => acc + (Number(d.amount) || 0), 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <Lock size={24} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Dispute Cases Management Panel */}
+              <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Scale size={20} className="text-rose-400" />
+                      3-Way Escrow Arbitration & Mediation Hub
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Investigate evidence, conduct real-time 3-way arbitration hearings, and issue binding escrow settlement verdicts.
+                    </p>
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      apiGetDisputes().then(res => {
+                        if (Array.isArray(res)) {
+                          setDisputesList(res);
+                          saveDisputes(res);
+                          if (showToast) showToast('Disputes list refreshed from MongoDB Atlas', 'ai');
+                        }
+                      }).catch(() => {
+                        setDisputesList(getDisputes());
+                      });
+                    }}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw size={14} />
+                    <span>Refresh Cases</span>
+                  </button>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input 
+                      type="text" 
+                      placeholder="Search disputes by contract, client, freelancer, reason or ID..." 
+                      value={disputeSearch}
+                      onChange={(e) => setDisputeSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                    {['All', 'Open', 'Resolved'].map(filter => (
+                      <button
+                        key={filter}
+                        onClick={() => setDisputeFilter(filter)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                          disputeFilter === filter 
+                            ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/25' 
+                            : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700/60'
+                        }`}
+                      >
+                        {filter === 'All' ? 'All Disputes' : filter === 'Open' ? 'Active / In Mediation' : 'Settled Verdicts'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Disputes List */}
+                <div className="space-y-4">
+                  {filteredDisputes.length === 0 ? (
+                    <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-slate-800 bg-slate-900/30">
+                      <Scale className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                      <h4 className="text-base font-semibold text-slate-300">No Disputes Found</h4>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        All escrow contracts are running smoothly or no active cases match your search criteria.
+                      </p>
+                    </div>
+                  ) : (
+                    filteredDisputes.map(dispute => {
+                      const isResolved = dispute.status?.startsWith('Resolved');
+                      return (
+                        <div 
+                          key={dispute.id || dispute._id}
+                          className={`p-5 rounded-2xl border transition-all ${
+                            isResolved 
+                              ? 'bg-slate-900/40 border-slate-800/80 opacity-90' 
+                              : 'bg-slate-900/90 border-rose-500/30 shadow-lg shadow-rose-950/20'
+                          }`}
+                        >
+                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                            <div className="space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                  isResolved 
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse'
+                                }`}>
+                                  {dispute.status}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                  {dispute.reason}
+                                </span>
+                                <span className="text-xs text-slate-400 font-mono">Case #{dispute.id || dispute._id}</span>
+                              </div>
+                              <h4 className="text-base font-bold text-white">{dispute.jobTitle}</h4>
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                                <span>Initiated by: <strong className="text-rose-400">{dispute.initiatedByName} ({dispute.initiatedByRole})</strong></span>
+                                <span>&bull;</span>
+                                <span>Client: <strong className="text-slate-200">{dispute.clientName}</strong></span>
+                                <span>&bull;</span>
+                                <span>Freelancer: <strong className="text-slate-200">{dispute.talentName}</strong></span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-3">
+                              <div className="text-left lg:text-right">
+                                <span className="text-xs text-slate-400 block">Frozen Escrow</span>
+                                <span className="text-lg font-black text-amber-400">
+                                  PKR {Number(dispute.amount || 0).toLocaleString()}
+                                </span>
+                              </div>
+
+                              <button
+                                onClick={() => setActiveMediationDispute(dispute)}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                  isResolved 
+                                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700' 
+                                    : 'bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white shadow-lg shadow-rose-600/30'
+                                }`}
+                              >
+                                <Scale size={14} />
+                                <span>{isResolved ? 'View Arbitration Record' : 'Enter Mediation Room'}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Statement & Details */}
+                          <div className="mt-3.5 space-y-2">
+                            <p className="text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-white/5 line-clamp-2">
+                              <strong className="text-slate-400">Claim: </strong>
+                              {dispute.description}
+                            </p>
+
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 pt-1">
+                              <div className="flex items-center gap-3">
+                                <span>Evidence files: <strong className="text-slate-200">{dispute.evidence?.length || 0} attached</strong></span>
+                                <span>&bull;</span>
+                                <span>Hearing messages: <strong className="text-slate-200">{dispute.messages?.length || 0}</strong></span>
+                              </div>
+
+                              {dispute.verdict && (
+                                <div className="text-xs text-emerald-400 font-medium">
+                                  Verdict: <strong>{dispute.verdict.decision?.toUpperCase()}</strong> ({new Date(dispute.verdict.resolvedAt).toLocaleDateString()})
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
               TAB 4: GOVERNANCE & PLATFORM CONTROLS
               ============================================================ */}
           {activeTab === 'settings' && (
@@ -2355,6 +2629,21 @@ export const AdminDashboardPage = ({
             </form>
           </div>
         </div>
+      )}
+      {/* 3-Way Arbitration Mediation Room Modal for Admin */}
+      {activeMediationDispute && (
+        <MediationRoomModal 
+          initialDispute={activeMediationDispute}
+          currentUser={currentUser}
+          onClose={() => setActiveMediationDispute(null)}
+          onDisputeResolved={(resolvedDispute) => {
+            const updated = disputesList.map(d => (String(d.id || d._id) === String(resolvedDispute.id || resolvedDispute._id) ? resolvedDispute : d));
+            setDisputesList(updated);
+            saveDisputes(updated);
+            if (showToast) showToast('Arbitration verdict executed and escrow settled!', 'success');
+          }}
+          showToast={showToast}
+        />
       )}
     </div>
   );

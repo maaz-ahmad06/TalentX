@@ -16,7 +16,8 @@ const KEYS = {
   MESSAGES: 'talentx_messages',
   CURRENT_USER: 'talentx_auth_user',
   REGISTERED_USERS: 'talentx_all_users',
-  PLATFORM_SETTINGS: 'talentx_platform_settings'
+  PLATFORM_SETTINGS: 'talentx_platform_settings',
+  DISPUTES: 'talentx_disputes_v1'
 };
 
 const DEFAULT_SETTINGS = {
@@ -362,6 +363,40 @@ export const addMessage = (msg) => {
 export const getPlatformSettings = () => getStorageData(KEYS.PLATFORM_SETTINGS, DEFAULT_SETTINGS);
 export const savePlatformSettings = (settings) => setStorageData(KEYS.PLATFORM_SETTINGS, settings);
 
+// Disputes & Escrow Mediation Storage
+export const getDisputes = () => getStorageData(KEYS.DISPUTES, []);
+export const saveDisputes = (disputes) => setStorageData(KEYS.DISPUTES, disputes);
+
+export const addDispute = (dispute) => {
+  const disputes = getDisputes();
+  const newDispute = {
+    ...dispute,
+    id: dispute.id || dispute._id || `dsp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    createdAt: dispute.createdAt || new Date().toISOString(),
+    status: dispute.status || 'Open',
+    timeline: dispute.timeline || [
+      {
+        event: 'Dispute Registered',
+        actor: dispute.initiatorName || 'Initiator',
+        details: `Dispute opened for: ${dispute.reason}`,
+        timestamp: new Date().toISOString()
+      }
+    ],
+    messages: dispute.messages || []
+  };
+  const updated = [newDispute, ...disputes];
+  saveDisputes(updated);
+  return newDispute;
+};
+
+export const updateDispute = (updatedDispute) => {
+  const disputes = getDisputes();
+  const uId = String(updatedDispute.id || updatedDispute._id);
+  const updated = disputes.map(d => (String(d.id || d._id) === uId ? updatedDispute : d));
+  saveDisputes(updated);
+  return updatedDispute;
+};
+
 // Wipes all data to fresh empty state for real testing
 export const resetStorageToDefault = () => {
   localStorage.setItem(KEYS.TALENTS, JSON.stringify([]));
@@ -370,6 +405,7 @@ export const resetStorageToDefault = () => {
   localStorage.setItem(KEYS.CONTRACTS, JSON.stringify([]));
   localStorage.setItem(KEYS.MESSAGES, JSON.stringify([]));
   localStorage.setItem(KEYS.REGISTERED_USERS, JSON.stringify([]));
+  localStorage.setItem(KEYS.DISPUTES, JSON.stringify([]));
   localStorage.setItem(KEYS.PLATFORM_SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
   return {
     talents: [],
@@ -378,6 +414,7 @@ export const resetStorageToDefault = () => {
     contracts: [],
     messages: [],
     users: [],
+    disputes: [],
     settings: DEFAULT_SETTINGS
   };
 };

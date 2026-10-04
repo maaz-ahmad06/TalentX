@@ -278,3 +278,39 @@ export const apiGetPaymentsLedger = async (userId = '') => {
   const res = await request(`/payments/ledger${query}`, { method: 'GET' });
   return res.data || { transactions: [], summary: {} };
 };
+
+// -------------------------------------------------------------
+// DISPUTE RESOLUTION & ESCROW MEDIATION (Arbitration Hub)
+// -------------------------------------------------------------
+export const apiCreateDispute = async (disputeData) => {
+  return await request('/disputes', {
+    method: 'POST',
+    body: JSON.stringify(disputeData)
+  });
+};
+
+export const apiGetDisputes = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const res = await request(`/disputes${query ? `?${query}` : ''}`, { method: 'GET' });
+  return res.disputes || [];
+};
+
+export const apiGetDisputeById = async (id) => {
+  const res = await request(`/disputes/${id}`, { method: 'GET' });
+  return res.dispute;
+};
+
+export const apiSendMediationMessage = async (id, messageData) => {
+  return await request(`/disputes/${id}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(messageData)
+  });
+};
+
+export const apiResolveDispute = async (id, resolutionData) => {
+  return await request(`/disputes/${id}/resolve`, {
+    method: 'POST',
+    body: JSON.stringify(resolutionData)
+  });
+};
+

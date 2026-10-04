@@ -40,16 +40,20 @@ const ContractSchema = new mongoose.Schema({
   currency: { type: String, default: 'PKR' },
   escrowStatus: {
     type: String,
-    enum: ['Funded in Escrow', 'Partially Funded', 'Completed', 'Cancelled', 'Pending Deposit'],
+    enum: ['Funded in Escrow', 'Partially Funded', 'Completed', 'Frozen in Dispute', 'Refunded', 'Cancelled', 'Pending Deposit'],
     default: 'Funded in Escrow'
   },
   escrowFundedAmount: { type: Number, default: 0 },
   paymentMethod: { type: String, default: 'JazzCash' },
   transactionRef: { type: String, default: '' },
+  disputeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Dispute'
+  },
   deadline: { type: String },
   status: {
     type: String,
-    enum: ['In Progress', 'Under Review', 'Completed', 'Disputed', 'Cancelled'],
+    enum: ['In Progress', 'Under Review', 'Completed', 'Disputed', 'Frozen (Dispute)', 'Cancelled'],
     default: 'In Progress'
   },
   milestones: [MilestoneSchema],

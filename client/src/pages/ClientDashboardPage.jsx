@@ -35,11 +35,15 @@ import {
   Landmark,
   Smartphone,
   Download,
-  FileText
+  FileText,
+  Scale,
+  ShieldAlert
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES } from '../data/mockData';
 import { PaymentCheckoutModal } from '../components/PaymentCheckoutModal';
+import { DisputeModal } from '../components/DisputeModal';
+import { MediationRoomModal } from '../components/MediationRoomModal';
 import { apiReleaseMilestonePayment } from '../services/api';
 
 export const ClientDashboardPage = ({ 
@@ -81,6 +85,45 @@ export const ClientDashboardPage = ({
   const [fundingContract, setFundingContract] = useState(null);
   const [viewingReceipt, setViewingReceipt] = useState(null);
   const [checkoutInitialMethod, setCheckoutInitialMethod] = useState('jazzcash');
+
+  // Dispute & Mediation States
+  const [disputingContract, setDisputingContract] = useState(null);
+  const [activeMediationDispute, setActiveMediationDispute] = useState(null);
+
+  const handleDisputeCreated = (newDispute) => {
+    const updated = contracts.map(c => {
+      if ((c.id || c._id) === (newDispute.contractId || newDispute.contract)) {
+        return {
+          ...c,
+          status: 'Frozen (Dispute)',
+          escrowStatus: 'Frozen in Dispute',
+          disputeId: newDispute.id || newDispute._id
+        };
+      }
+      return c;
+    });
+    if (onUpdateContracts) {
+      onUpdateContracts(updated);
+    }
+    setActiveMediationDispute(newDispute);
+  };
+
+  const handleDisputeResolved = (resolvedDispute) => {
+    const updated = contracts.map(c => {
+      if ((c.id || c._id) === (resolvedDispute.contractId || resolvedDispute.contract)) {
+        const isRefund = resolvedDispute.status === 'Resolved (Refunded)';
+        return {
+          ...c,
+          status: isRefund ? 'Cancelled' : 'Completed',
+          escrowStatus: isRefund ? 'Refunded' : 'Completed'
+        };
+      }
+      return c;
+    });
+    if (onUpdateContracts) {
+      onUpdateContracts(updated);
+    }
+  };
 
   const handleOpenGatewayCheckout = (gatewayKey) => {
     setCheckoutInitialMethod(gatewayKey);
@@ -623,6 +666,36 @@ export const ClientDashboardPage = ({
                               <MessageSquare size={13} />
                               <span>Chat</span>
                             </Link>
+
+                            {contract.status === 'Frozen (Dispute)' ? (
+                              <button
+                                type="button"
+                                onClick={() => setActiveMediationDispute({
+                                  contractId: contract._id || contract.id,
+                                  contractTitle: contract.jobTitle,
+                                  disputedAmount: contract.amount,
+                                  initiatorName: contract.clientName,
+                                  initiatorRole: 'client',
+                                  respondentName: contract.talentName,
+                                  respondentRole: 'talent',
+                                  status: 'Mediation In Progress'
+                                })}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 text-xs font-bold transition-all cursor-pointer shadow-md shadow-rose-500/20 animate-pulse"
+                              >
+                                <Scale size={13} />
+                                <span>Mediation Room</span>
+                              </button>
+                            ) : contract.status === 'In Progress' && (
+                              <button
+                                type="button"
+                                onClick={() => setDisputingContract(contract)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer"
+                                title="Raise formal dispute with Super Admin"
+                              >
+                                <ShieldAlert size={13} />
+                                <span>Dispute</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1425,6 +1498,28 @@ export const ClientDashboardPage = ({
             if (showToast) showToast('Milestone successfully funded into Escrow!', 'success');
             setFundingContract(null);
           }}
+        />
+      )}
+
+      {/* Dispute Filing Modal */}
+      {disputingContract && (
+        <DisputeModal 
+          contract={disputingContract}
+          currentUser={currentUser}
+          onClose={() => setDisputingContract(null)}
+          onDisputeCreated={handleDisputeCreated}
+          showToast={showToast}
+        />
+      )}
+
+      {/* 3-Way Arbitration Mediation Room Modal */}
+      {activeMediationDispute && (
+        <MediationRoomModal 
+          initialDispute={activeMediationDispute}
+          currentUser={currentUser}
+          onClose={() => setActiveMediationDispute(null)}
+          onDisputeResolved={handleDisputeResolved}
+          showToast={showToast}
         />
       )}
     </div>
