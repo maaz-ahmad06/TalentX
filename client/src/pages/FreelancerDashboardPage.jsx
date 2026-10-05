@@ -38,7 +38,11 @@ import {
   FileCode,
   AlertCircle,
   Scale,
-  ShieldAlert
+  ShieldAlert,
+  Code2,
+  Server,
+  Cpu,
+  Palette
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
@@ -600,12 +604,13 @@ export const FreelancerDashboardPage = ({
             </div>
 
             <button 
+              type="button"
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                 activeSubTab === 'contracts' 
                   ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
-              onClick={() => setActiveSubTab('contracts')}
+              onClick={(e) => { e.preventDefault(); setActiveSubTab('contracts'); }}
             >
               <div className="flex items-center gap-3">
                 <Briefcase size={18} />
@@ -615,12 +620,13 @@ export const FreelancerDashboardPage = ({
             </button>
 
             <button 
+              type="button"
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                 activeSubTab === 'proposals' 
                   ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
-              onClick={() => setActiveSubTab('proposals')}
+              onClick={(e) => { e.preventDefault(); setActiveSubTab('proposals'); }}
             >
               <div className="flex items-center gap-3">
                 <Layers size={18} />
@@ -630,12 +636,13 @@ export const FreelancerDashboardPage = ({
             </button>
 
             <button 
+              type="button"
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                 activeSubTab === 'portfolio' 
                   ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
-              onClick={() => setActiveSubTab('portfolio')}
+              onClick={(e) => { e.preventDefault(); setActiveSubTab('portfolio'); }}
             >
               <div className="flex items-center gap-3">
                 <Award size={18} />
@@ -645,12 +652,13 @@ export const FreelancerDashboardPage = ({
             </button>
 
             <button 
+              type="button"
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                 activeSubTab === 'profile-settings' 
                   ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
-              onClick={() => setActiveSubTab('profile-settings')}
+              onClick={(e) => { e.preventDefault(); setActiveSubTab('profile-settings'); }}
             >
               <div className="flex items-center gap-3">
                 <User size={18} />
@@ -659,12 +667,13 @@ export const FreelancerDashboardPage = ({
             </button>
 
             <button 
+              type="button"
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                 activeSubTab === 'verification' 
                   ? 'bg-gradient-to-r from-emerald-600/25 to-teal-600/25 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-500/10' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
-              onClick={() => setActiveSubTab('verification')}
+              onClick={(e) => { e.preventDefault(); setActiveSubTab('verification'); }}
             >
               <div className="flex items-center gap-3">
                 <ShieldCheck size={18} className={currentUser?.isIdVerified ? "text-emerald-400" : "text-slate-400"} />
@@ -706,6 +715,7 @@ export const FreelancerDashboardPage = ({
 
           {onLogout && (
             <button 
+              type="button"
               className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl hover:bg-rose-500/15 text-rose-400 hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer" 
               onClick={onLogout}
             >
@@ -730,6 +740,7 @@ export const FreelancerDashboardPage = ({
               {activeSubTab === 'proposals' && 'My Active Proposals & Bids'}
               {activeSubTab === 'portfolio' && 'Featured Portfolio Showcase'}
               {activeSubTab === 'profile-settings' && 'Manage Profile, Skills & Rates'}
+              {activeSubTab === 'verification' && 'Pakistani ID & Skill Assessment Badges'}
             </span>
           </div>
 
