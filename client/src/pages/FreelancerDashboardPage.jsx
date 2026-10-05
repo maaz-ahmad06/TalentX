@@ -52,6 +52,7 @@ import { MediationRoomModal } from '../components/MediationRoomModal';
 import { CnicVerificationModal } from '../components/CnicVerificationModal';
 import { SkillAssessmentModal } from '../components/SkillAssessmentModal';
 import { VerificationBadge } from '../components/VerificationBadge';
+import { ContractWorkspaceModal } from '../components/ContractWorkspaceModal';
 import { apiSubmitMilestoneWork, apiRequestWithdrawal } from '../services/api';
 
 const SAMPLE_PORTFOLIO_ITEMS = [
@@ -170,6 +171,9 @@ export const FreelancerDashboardPage = ({
   // Verification & Skill Assessment States
   const [isCnicModalOpen, setIsCnicModalOpen] = useState(false);
   const [isSkillAssessmentModalOpen, setIsSkillAssessmentModalOpen] = useState(false);
+
+  // Collaboration Workspace & Work Logs (Point 6)
+  const [activeWorkspaceContract, setActiveWorkspaceContract] = useState(null);
 
   const handleDisputeCreated = (newDispute) => {
     setActiveMediationDispute(newDispute);
@@ -880,6 +884,16 @@ export const FreelancerDashboardPage = ({
                             <div className="text-xl font-black text-emerald-400 font-display">PKR {Number(contract.amount).toLocaleString()}</div>
                             <div className="text-xs text-slate-500 mt-0.5">Due: {contract.deadline || '2026-10-05'}</div>
                             <div className="mt-2.5 flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setActiveWorkspaceContract(contract)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600/30 via-purple-600/30 to-pink-600/20 hover:from-indigo-600/50 hover:to-purple-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-bold transition-all cursor-pointer shadow-md shadow-indigo-600/10"
+                                title="Open Multi-Party Collaboration Workspace & Work Logs"
+                              >
+                                <Layers size={13} className="text-indigo-400" />
+                                <span>Workspace & Logs</span>
+                              </button>
+
                               <Link 
                                 to="/messages" 
                                 state={{ 
@@ -1960,6 +1974,17 @@ export const FreelancerDashboardPage = ({
               });
             }
           }}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Multi-Party Collaboration Workspace & Work Logs Modal (Point 6) */}
+      {activeWorkspaceContract && (
+        <ContractWorkspaceModal
+          isOpen={Boolean(activeWorkspaceContract)}
+          onClose={() => setActiveWorkspaceContract(null)}
+          contract={activeWorkspaceContract}
+          currentUser={currentUser}
           showToast={showToast}
         />
       )}

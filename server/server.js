@@ -17,6 +17,7 @@ import aiRoutes from './routes/aiRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import disputeRoutes from './routes/disputeRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
+import workLogRoutes from './routes/workLogRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -46,6 +47,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Attach Socket.io to req
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
@@ -57,6 +64,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/disputes', disputeRoutes);
 app.use('/api/verifications', verificationRoutes);
+app.use('/api/worklogs', workLogRoutes);
 
 // Base Health Check
 app.get('/', (req, res) => {

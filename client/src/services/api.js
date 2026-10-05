@@ -353,4 +353,40 @@ export const apiSubmitSkillQuiz = async (quizData) => {
   });
 };
 
+// -------------------------------------------------------------
+// COLLABORATION WORKSPACE & WORK LOGS (Point 6)
+// -------------------------------------------------------------
+export const apiGetContractWorkLogs = async (contractId) => {
+  const res = await request(`/worklogs/contract/${contractId}`, { method: 'GET' });
+  return res.workLogs || [];
+};
+
+export const apiCreateWorkLog = async (payload) => {
+  return await request('/worklogs', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+};
+
+export const apiLogTimesheet = async (payload) => {
+  return await request('/worklogs/timesheet', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+};
+
+export const apiReviewDeliverable = async (id, reviewData) => {
+  return await request(`/worklogs/${id}/review`, {
+    method: 'PUT',
+    body: JSON.stringify(reviewData)
+  });
+};
+
+export const apiDeleteWorkLog = async (id) => {
+  return await request(`/worklogs/${id}`, {
+    method: 'DELETE'
+  });
+};
+
+
 

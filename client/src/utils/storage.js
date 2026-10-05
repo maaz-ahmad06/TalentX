@@ -18,7 +18,8 @@ const KEYS = {
   REGISTERED_USERS: 'talentx_all_users',
   PLATFORM_SETTINGS: 'talentx_platform_settings',
   DISPUTES: 'talentx_disputes_v1',
-  VERIFICATIONS: 'talentx_verifications_v1'
+  VERIFICATIONS: 'talentx_verifications_v1',
+  WORK_LOGS: 'talentx_work_logs_v1'
 };
 
 const DEFAULT_SETTINGS = {
@@ -436,6 +437,48 @@ export const updateVerification = (updatedVerif) => {
   const updated = list.map(v => (String(v.id || v._id) === uId ? updatedVerif : v));
   saveVerifications(updated);
   return updatedVerif;
+};
+
+// -------------------------------------------------------------
+// WORK LOGS & COLLABORATION (Storage Fallback & Cache)
+// -------------------------------------------------------------
+export const getWorkLogs = (contractId) => {
+  if (typeof window === 'undefined' || !window.localStorage) return [];
+  const stored = localStorage.getItem(KEYS.WORK_LOGS);
+  if (!stored) return [];
+  try {
+    const all = JSON.parse(stored);
+    if (!contractId) return all;
+    return all.filter(w => String(w.contractId) === String(contractId));
+  } catch (e) {
+    return [];
+  }
+};
+
+export const saveWorkLogs = (workLogs) => {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  localStorage.setItem(KEYS.WORK_LOGS, JSON.stringify(workLogs));
+};
+
+export const addWorkLog = (logData) => {
+  const list = getWorkLogs();
+  const newLog = {
+    ...logData,
+    id: logData.id || logData._id || `log_${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    date: logData.date || new Date().toISOString()
+  };
+  const updated = [newLog, ...list];
+  saveWorkLogs(updated);
+  return newLog;
+};
+
+export const updateWorkLogInStorage = (updatedLog) => {
+  const list = getWorkLogs();
+  const targetId = String(updatedLog.id || updatedLog._id);
+  const updated = list.map(w => (String(w.id || w._id) === targetId ? { ...w, ...updatedLog } : w));
+  saveWorkLogs(updated);
+  return updatedLog;
 };
 
 // Wipes all data to fresh empty state for real testing
