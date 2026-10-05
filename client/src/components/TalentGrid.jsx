@@ -11,9 +11,11 @@ import {
   SlidersHorizontal,
   Layers,
   ArrowRight,
-  Eye
+  Eye,
+  Award
 } from 'lucide-react';
 import { CATEGORIES, CITIES } from '../data/mockData';
+import { VerificationBadge } from './VerificationBadge';
 
 export const TalentGrid = ({ 
   talents, 
@@ -28,6 +30,7 @@ export const TalentGrid = ({
 }) => {
   const [maxPrice, setMaxPrice] = useState(15000);
   const [workModeFilter, setWorkModeFilter] = useState('all');
+  const [onlyVerifiedFilter, setOnlyVerifiedFilter] = useState(false);
 
   // Filter Talents
   const filteredTalents = talents.filter(talent => {
@@ -39,16 +42,19 @@ export const TalentGrid = ({
     if (talent.hourlyRate > maxPrice) return false;
     // Work mode match
     if (workModeFilter !== 'all') {
-      if (workModeFilter === 'onsite' && !talent.workMode.toLowerCase().includes('site')) return false;
-      if (workModeFilter === 'remote' && !talent.workMode.toLowerCase().includes('remote')) return false;
+      if (workModeFilter === 'onsite' && !talent.workMode?.toLowerCase().includes('site')) return false;
+      if (workModeFilter === 'remote' && !talent.workMode?.toLowerCase().includes('remote')) return false;
     }
+    // Verified only filter
+    if (onlyVerifiedFilter && !talent.isIdVerified && talent.badge === 'Unverified') return false;
+
     // Search query match (name, headline, skills, area)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchName = talent.name.toLowerCase().includes(q);
-      const matchHeadline = talent.headline.toLowerCase().includes(q);
-      const matchArea = talent.area.toLowerCase().includes(q);
-      const matchSkill = talent.skills.some(s => s.toLowerCase().includes(q));
+      const matchName = talent.name?.toLowerCase().includes(q);
+      const matchHeadline = talent.headline?.toLowerCase().includes(q);
+      const matchArea = talent.area?.toLowerCase().includes(q);
+      const matchSkill = talent.skills?.some(s => s.toLowerCase().includes(q));
       if (!matchName && !matchHeadline && !matchArea && !matchSkill) return false;
     }
     return true;
@@ -93,7 +99,7 @@ export const TalentGrid = ({
       </div>
 
       {/* Filters Strip */}
-      <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+      <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
         <div className="flex items-center gap-2">
           <label className="text-xs font-semibold text-slate-400 flex items-center gap-1 shrink-0">
             <MapPin size={13} /> City:
@@ -109,7 +115,7 @@ export const TalentGrid = ({
 
         <div className="flex items-center gap-2">
           <label className="text-xs font-semibold text-slate-400 flex items-center gap-1 shrink-0">
-            <Briefcase size={13} /> Work Mode:
+            <Briefcase size={13} /> Mode:
           </label>
           <select 
             value={workModeFilter} 
@@ -122,6 +128,21 @@ export const TalentGrid = ({
           </select>
         </div>
 
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setOnlyVerifiedFilter(!onlyVerifiedFilter)}
+            className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border ${
+              onlyVerifiedFilter 
+                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-md shadow-emerald-500/10' 
+                : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white'
+            }`}
+          >
+            <ShieldCheck size={14} className={onlyVerifiedFilter ? "text-emerald-400" : "text-slate-400"} />
+            <span>{onlyVerifiedFilter ? 'Verified Pros Only' : 'Filter: All Pros'}</span>
+          </button>
+        </div>
+
         <div className="flex flex-col gap-1">
           <div className="flex justify-between text-xs text-slate-400">
             <span className="flex items-center gap-1"><SlidersHorizontal size={13} /> Max Rate:</span>
@@ -132,7 +153,7 @@ export const TalentGrid = ({
             min="2000" 
             max="15000" 
             step="500"
-            value={maxPrice}
+            value={maxPrice} 
             onChange={(e) => setMaxPrice(Number(e.target.value))}
             className="w-full accent-indigo-500 cursor-pointer"
           />
@@ -154,6 +175,7 @@ export const TalentGrid = ({
               setSelectedCity('All Cities');
               setMaxPrice(15000);
               setWorkModeFilter('all');
+              setOnlyVerifiedFilter(false);
             }}
           >
             Reset All Filters
@@ -189,6 +211,16 @@ export const TalentGrid = ({
                     <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
                       <MapPin size={12} className="text-slate-500" />
                       <span className="truncate">{talent.city} &bull; {talent.area}</span>
+                    </div>
+
+                    {/* Verified Badges Row */}
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {talent.badge && talent.badge !== 'Unverified' && (
+                        <VerificationBadge type="id" badgeName={talent.badge} size="xs" />
+                      )}
+                      {Array.isArray(talent.verifiedBadges) && talent.verifiedBadges.slice(0, 1).map((b, idx) => (
+                        <VerificationBadge key={idx} type="skill" badgeName={b.badgeName || b.name} size="xs" />
+                      ))}
                     </div>
                   </div>
                 </div>

@@ -45,6 +45,9 @@ import { CITIES, CATEGORIES } from '../data/mockData';
 import { WithdrawModal } from '../components/WithdrawModal';
 import { DisputeModal } from '../components/DisputeModal';
 import { MediationRoomModal } from '../components/MediationRoomModal';
+import { CnicVerificationModal } from '../components/CnicVerificationModal';
+import { SkillAssessmentModal } from '../components/SkillAssessmentModal';
+import { VerificationBadge } from '../components/VerificationBadge';
 import { apiSubmitMilestoneWork, apiRequestWithdrawal } from '../services/api';
 
 const SAMPLE_PORTFOLIO_ITEMS = [
@@ -159,6 +162,10 @@ export const FreelancerDashboardPage = ({
   // Dispute & Mediation States
   const [disputingContract, setDisputingContract] = useState(null);
   const [activeMediationDispute, setActiveMediationDispute] = useState(null);
+
+  // Verification & Skill Assessment States
+  const [isCnicModalOpen, setIsCnicModalOpen] = useState(false);
+  const [isSkillAssessmentModalOpen, setIsSkillAssessmentModalOpen] = useState(false);
 
   const handleDisputeCreated = (newDispute) => {
     setActiveMediationDispute(newDispute);
@@ -649,6 +656,25 @@ export const FreelancerDashboardPage = ({
                 <User size={18} />
                 <span>Profile & Skills</span>
               </div>
+            </button>
+
+            <button 
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
+                activeSubTab === 'verification' 
+                  ? 'bg-gradient-to-r from-emerald-600/25 to-teal-600/25 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-500/10' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+              }`}
+              onClick={() => setActiveSubTab('verification')}
+            >
+              <div className="flex items-center gap-3">
+                <ShieldCheck size={18} className={currentUser?.isIdVerified ? "text-emerald-400" : "text-slate-400"} />
+                <span>ID & Skill Badges</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                currentUser?.isIdVerified ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-300'
+              }`}>
+                {currentUser?.isIdVerified ? 'Verified' : 'Get Verified'}
+              </span>
             </button>
 
             <Link 
@@ -1409,6 +1435,197 @@ export const FreelancerDashboardPage = ({
               </form>
             </div>
           )}
+
+          {/* ============================================================
+              TAB: ID VERIFICATION & SKILL ASSESSMENT BADGES (Point 5)
+              ============================================================ */}
+          {activeSubTab === 'verification' && (
+            <div className="space-y-6">
+              {/* Top Banner: Verification Status */}
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-white/10 backdrop-blur-xl relative overflow-hidden shadow-2xl">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+                        currentUser?.isIdVerified 
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+                          : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      }`}>
+                        <ShieldCheck size={14} />
+                        {currentUser?.isIdVerified ? 'Government ID Verified' : 'ID Unverified'}
+                      </span>
+                      <span className="text-xs text-slate-400">NADRA / FBR Authentication</span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                      {currentUser?.isIdVerified ? 'Identity Fully Verified' : 'Verify Your Identity & Skills'}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+                      {currentUser?.isIdVerified
+                        ? `Your Pakistani identity (${currentUser?.cnic ? `CNIC ${currentUser.cnic}` : 'NADRA Verified'}) is validated. You enjoy priority algorithmic matching and instant escrow payouts.`
+                        : 'Submit your Pakistani CNIC or FBR NTN to earn the trusted Green Verification Badge. Verified freelancers receive 3.5x more client hires.'}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {!currentUser?.isIdVerified ? (
+                      <button
+                        onClick={() => setIsCnicModalOpen(true)}
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-xl shadow-emerald-600/30 transition-all cursor-pointer transform hover:-translate-y-0.5"
+                      >
+                        <ShieldCheck size={18} />
+                        <span>Verify CNIC / NTN</span>
+                      </button>
+                    ) : (
+                      <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                        <CheckCircle2 size={16} />
+                        <span>NADRA Verified Pro</span>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => setIsSkillAssessmentModalOpen(true)}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-xl shadow-indigo-600/25 transition-all cursor-pointer transform hover:-translate-y-0.5"
+                    >
+                      <Award size={18} />
+                      <span>Take Skill Assessment</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Verified Badges Showcase */}
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/60 border border-white/10 backdrop-blur-xl space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                      <Sparkles size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">Your Earned Credential Badges</h3>
+                      <p className="text-xs text-slate-400">Badges displayed publicly on your talent marketplace card</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setIsSkillAssessmentModalOpen(true)}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer flex items-center gap-1"
+                  >
+                    <span>Add New Badge</span>
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                {/* Badges List */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  {currentUser?.isIdVerified && (
+                    <VerificationBadge type="id" badgeName="NADRA Verified Pro" size="md" />
+                  )}
+
+                  {Array.isArray(currentUser?.verifiedBadges) && currentUser.verifiedBadges.length > 0 ? (
+                    currentUser.verifiedBadges.map((b, idx) => (
+                      <VerificationBadge 
+                        key={idx}
+                        type="skill"
+                        badgeName={b.badgeName || b.name}
+                        score={b.score}
+                        size="md"
+                      />
+                    ))
+                  ) : (
+                    !currentUser?.isIdVerified && (
+                      <div className="text-xs text-slate-400 py-3">
+                        No skill assessment badges earned yet. Take a 10-minute quiz below to unlock your first verified badge!
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Assessment Tests Grid */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <Award size={18} className="text-indigo-400" />
+                    Available Skill Assessments (MCQ Certifications)
+                  </h3>
+                  <span className="text-xs text-slate-400">10 Questions &bull; 80% Passing Score</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    {
+                      id: 'react-frontend',
+                      title: 'React & Modern Frontend',
+                      desc: 'Hooks, Virtual DOM, State Management (Redux/Zustand), and React 19 architecture.',
+                      badge: 'React Certified Pro',
+                      icon: <Code2 size={22} className="text-cyan-400" />,
+                      color: 'border-cyan-500/30 bg-cyan-950/10'
+                    },
+                    {
+                      id: 'nodejs-backend',
+                      title: 'Node.js & Backend Architecture',
+                      desc: 'Express REST APIs, Mongoose MongoDB indexing, JWT auth, and microservices.',
+                      badge: 'Node Backend Specialist',
+                      icon: <Server size={22} className="text-emerald-400" />,
+                      color: 'border-emerald-500/30 bg-emerald-950/10'
+                    },
+                    {
+                      id: 'python-ai',
+                      title: 'Python, AI & Data Engineering',
+                      desc: 'FastAPI, Vector Embeddings, LLM Prompt Engineering, and data pipelines.',
+                      badge: 'Python & AI Specialist',
+                      icon: <Cpu size={22} className="text-amber-400" />,
+                      color: 'border-amber-500/30 bg-amber-950/10'
+                    },
+                    {
+                      id: 'uiux-figma',
+                      title: 'UI/UX & Product Design',
+                      desc: 'Figma Auto-Layout, Design Tokens, WCAG accessibility, and responsive systems.',
+                      badge: 'Certified UX/UI Designer',
+                      icon: <Palette size={22} className="text-pink-400" />,
+                      color: 'border-pink-500/30 bg-pink-950/10'
+                    }
+                  ].map(test => (
+                    <div 
+                      key={test.id}
+                      className={`p-5 rounded-3xl border ${test.color} backdrop-blur-xl flex flex-col justify-between space-y-4 hover:border-indigo-500/50 transition-all group`}
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10">
+                            {test.icon}
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                            10 Mins
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">
+                          {test.title}
+                        </h4>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          {test.desc}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                        <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 truncate">
+                          <ShieldCheck size={12} className="shrink-0" />
+                          <span className="truncate">{test.badge}</span>
+                        </span>
+                        <button
+                          onClick={() => setIsSkillAssessmentModalOpen(true)}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all cursor-pointer shadow-md shadow-indigo-600/20 shrink-0"
+                        >
+                          Start Test
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1699,6 +1916,39 @@ export const FreelancerDashboardPage = ({
           currentUser={currentUser}
           onClose={() => setActiveMediationDispute(null)}
           onDisputeResolved={handleDisputeResolved}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Pakistani CNIC / NTN Verification Modal (Point 5) */}
+      {isCnicModalOpen && (
+        <CnicVerificationModal
+          isOpen={isCnicModalOpen}
+          onClose={() => setIsCnicModalOpen(false)}
+          currentUser={currentUser}
+          onVerificationSubmitted={(verif) => {
+            if (showToast) showToast('Identity verification request submitted for review!', 'success');
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {/* MCQ Skill Assessment & Certification Modal (Point 5) */}
+      {isSkillAssessmentModalOpen && (
+        <SkillAssessmentModal
+          isOpen={isSkillAssessmentModalOpen}
+          onClose={() => setIsSkillAssessmentModalOpen(false)}
+          currentUser={currentUser}
+          onBadgeEarned={(badge) => {
+            if (onUpdateCurrentUser) {
+              const currentBadges = currentUser?.verifiedBadges || [];
+              const updatedBadges = [...currentBadges.filter(b => b.badgeName !== badge.badgeName), badge];
+              onUpdateCurrentUser({
+                ...currentUser,
+                verifiedBadges: updatedBadges
+              });
+            }
+          }}
           showToast={showToast}
         />
       )}

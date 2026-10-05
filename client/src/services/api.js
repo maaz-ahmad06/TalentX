@@ -314,3 +314,43 @@ export const apiResolveDispute = async (id, resolutionData) => {
   });
 };
 
+// -------------------------------------------------------------
+// PAKISTANI ID VERIFICATION & SKILL ASSESSMENTS (Point 5)
+// -------------------------------------------------------------
+export const apiSubmitVerification = async (verificationData) => {
+  return await request('/verifications/submit', {
+    method: 'POST',
+    body: JSON.stringify(verificationData)
+  });
+};
+
+export const apiGetVerifications = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const res = await request(`/verifications${query ? `?${query}` : ''}`, { method: 'GET' });
+  return res;
+};
+
+export const apiReviewVerification = async (id, reviewData) => {
+  return await request(`/verifications/${id}/review`, {
+    method: 'PUT',
+    body: JSON.stringify(reviewData)
+  });
+};
+
+export const apiGetSkillCategories = async () => {
+  const res = await request('/verifications/skills/categories', { method: 'GET' });
+  return res.categories || [];
+};
+
+export const apiGetSkillQuiz = async (categoryId) => {
+  return await request(`/verifications/skills/${categoryId}/quiz`, { method: 'GET' });
+};
+
+export const apiSubmitSkillQuiz = async (quizData) => {
+  return await request('/verifications/skills/submit', {
+    method: 'POST',
+    body: JSON.stringify(quizData)
+  });
+};
+
+

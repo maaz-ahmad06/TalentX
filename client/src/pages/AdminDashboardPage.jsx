@@ -47,8 +47,8 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
-import { apiUpdateUser, apiDeleteUser, apiGetPaymentsLedger, apiGetDisputes } from '../services/api';
-import { getDisputes, saveDisputes } from '../utils/storage';
+import { apiUpdateUser, apiDeleteUser, apiGetPaymentsLedger, apiGetDisputes, apiGetVerifications, apiReviewVerification } from '../services/api';
+import { getDisputes, saveDisputes, getVerifications, saveVerifications } from '../utils/storage';
 import { MediationRoomModal } from '../components/MediationRoomModal';
 
 export const AdminDashboardPage = ({ 
@@ -95,6 +95,12 @@ export const AdminDashboardPage = ({
   const [disputeSearch, setDisputeSearch] = useState('');
   const [activeMediationDispute, setActiveMediationDispute] = useState(null);
 
+  // Verifications & Identity Verification Queue (Point 5)
+  const [verificationsList, setVerificationsList] = useState(() => getVerifications());
+  const [verificationFilter, setVerificationFilter] = useState('All');
+  const [verificationSearch, setVerificationSearch] = useState('');
+  const [selectedVerificationPreview, setSelectedVerificationPreview] = useState(null);
+
   // Modal States
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
@@ -114,7 +120,7 @@ export const AdminDashboardPage = ({
   const [dbOnline, setDbOnline] = useState(platformSettings?.mongoDbOnline ?? true);
   const [allowSignups, setAllowSignups] = useState(platformSettings?.allowNewRegistrations ?? true);
 
-  // Fetch Escrow Ledger & Disputes on Tab Activation
+  // Fetch Escrow Ledger, Disputes & Verifications on Tab Activation
   useEffect(() => {
     if (activeTab === 'escrow') {
       apiGetPaymentsLedger()
@@ -136,6 +142,17 @@ export const AdminDashboardPage = ({
         })
         .catch(err => {
           console.warn('Disputes fetch notice:', err.message);
+        });
+    } else if (activeTab === 'verifications') {
+      apiGetVerifications()
+        .then(res => {
+          if (res && Array.isArray(res.verifications) && res.verifications.length > 0) {
+            setVerificationsList(res.verifications);
+            saveVerifications(res.verifications);
+          }
+        })
+        .catch(err => {
+          console.warn('Verifications fetch notice:', err.message);
         });
     }
   }, [activeTab, contracts]);
@@ -620,6 +637,53 @@ export const AdminDashboardPage = ({
     return matchesSearch && matchesStatus;
   });
 
+  const handleReviewVerification = async (id, status, notes = '') => {
+    try {
+      await apiReviewVerification(id, {
+        status,
+        adminNotes: notes,
+        reviewerName: currentUser?.name || 'Super Admin'
+      });
+    } catch (err) {
+      console.warn('API review notice:', err.message);
+    }
+
+    const updated = verificationsList.map(v => {
+      if (String(v.id || v._id) === String(id)) {
+        return { ...v, status, adminNotes: notes, reviewedAt: new Date().toISOString() };
+      }
+      return v;
+    });
+
+    setVerificationsList(updated);
+    saveVerifications(updated);
+
+    if (status === 'Approved') {
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+      showToast('ID Verification Approved! Green NADRA badge granted to user.', 'success');
+    } else {
+      showToast('Verification request rejected.', 'warning');
+    }
+  };
+
+  const filteredVerifications = verificationsList.filter(v => {
+    const q = verificationSearch.toLowerCase();
+    const matchesSearch = 
+      !q ||
+      (v.userName && v.userName.toLowerCase().includes(q)) ||
+      (v.userEmail && v.userEmail.toLowerCase().includes(q)) ||
+      (v.legalName && v.legalName.toLowerCase().includes(q)) ||
+      (v.idNumber && String(v.idNumber).toLowerCase().includes(q)) ||
+      (v.city && v.city.toLowerCase().includes(q));
+
+    const matchesStatus = 
+      verificationFilter === 'All' 
+        ? true 
+        : v.status === verificationFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row antialiased selection:bg-indigo-500 selection:text-white">
       {/* ============================================================
@@ -735,6 +799,23 @@ export const AdminDashboardPage = ({
 
             <button 
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                activeTab === 'verifications' 
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25 font-semibold' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+              onClick={() => setActiveTab('verifications')}
+            >
+              <div className="flex items-center gap-3">
+                <ShieldCheck size={18} className={activeTab === 'verifications' ? 'text-white' : 'text-slate-400'} />
+                <span>Verification Hub</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'verifications' ? 'bg-white/20 text-white' : 'bg-emerald-500/20 text-emerald-300'}`}>
+                {verificationsList.filter(v => v.status === 'Pending').length || 0}
+              </span>
+            </button>
+
+            <button 
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
                 activeTab === 'settings' 
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -799,6 +880,7 @@ export const AdminDashboardPage = ({
               {activeTab === 'jobs' && 'Job Posts Moderation'}
               {activeTab === 'escrow' && 'Milestone Escrow Vault'}
               {activeTab === 'disputes' && 'Disputes & Mediation Center'}
+              {activeTab === 'verifications' && 'Identity & CNIC Verification Hub'}
               {activeTab === 'settings' && 'Platform Governance & Controls'}
             </span>
           </div>
@@ -822,6 +904,25 @@ export const AdminDashboardPage = ({
               >
                 <RefreshCw size={16} />
                 <span>Refresh Disputes</span>
+              </button>
+            ) : activeTab === 'verifications' ? (
+              <button 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                onClick={() => {
+                  apiGetVerifications().then(res => {
+                    if (res && Array.isArray(res.verifications)) {
+                      setVerificationsList(res.verifications);
+                      saveVerifications(res.verifications);
+                      if (showToast) showToast('Verification queue refreshed!', 'ai');
+                    }
+                  }).catch(() => {
+                    setVerificationsList(getVerifications());
+                    if (showToast) showToast('Verification queue refreshed!', 'ai');
+                  });
+                }}
+              >
+                <RefreshCw size={16} />
+                <span>Refresh Queue</span>
               </button>
             ) : activeTab === 'settings' ? (
               <button 
@@ -1877,6 +1978,281 @@ export const AdminDashboardPage = ({
           )}
 
           {/* ============================================================
+              TAB: PAKISTANI ID & SKILL VERIFICATION HUB (Point 5)
+              ============================================================ */}
+          {activeTab === 'verifications' && (
+            <div className="space-y-6">
+              {/* Stat Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Submissions</span>
+                    <span className="text-2xl font-black text-white mt-1 block">{verificationsList.length}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <ShieldCheck size={24} />
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-amber-500/30 bg-amber-950/10 backdrop-blur-xl shadow-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider block">Pending Review</span>
+                    <span className="text-2xl font-black text-amber-400 mt-1 block">
+                      {verificationsList.filter(v => v.status === 'Pending').length}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <Clock size={24} />
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-emerald-500/30 bg-emerald-950/10 backdrop-blur-xl shadow-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wider block">Approved & Badged</span>
+                    <span className="text-2xl font-black text-emerald-400 mt-1 block">
+                      {verificationsList.filter(v => v.status === 'Approved').length}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <CheckCircle2 size={24} />
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Rejected / Incomplete</span>
+                    <span className="text-2xl font-black text-rose-400 mt-1 block">
+                      {verificationsList.filter(v => v.status === 'Rejected').length}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    <XCircle size={24} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Verification Queue Panel */}
+              <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <ShieldCheck size={20} className="text-emerald-400" />
+                      NADRA CNIC & FBR NTN Verification Queue
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Inspect official identity documents, review Pakistani CNIC numbers, and grant official verified trust badges.
+                    </p>
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      apiGetVerifications().then(res => {
+                        if (res && Array.isArray(res.verifications)) {
+                          setVerificationsList(res.verifications);
+                          saveVerifications(res.verifications);
+                          if (showToast) showToast('Verification queue synced with database!', 'ai');
+                        }
+                      }).catch(() => {
+                        setVerificationsList(getVerifications());
+                      });
+                    }}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw size={14} />
+                    <span>Refresh Queue</span>
+                  </button>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input 
+                      type="text" 
+                      placeholder="Search by applicant name, email, CNIC / NTN, legal name or city..." 
+                      value={verificationSearch}
+                      onChange={(e) => setVerificationSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs sm:text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                    {['All', 'Pending', 'Approved', 'Rejected'].map(filter => (
+                      <button
+                        key={filter}
+                        onClick={() => setVerificationFilter(filter)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                          verificationFilter === filter 
+                            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25' 
+                            : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700/60'
+                        }`}
+                      >
+                        {filter === 'All' ? 'All Requests' : filter}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Verification Submissions List */}
+                <div className="space-y-4">
+                  {filteredVerifications.length === 0 ? (
+                    <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-slate-800 bg-slate-900/30">
+                      <ShieldCheck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                      <h4 className="text-base font-semibold text-slate-300">No Verification Requests Found</h4>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        No pending identity submissions match your search or all members have been reviewed.
+                      </p>
+                    </div>
+                  ) : (
+                    filteredVerifications.map(verif => {
+                      const isPending = verif.status === 'Pending';
+                      const isApproved = verif.status === 'Approved';
+
+                      return (
+                        <div 
+                          key={verif.id || verif._id}
+                          className={`p-5 rounded-2xl border transition-all ${
+                            isPending 
+                              ? 'bg-slate-900/90 border-amber-500/30 shadow-lg shadow-amber-950/20' 
+                              : isApproved
+                              ? 'bg-slate-900/40 border-emerald-500/20'
+                              : 'bg-slate-900/40 border-slate-800/80 opacity-80'
+                          }`}
+                        >
+                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                            <div className="space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                  isPending 
+                                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse' 
+                                    : isApproved
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                }`}>
+                                  {verif.status}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                  {verif.idType || 'CNIC'}
+                                </span>
+                                <span className="text-xs text-slate-400 font-mono">#{verif.id || verif._id}</span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-base font-bold text-white">{verif.userName}</h4>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 uppercase font-bold text-[10px]">
+                                  {verif.userRole || 'Talent'}
+                                </span>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                                <span>Email: <strong className="text-slate-200">{verif.userEmail}</strong></span>
+                                <span>&bull;</span>
+                                <span>Legal Name: <strong className="text-emerald-400">{verif.legalName}</strong></span>
+                                <span>&bull;</span>
+                                <span>Location: <strong className="text-slate-200">{verif.city}{verif.districtOrArea ? `, ${verif.districtOrArea}` : ''}</strong></span>
+                              </div>
+                            </div>
+
+                            {/* ID Number & Action Buttons */}
+                            <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-3">
+                              <div className="text-left lg:text-right">
+                                <span className="text-xs text-slate-400 block">{verif.idType || 'CNIC'} Number</span>
+                                <span className="text-sm sm:text-base font-mono font-bold text-emerald-400 bg-emerald-950/40 px-2.5 py-0.5 rounded-lg border border-emerald-500/30 inline-block">
+                                  {verif.idNumber}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setSelectedVerificationPreview(verif)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+                                >
+                                  <Eye size={13} />
+                                  <span>Inspect Docs</span>
+                                </button>
+
+                                {isPending && (
+                                  <>
+                                    <button
+                                      onClick={() => handleReviewVerification(verif.id || verif._id, 'Approved')}
+                                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
+                                    >
+                                      <ShieldCheck size={14} />
+                                      <span>Approve</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        const reason = window.prompt('Enter rejection reason (optional):', 'Document unreadable or invalid name match');
+                                        if (reason !== null) {
+                                          handleReviewVerification(verif.id || verif._id, 'Rejected', reason);
+                                        }
+                                      }}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-400 hover:text-white bg-rose-950/30 hover:bg-rose-600 border border-rose-500/30 transition-all cursor-pointer"
+                                    >
+                                      <X size={14} />
+                                      <span>Reject</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Document Thumbnails */}
+                          <div className="mt-3.5 flex flex-wrap items-center gap-4 text-xs">
+                            <div className="flex items-center gap-3">
+                              {verif.documentFront && (
+                                <div 
+                                  onClick={() => setSelectedVerificationPreview(verif)}
+                                  className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition-all group"
+                                >
+                                  <img 
+                                    src={verif.documentFront} 
+                                    alt="Front Doc" 
+                                    className="w-12 h-8 object-cover rounded-lg"
+                                  />
+                                  <span className="text-[11px] text-slate-300 font-medium group-hover:text-emerald-400">Front Image</span>
+                                </div>
+                              )}
+
+                              {verif.documentBack && (
+                                <div 
+                                  onClick={() => setSelectedVerificationPreview(verif)}
+                                  className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition-all group"
+                                >
+                                  <img 
+                                    src={verif.documentBack} 
+                                    alt="Back Doc" 
+                                    className="w-12 h-8 object-cover rounded-lg"
+                                  />
+                                  <span className="text-[11px] text-slate-300 font-medium group-hover:text-emerald-400">Back Image</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {verif.adminNotes && (
+                              <div className="text-[11px] text-rose-300 bg-rose-950/20 px-2.5 py-1 rounded-lg border border-rose-500/20">
+                                Note: {verif.adminNotes}
+                              </div>
+                            )}
+
+                            {verif.reviewedAt && (
+                              <span className="text-slate-500 text-[11px] ml-auto">
+                                Reviewed: {new Date(verif.reviewedAt).toLocaleDateString()} by {verif.reviewedBy || 'Admin'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
               TAB 4: GOVERNANCE & PLATFORM CONTROLS
               ============================================================ */}
           {activeTab === 'settings' && (
@@ -2672,6 +3048,137 @@ export const AdminDashboardPage = ({
           }}
           showToast={showToast}
         />
+      )}
+
+      {/* Document Inspection Lightbox Modal (Point 5) */}
+      {selectedVerificationPreview && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
+          onClick={() => setSelectedVerificationPreview(null)}
+        >
+          <div 
+            className="w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    Inspect {selectedVerificationPreview.idType || 'CNIC'} Documents
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Applicant: <strong className="text-white">{selectedVerificationPreview.userName}</strong> ({selectedVerificationPreview.userEmail})
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setSelectedVerificationPreview(null)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-5">
+              <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 text-xs">
+                <div>
+                  <span className="text-slate-400 block">Legal Name on ID:</span>
+                  <strong className="text-emerald-400 text-sm">{selectedVerificationPreview.legalName}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">{selectedVerificationPreview.idType || 'CNIC'} Number:</span>
+                  <strong className="text-white text-sm font-mono">{selectedVerificationPreview.idNumber}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">City / Area:</span>
+                  <strong className="text-slate-200">{selectedVerificationPreview.city}{selectedVerificationPreview.districtOrArea ? `, ${selectedVerificationPreview.districtOrArea}` : ''}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Current Status:</span>
+                  <strong className={`font-bold ${
+                    selectedVerificationPreview.status === 'Approved' ? 'text-emerald-400' : selectedVerificationPreview.status === 'Pending' ? 'text-amber-400' : 'text-rose-400'
+                  }`}>
+                    {selectedVerificationPreview.status}
+                  </strong>
+                </div>
+              </div>
+
+              {/* High-Res Document Images */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-slate-300 block">Front Document Image</span>
+                  {selectedVerificationPreview.documentFront ? (
+                    <img 
+                      src={selectedVerificationPreview.documentFront} 
+                      alt="Front Doc Full" 
+                      className="w-full h-56 object-contain bg-slate-950 rounded-2xl border border-slate-700 shadow-inner"
+                    />
+                  ) : (
+                    <div className="h-56 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-xs text-slate-500">
+                      No front document uploaded
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-slate-300 block">Back Document Image</span>
+                  {selectedVerificationPreview.documentBack ? (
+                    <img 
+                      src={selectedVerificationPreview.documentBack} 
+                      alt="Back Doc Full" 
+                      className="w-full h-56 object-contain bg-slate-950 rounded-2xl border border-slate-700 shadow-inner"
+                    />
+                  ) : (
+                    <div className="h-56 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-xs text-slate-500">
+                      No back document uploaded
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 px-6 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between">
+              <button
+                onClick={() => setSelectedVerificationPreview(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                Close Viewer
+              </button>
+
+              {selectedVerificationPreview.status === 'Pending' && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const reason = window.prompt('Enter rejection reason (optional):', 'Document unreadable');
+                      if (reason !== null) {
+                        handleReviewVerification(selectedVerificationPreview.id || selectedVerificationPreview._id, 'Rejected', reason);
+                        setSelectedVerificationPreview(null);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-rose-400 hover:text-white bg-rose-950/30 hover:bg-rose-600 border border-rose-500/30 transition-all cursor-pointer"
+                  >
+                    Reject Application
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleReviewVerification(selectedVerificationPreview.id || selectedVerificationPreview._id, 'Approved');
+                      setSelectedVerificationPreview(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+                  >
+                    <ShieldCheck size={15} />
+                    <span>Approve & Grant Badge</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

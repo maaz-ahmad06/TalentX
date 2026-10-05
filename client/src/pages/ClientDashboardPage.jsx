@@ -44,6 +44,8 @@ import { CITIES } from '../data/mockData';
 import { PaymentCheckoutModal } from '../components/PaymentCheckoutModal';
 import { DisputeModal } from '../components/DisputeModal';
 import { MediationRoomModal } from '../components/MediationRoomModal';
+import { CnicVerificationModal } from '../components/CnicVerificationModal';
+import { VerificationBadge } from '../components/VerificationBadge';
 import { apiReleaseMilestonePayment } from '../services/api';
 
 export const ClientDashboardPage = ({ 
@@ -89,6 +91,9 @@ export const ClientDashboardPage = ({
   // Dispute & Mediation States
   const [disputingContract, setDisputingContract] = useState(null);
   const [activeMediationDispute, setActiveMediationDispute] = useState(null);
+
+  // Identity Verification State
+  const [isCnicModalOpen, setIsCnicModalOpen] = useState(false);
 
   const handleDisputeCreated = (newDispute) => {
     const updated = contracts.map(c => {
@@ -1519,6 +1524,19 @@ export const ClientDashboardPage = ({
           currentUser={currentUser}
           onClose={() => setActiveMediationDispute(null)}
           onDisputeResolved={handleDisputeResolved}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Pakistani Business & CNIC/NTN Verification Modal (Point 5) */}
+      {isCnicModalOpen && (
+        <CnicVerificationModal
+          isOpen={isCnicModalOpen}
+          onClose={() => setIsCnicModalOpen(false)}
+          currentUser={currentUser}
+          onVerificationSubmitted={(verif) => {
+            if (showToast) showToast('Business verification request submitted for review!', 'success');
+          }}
           showToast={showToast}
         />
       )}

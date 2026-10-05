@@ -61,6 +61,24 @@ const UserSchema = new mongoose.Schema({
     default: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=1200&q=80'
   },
   portfolio: [PortfolioItemSchema],
+  cnic: { type: String, default: '' },
+  ntn: { type: String, default: '' },
+  isIdVerified: { type: Boolean, default: false },
+  idVerifiedAt: { type: Date },
+  verifiedBadges: [{
+    badgeName: { type: String },
+    category: { type: String },
+    score: { type: Number },
+    earnedAt: { type: Date, default: Date.now },
+    icon: { type: String }
+  }],
+  assessmentScores: [{
+    skillCategory: { type: String },
+    score: { type: Number },
+    totalQuestions: { type: Number, default: 10 },
+    passed: { type: Boolean, default: false },
+    completedAt: { type: Date, default: Date.now }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

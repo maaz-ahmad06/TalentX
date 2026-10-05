@@ -17,7 +17,8 @@ const KEYS = {
   CURRENT_USER: 'talentx_auth_user',
   REGISTERED_USERS: 'talentx_all_users',
   PLATFORM_SETTINGS: 'talentx_platform_settings',
-  DISPUTES: 'talentx_disputes_v1'
+  DISPUTES: 'talentx_disputes_v1',
+  VERIFICATIONS: 'talentx_verifications_v1'
 };
 
 const DEFAULT_SETTINGS = {
@@ -397,6 +398,46 @@ export const updateDispute = (updatedDispute) => {
   return updatedDispute;
 };
 
+// -------------------------------------------------------------
+// VERIFICATION REQUESTS (Storage Fallback & Cache)
+// -------------------------------------------------------------
+export const getVerifications = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return [];
+  const stored = localStorage.getItem(KEYS.VERIFICATIONS);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    return [];
+  }
+};
+
+export const saveVerifications = (verifications) => {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  localStorage.setItem(KEYS.VERIFICATIONS, JSON.stringify(verifications));
+};
+
+export const addVerification = (verifData) => {
+  const list = getVerifications();
+  const newVerif = {
+    ...verifData,
+    id: verifData.id || `verif_${Date.now()}`,
+    status: 'Pending',
+    createdAt: new Date().toISOString()
+  };
+  const updated = [newVerif, ...list];
+  saveVerifications(updated);
+  return newVerif;
+};
+
+export const updateVerification = (updatedVerif) => {
+  const list = getVerifications();
+  const uId = String(updatedVerif.id || updatedVerif._id);
+  const updated = list.map(v => (String(v.id || v._id) === uId ? updatedVerif : v));
+  saveVerifications(updated);
+  return updatedVerif;
+};
+
 // Wipes all data to fresh empty state for real testing
 export const resetStorageToDefault = () => {
   localStorage.setItem(KEYS.TALENTS, JSON.stringify([]));
@@ -406,6 +447,7 @@ export const resetStorageToDefault = () => {
   localStorage.setItem(KEYS.MESSAGES, JSON.stringify([]));
   localStorage.setItem(KEYS.REGISTERED_USERS, JSON.stringify([]));
   localStorage.setItem(KEYS.DISPUTES, JSON.stringify([]));
+  localStorage.setItem(KEYS.VERIFICATIONS, JSON.stringify([]));
   localStorage.setItem(KEYS.PLATFORM_SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
   return {
     talents: [],
@@ -415,6 +457,8 @@ export const resetStorageToDefault = () => {
     messages: [],
     users: [],
     disputes: [],
+    verifications: [],
     settings: DEFAULT_SETTINGS
   };
 };
+
