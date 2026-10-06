@@ -36,7 +36,7 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
   const categoryHighlights = [
     { title: 'Fashion & Commercial Photography', icon: Camera, count: '140+ Photographers', cat: 'Photography', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80' },
     { title: 'Full-Stack MERN & Next.js Web Dev', icon: Code, count: '210+ Developers', cat: 'Web Development', img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80' },
-    { title: 'Figma UI/UX & Mobile App Design', icon: Palette, count: '95+ Designers', cat: 'UI/UX Design', img: 'https://images.unsplash.com/photo-1581291518655-9523c932edcf?auto=format&fit=crop&w=600&q=80' },
+    { title: 'Figma UI/UX & Mobile App Design', icon: Palette, count: '95+ Designers', cat: 'UI/UX Design', img: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&q=80' },
     { title: 'TikTok Ads & 4K Video Editing', icon: Film, count: '115+ Video Editors', cat: 'Photography', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80' }
   ];
 
@@ -232,7 +232,14 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
               className="rounded-3xl bg-slate-900/80 border border-slate-800/80 overflow-hidden shadow-lg hover:border-indigo-500/40 transition-all group flex flex-col justify-between"
             >
               <div className="relative h-44 overflow-hidden">
-                <img src={cat.img} alt={cat.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <img 
+                  src={cat.img} 
+                  alt={cat.title} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&q=80';
+                  }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
                 <span className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white">
                   {cat.count}
