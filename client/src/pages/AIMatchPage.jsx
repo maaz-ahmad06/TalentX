@@ -117,9 +117,9 @@ export const AIMatchPage = ({
                 setCustomPrompt('');
               }}
             >
-              {jobs.map(j => (
-                <option key={j.id} value={j.id}>
-                  {j.title} — {j.city} (PKR {j.budget?.toLocaleString()})
+              {jobs.map((j, idx) => (
+                <option key={j._id || j.id || `job_${idx}`} value={j._id || j.id}>
+                  {j.title} — {j.city} (PKR {Number(j.budget || 0).toLocaleString()})
                 </option>
               ))}
             </select>
@@ -175,10 +175,11 @@ export const AIMatchPage = ({
           {rankedResults.map((item, index) => {
             const { talent, score, reasoning, breakdown } = item;
             const isTopPick = index === 0;
+            const tKey = talent?._id || talent?.id || talent?.userId || `match_${index}`;
 
             return (
               <div 
-                key={talent.id} 
+                key={tKey} 
                 className={`p-5 sm:p-6 rounded-3xl border transition-all relative overflow-hidden ${
                   isTopPick 
                     ? 'bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-900 border-purple-500/40 shadow-xl' 

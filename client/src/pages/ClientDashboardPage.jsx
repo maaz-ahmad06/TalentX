@@ -771,8 +771,8 @@ export const ClientDashboardPage = ({
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {contracts.map((contract) => (
-                    <div key={contract.id || contract._id} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-7 backdrop-blur-xl shadow-xl transition-all">
+                  {contracts.map((contract, idx) => (
+                    <div key={contract._id || contract.id || `cnt_${idx}`} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-7 backdrop-blur-xl shadow-xl transition-all">
                       <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-white/5">
                         <div>
                           <div className="flex items-center gap-2 mb-2.5">
@@ -901,7 +901,7 @@ export const ClientDashboardPage = ({
 
                         <div className="space-y-3">
                           {contract.milestones?.map((m, idx) => (
-                            <div key={m.id || m._id || idx} className="p-3.5 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-2xl transition-all space-y-3">
+                            <div key={m._id || m.id || `milestone_${idx}`} className="p-3.5 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-2xl transition-all space-y-3">
                               <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div className="flex items-center gap-3">
                                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
@@ -1025,8 +1025,8 @@ export const ClientDashboardPage = ({
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {jobs.map((j) => (
-                    <div key={j.id} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between transition-all">
+                  {jobs.map((j, idx) => (
+                    <div key={j._id || j.id || `job_${idx}`} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between transition-all">
                       <div>
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div>
@@ -1111,8 +1111,8 @@ export const ClientDashboardPage = ({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {proposals.map((p) => (
-                    <div key={p.id} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-6 backdrop-blur-xl shadow-xl transition-all">
+                  {proposals.map((p, idx) => (
+                    <div key={p._id || p.id || `prop_${idx}`} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-6 backdrop-blur-xl shadow-xl transition-all">
                       <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
                         <div>
                           <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 text-[10px] font-bold uppercase tracking-wider mb-2">
@@ -1357,8 +1357,8 @@ export const ClientDashboardPage = ({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {contracts.map((c) => (
-                          <tr key={c.id || c._id} className="hover:bg-white/5 transition-colors">
+                        {contracts.map((c, idx) => (
+                          <tr key={c._id || c.id || `cnt_${idx}`} className="hover:bg-white/5 transition-colors">
                             <td className="py-3.5 px-4 font-mono font-bold text-emerald-400">
                               {c.transactionRef || `TX-ESC-${Math.floor(100000 + Math.random() * 900000)}`}
                             </td>

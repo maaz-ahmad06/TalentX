@@ -182,60 +182,62 @@ export const JobsPage = ({ jobs, onApplyJob, onMatchJob }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredJobs.map((job) => (
-                <div 
-                  key={job.id} 
-                  className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-purple-500/40 backdrop-blur-xl shadow-lg transition-all flex flex-col justify-between space-y-4 group"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-                          {job.clientAvatar ? (
-                            <img src={job.clientAvatar} alt={job.clientName} className="w-full h-full object-cover" />
-                          ) : (
-                            <Building2 size={18} className="text-slate-400" />
-                          )}
+              {filteredJobs.map((job, idx) => {
+                const jKey = job._id || job.id || `job_${idx}`;
+                return (
+                  <div 
+                    key={jKey} 
+                    className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-purple-500/40 backdrop-blur-xl shadow-lg transition-all flex flex-col justify-between space-y-4 group"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                            {job.clientAvatar ? (
+                              <img src={job.clientAvatar} alt={job.clientName} className="w-full h-full object-cover" />
+                            ) : (
+                              <Building2 size={18} className="text-slate-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-xs sm:text-sm text-white truncate">{job.clientName || 'Local Business'}</div>
+                            <div className="text-[11px] text-slate-400">{job.postedDate || 'Recent'}</div>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-xs sm:text-sm text-white truncate">{job.clientName || 'Local Business'}</div>
-                          <div className="text-[11px] text-slate-400">{job.postedDate || 'Recent'}</div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-sm sm:text-base font-black text-emerald-400 block">PKR {Number(job.budget).toLocaleString()}</span>
+                          <span className="text-[10px] text-slate-500 font-semibold uppercase">{job.budgetType || 'Fixed'}</span>
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="text-sm sm:text-base font-black text-emerald-400 block">PKR {Number(job.budget).toLocaleString()}</span>
-                        <span className="text-[10px] text-slate-500 font-semibold uppercase">{job.budgetType || 'Fixed'}</span>
+                      <div>
+                        <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-purple-300 transition-colors">{job.title}</h3>
+                        <p className="text-xs text-slate-300 line-clamp-2 mt-1 leading-relaxed">{job.description}</p>
                       </div>
-                    </div>
 
-                    <div>
-                      <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-purple-300 transition-colors">{job.title}</h3>
-                      <p className="text-xs text-slate-300 line-clamp-2 mt-1 leading-relaxed">{job.description}</p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
-                        <MapPin size={11} className="text-slate-400" /> {job.city || 'Pakistan'} &bull; {job.locationType || 'Local'}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
-                        <Briefcase size={11} className="text-slate-400" /> {job.experienceLevel || 'All Levels'}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                        <Users size={11} /> {job.proposalsCount || 0} Proposals
-                      </span>
-                    </div>
-
-                    {job.requiredSkills && job.requiredSkills.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {job.requiredSkills.map(skill => (
-                          <span key={skill} className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">
-                            {skill}
-                          </span>
-                        ))}
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
+                          <MapPin size={11} className="text-slate-400" /> {job.city || 'Pakistan'} &bull; {job.locationType || 'Local'}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
+                          <Briefcase size={11} className="text-slate-400" /> {job.experienceLevel || 'All Levels'}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                          <Users size={11} /> {job.proposalsCount || 0} Proposals
+                        </span>
                       </div>
-                    )}
-                  </div>
+
+                      {job.requiredSkills && job.requiredSkills.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {job.requiredSkills.map((skill, sIdx) => (
+                            <span key={`${jKey}_sk_${skill || sIdx}`} className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                   <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
                     <button 
@@ -256,8 +258,9 @@ export const JobsPage = ({ jobs, onApplyJob, onMatchJob }) => {
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
+          </div>
           )}
         </main>
       </div>

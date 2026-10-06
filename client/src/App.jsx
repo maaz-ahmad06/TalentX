@@ -18,6 +18,7 @@ import {
   saveContracts,
   addContract,
   getMessages,
+  saveMessages,
   addMessage,
   getPlatformSettings,
   savePlatformSettings,

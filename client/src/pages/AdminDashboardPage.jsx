@@ -1336,8 +1336,8 @@ export const AdminDashboardPage = ({
                         </td>
                       </tr>
                     ) : (
-                      filteredUsers.map((u) => {
-                        const uid = u._id || u.id;
+                      filteredUsers.map((u, idx) => {
+                        const uid = u._id || u.id || u.email || `usr_${idx}`;
                         const isVerified = u.badge && u.badge !== 'Unverified';
                         const isClient = u.role === 'client';
                         const isAdmin = u.role === 'admin';
@@ -1544,8 +1544,8 @@ export const AdminDashboardPage = ({
                         </td>
                       </tr>
                     ) : (
-                      filteredJobs.map((j) => (
-                        <tr key={j.id} className="hover:bg-slate-800/30 transition-colors">
+                      filteredJobs.map((j, idx) => (
+                        <tr key={j._id || j.id || `job_${idx}`} className="hover:bg-slate-800/30 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="space-y-0.5">
                               <div className="font-semibold text-slate-100 flex items-center gap-2">
@@ -1756,8 +1756,8 @@ export const AdminDashboardPage = ({
                             }
                             return true;
                           })
-                          .map((t) => (
-                            <tr key={t._id || t.transactionRef} className="hover:bg-white/[0.03] transition-colors">
+                          .map((t, idx) => (
+                            <tr key={t._id || t.transactionRef || t.id || `tx_${idx}`} className="hover:bg-white/[0.03] transition-colors">
                               <td className="py-3 px-3 font-bold text-indigo-300">{t.transactionRef}</td>
                               <td className="py-3 px-3">
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-sans ${
@@ -1791,7 +1791,7 @@ export const AdminDashboardPage = ({
                           ))
                       ) : (
                         contracts.map((c, i) => (
-                          <tr key={c.id || i} className="hover:bg-white/[0.03] transition-colors">
+                          <tr key={c._id || c.id || `cnt_${i}`} className="hover:bg-white/[0.03] transition-colors">
                             <td className="py-3 px-3 font-bold text-indigo-300">{c.transactionRef || `TX-ESC-10${i}42`}</td>
                             <td className="py-3 px-3">
                               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold font-sans">
@@ -1856,8 +1856,8 @@ export const AdminDashboardPage = ({
                       <p className="text-xs text-slate-500 mt-1">Create a test contract to simulate platform escrow transactions.</p>
                     </div>
                   ) : (
-                    contracts.map((c) => (
-                      <div key={c.id || c._id} className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 shadow-lg space-y-4">
+                    contracts.map((c, idx) => (
+                      <div key={c._id || c.id || `cnt_${idx}`} className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 shadow-lg space-y-4">
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-700/60">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2.5">
@@ -1907,7 +1907,7 @@ export const AdminDashboardPage = ({
 
                           {c.milestones?.map((m, idx) => (
                             <div 
-                              key={m.id || m._id || idx} 
+                              key={m._id || m.id || `milestone_${idx}`} 
                               className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${
                                 m.isPaid 
                                   ? 'bg-emerald-950/20 border-emerald-500/20' 
@@ -2099,11 +2099,11 @@ export const AdminDashboardPage = ({
                       </p>
                     </div>
                   ) : (
-                    filteredDisputes.map(dispute => {
+                    filteredDisputes.map((dispute, idx) => {
                       const isResolved = dispute.status?.startsWith('Resolved');
                       return (
                         <div 
-                          key={dispute.id || dispute._id}
+                          key={dispute._id || dispute.id || `dispute_${idx}`}
                           className={`p-5 rounded-2xl border transition-all ${
                             isResolved 
                               ? 'bg-slate-900/40 border-slate-800/80 opacity-90' 
@@ -2314,13 +2314,13 @@ export const AdminDashboardPage = ({
                       </p>
                     </div>
                   ) : (
-                    filteredVerifications.map(verif => {
+                    filteredVerifications.map((verif, idx) => {
                       const isPending = verif.status === 'Pending';
                       const isApproved = verif.status === 'Approved';
 
                       return (
                         <div 
-                          key={verif.id || verif._id}
+                          key={verif._id || verif.id || `verif_${idx}`}
                           className={`p-5 rounded-2xl border transition-all ${
                             isPending 
                               ? 'bg-slate-900/90 border-amber-500/30 shadow-lg shadow-amber-950/20' 
@@ -3203,8 +3203,8 @@ export const AdminDashboardPage = ({
                     value={newContractForm.talentName}
                     onChange={(e) => setNewContractForm({ ...newContractForm, talentName: e.target.value })}
                   >
-                    {talents.map(t => (
-                      <option key={t.id} value={t.name}>{t.name} ({t.city})</option>
+                    {talents.map((t, idx) => (
+                      <option key={t._id || t.id || `talent_${idx}`} value={t.name}>{t.name} ({t.city})</option>
                     ))}
                   </select>
                 </div>

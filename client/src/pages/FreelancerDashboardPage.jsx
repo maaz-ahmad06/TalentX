@@ -1092,13 +1092,13 @@ export const FreelancerDashboardPage = ({
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {contracts.map((contract) => {
+                  {contracts.map((contract, idx) => {
                     const paidCount = contract.milestones?.filter(m => m.isPaid).length || 0;
                     const totalMilestones = contract.milestones?.length || 1;
                     const progressPercent = Math.round((paidCount / totalMilestones) * 100);
 
                     return (
-                      <div key={contract.id || contract._id} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-7 backdrop-blur-xl shadow-xl transition-all">
+                      <div key={contract._id || contract.id || `cnt_${idx}`} className="bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 rounded-3xl p-7 backdrop-blur-xl shadow-xl transition-all">
                         <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-white/5">
                           <div>
                             <div className="flex items-center gap-2 mb-2.5">
@@ -1194,7 +1194,7 @@ export const FreelancerDashboardPage = ({
 
                           <div className="space-y-2.5">
                             {contract.milestones?.map((m, idx) => (
-                              <div key={m.id || m._id || idx} className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-xl transition-all">
+                              <div key={m._id || m.id || `milestone_${idx}`} className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-xl transition-all">
                                 <div className="flex items-center gap-3">
                                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
                                     m.isPaid 
@@ -1289,8 +1289,8 @@ export const FreelancerDashboardPage = ({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {proposals.map((p) => (
-                    <div key={p.id} className="bg-slate-900/70 border border-white/10 hover:border-purple-500/40 rounded-3xl p-6 backdrop-blur-xl shadow-xl transition-all">
+                  {proposals.map((p, idx) => (
+                    <div key={p._id || p.id || `prop_${idx}`} className="bg-slate-900/70 border border-white/10 hover:border-purple-500/40 rounded-3xl p-6 backdrop-blur-xl shadow-xl transition-all">
                       <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                         <div>
                           <h4 className="text-lg font-bold text-white font-display mb-1">{p.jobTitle || 'Project Pitch Proposal'}</h4>
@@ -1376,42 +1376,45 @@ export const FreelancerDashboardPage = ({
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                  {currentPortfolio.map((item) => (
-                    <div key={item.id} className="group bg-slate-900/80 border border-white/10 hover:border-indigo-500/40 rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10">
-                      <div className="relative h-48 overflow-hidden bg-slate-950">
-                        <img 
-                          src={item.image} 
-                          alt={item.title} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                        />
-                        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md text-indigo-300 text-xs font-bold border border-indigo-500/30">
-                          {item.category}
-                        </span>
-                        <button 
-                          className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-slate-950/80 backdrop-blur-md border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all opacity-80 hover:opacity-100 cursor-pointer"
-                          title="Delete Project"
-                          onClick={() => handleDeletePortfolioProject(item.id, item.title)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                      <div className="p-5 flex flex-col flex-1">
-                        <h4 className="font-bold text-white text-base mb-2 group-hover:text-indigo-300 transition-colors">
-                          {item.title}
-                        </h4>
-                        <p className="text-slate-400 text-sm leading-relaxed mb-4 flex-1 line-clamp-3">
-                          {item.description}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5 pt-3 border-t border-white/5">
-                          {item.tags?.map((t) => (
-                            <span key={t} className="px-2.5 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
-                              #{t}
-                            </span>
-                          ))}
+                  {currentPortfolio.map((item, idx) => {
+                    const portKey = item._id || item.id || `port_${idx}`;
+                    return (
+                      <div key={portKey} className="group bg-slate-900/80 border border-white/10 hover:border-indigo-500/40 rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10">
+                        <div className="relative h-48 overflow-hidden bg-slate-950">
+                          <img 
+                            src={item.image} 
+                            alt={item.title} 
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                          />
+                          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md text-indigo-300 text-xs font-bold border border-indigo-500/30">
+                            {item.category}
+                          </span>
+                          <button 
+                            className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-slate-950/80 backdrop-blur-md border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all opacity-80 hover:opacity-100 cursor-pointer"
+                            title="Delete Project"
+                            onClick={() => handleDeletePortfolioProject(item._id || item.id, item.title)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <div className="p-5 flex flex-col flex-1">
+                          <h4 className="font-bold text-white text-base mb-2 group-hover:text-indigo-300 transition-colors">
+                            {item.title}
+                          </h4>
+                          <p className="text-slate-400 text-sm leading-relaxed mb-4 flex-1 line-clamp-3">
+                            {item.description}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 pt-3 border-t border-white/5">
+                            {item.tags?.map((t, tIdx) => (
+                              <span key={`${portKey}_tag_${t || tIdx}`} className="px-2.5 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
+                                #{t}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1779,36 +1782,39 @@ export const FreelancerDashboardPage = ({
                   <div className="space-y-3 pt-2">
                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Client Testimonials & Feedback:</div>
                     <div className="space-y-3">
-                      {reviewsList.map((rev) => (
-                        <div key={rev.id || rev._id} className="p-4 rounded-2xl bg-slate-950/50 border border-white/5 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <strong className="text-xs font-bold text-white">{rev.clientName}</strong>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">
-                                Verified Hire
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {[...Array(Math.round(Number(rev.overallRating || 5)))].map((_, i) => (
-                                <Star key={i} size={11} className="text-amber-400 fill-amber-400" />
-                              ))}
-                              <span className="text-[10px] text-slate-500 ml-1">
-                                {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : 'Recent'}
-                              </span>
-                            </div>
-                          </div>
-                          <p className="text-xs text-slate-300 italic">"{rev.comment}"</p>
-                          {Array.isArray(rev.tags) && rev.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 pt-1">
-                              {rev.tags.map(t => (
-                                <span key={t} className="text-[9px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300">
-                                  #{t}
+                      {reviewsList.map((rev, idx) => {
+                        const revKey = rev._id || rev.id || `rev_${idx}`;
+                        return (
+                          <div key={revKey} className="p-4 rounded-2xl bg-slate-950/50 border border-white/5 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <strong className="text-xs font-bold text-white">{rev.clientName}</strong>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">
+                                  Verified Hire
                                 </span>
-                              ))}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {[...Array(Math.round(Number(rev.overallRating || 5)))].map((_, i) => (
+                                  <Star key={i} size={11} className="text-amber-400 fill-amber-400" />
+                                ))}
+                                <span className="text-[10px] text-slate-500 ml-1">
+                                  {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : 'Recent'}
+                                </span>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      ))}
+                            <p className="text-xs text-slate-300 italic">"{rev.comment}"</p>
+                            {Array.isArray(rev.tags) && rev.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 pt-1">
+                                {rev.tags.map((t, tIdx) => (
+                                  <span key={`${revKey}_tag_${t || tIdx}`} className="text-[9px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300">
+                                    #{t}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

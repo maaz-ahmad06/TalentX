@@ -183,88 +183,90 @@ export const TalentGrid = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTalents.map((talent) => (
-            <div 
-              key={talent.id} 
-              className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-indigo-500/40 backdrop-blur-xl shadow-lg hover:shadow-indigo-500/10 transition-all flex flex-col justify-between space-y-4 group"
-            >
-              <div className="space-y-3.5">
-                {/* Header Profile */}
-                <div className="flex items-start gap-3.5">
-                  <div className="relative shrink-0">
-                    <img src={talent.avatar} alt={talent.name} className="w-13 h-13 rounded-2xl object-cover ring-2 ring-slate-800 group-hover:ring-indigo-500/40 transition-all" />
-                    <span className="absolute -bottom-1 -right-1 p-0.5 rounded-full bg-emerald-500 text-slate-950 shadow" title="Verified ID & Skills">
-                      <ShieldCheck size={13} />
-                    </span>
-                  </div>
+          {filteredTalents.map((talent, idx) => {
+            const tKey = talent._id || talent.id || talent.userId || `talent_${idx}`;
+            return (
+              <div 
+                key={tKey} 
+                className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-indigo-500/40 backdrop-blur-xl shadow-lg hover:shadow-indigo-500/10 transition-all flex flex-col justify-between space-y-4 group"
+              >
+                <div className="space-y-3.5">
+                  {/* Header Profile */}
+                  <div className="flex items-start gap-3.5">
+                    <div className="relative shrink-0">
+                      <img src={talent.avatar} alt={talent.name} className="w-13 h-13 rounded-2xl object-cover ring-2 ring-slate-800 group-hover:ring-indigo-500/40 transition-all" />
+                      <span className="absolute -bottom-1 -right-1 p-0.5 rounded-full bg-emerald-500 text-slate-950 shadow" title="Verified ID & Skills">
+                        <ShieldCheck size={13} />
+                      </span>
+                    </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-1">
-                      <h3 className="font-bold text-sm text-white truncate group-hover:text-indigo-300 transition-colors">{talent.name}</h3>
-                      <div className="flex items-center gap-1 text-xs text-amber-400 font-bold shrink-0">
-                        <Star size={12} className="fill-amber-400" />
-                        <span>{talent.rating}</span>
-                        <span className="text-[10px] text-slate-500 font-normal">({talent.reviewCount})</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <h3 className="font-bold text-sm text-white truncate group-hover:text-indigo-300 transition-colors">{talent.name}</h3>
+                        <div className="flex items-center gap-1 text-xs text-amber-400 font-bold shrink-0">
+                          <Star size={12} className="fill-amber-400" />
+                          <span>{talent.rating}</span>
+                          <span className="text-[10px] text-slate-500 font-normal">({talent.reviewCount})</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
+                        <MapPin size={12} className="text-slate-500" />
+                        <span className="truncate">{talent.city} &bull; {talent.area}</span>
+                      </div>
+
+                      {/* Verified Badges Row */}
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {talent.badge && talent.badge !== 'Unverified' && (
+                          <VerificationBadge type="id" badgeName={talent.badge} size="xs" />
+                        )}
+                        {Array.isArray(talent.verifiedBadges) && talent.verifiedBadges.slice(0, 1).map((b, bIdx) => (
+                          <VerificationBadge key={bIdx} type="skill" badgeName={b.badgeName || b.name} size="xs" />
+                        ))}
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
-                      <MapPin size={12} className="text-slate-500" />
-                      <span className="truncate">{talent.city} &bull; {talent.area}</span>
-                    </div>
-
-                    {/* Verified Badges Row */}
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {talent.badge && talent.badge !== 'Unverified' && (
-                        <VerificationBadge type="id" badgeName={talent.badge} size="xs" />
-                      )}
-                      {Array.isArray(talent.verifiedBadges) && talent.verifiedBadges.slice(0, 1).map((b, idx) => (
-                        <VerificationBadge key={idx} type="skill" badgeName={b.badgeName || b.name} size="xs" />
-                      ))}
-                    </div>
                   </div>
-                </div>
 
-                {/* Headline */}
-                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{talent.headline}</p>
+                  {/* Headline */}
+                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{talent.headline}</p>
 
-                {/* Skills tags */}
-                <div className="flex flex-wrap gap-1.5">
-                  {talent.skills.slice(0, 3).map((skill) => (
-                    <span key={skill} className="text-[11px] px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-medium border border-slate-700/60">
-                      {skill}
-                    </span>
-                  ))}
-                  {talent.skills.length > 3 && (
-                    <span className="text-[10px] px-1.5 py-0.5 text-slate-500 font-medium">
-                      +{talent.skills.length - 3}
-                    </span>
+                  {/* Skills tags */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {(talent.skills || []).slice(0, 3).map((skill, sIdx) => (
+                      <span key={`${tKey}_sk_${skill || sIdx}`} className="text-[11px] px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-medium border border-slate-700/60">
+                        {skill}
+                      </span>
+                    ))}
+                    {(talent.skills || []).length > 3 && (
+                      <span className="text-[10px] px-1.5 py-0.5 text-slate-500 font-medium">
+                        +{talent.skills.length - 3}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Visual Portfolio Strip Preview */}
+                  {talent.portfolio && talent.portfolio.length > 0 && (
+                    <div 
+                      className="p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2 cursor-pointer hover:bg-slate-800/60 transition-colors" 
+                      onClick={() => onSelectTalent(talent)}
+                    >
+                      <div className="flex items-center justify-between text-[11px] text-slate-400">
+                        <span>Featured Work ({talent.portfolio.length})</span>
+                        <span className="text-indigo-400 flex items-center gap-1 hover:underline">View <Eye size={11} /></span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {talent.portfolio.slice(0, 2).map((item, pIdx) => (
+                          <div key={item._id || item.id || `port_${pIdx}`} className="relative h-20 rounded-lg overflow-hidden group/img">
+                            <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform" />
+                            <div className="absolute inset-0 bg-black/40 flex items-end p-1.5 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                              <span className="text-[10px] text-white font-medium truncate">{item.title}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-
-                {/* Visual Portfolio Strip Preview */}
-                {talent.portfolio && talent.portfolio.length > 0 && (
-                  <div 
-                    className="p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2 cursor-pointer hover:bg-slate-800/60 transition-colors" 
-                    onClick={() => onSelectTalent(talent)}
-                  >
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
-                      <span>Featured Work ({talent.portfolio.length})</span>
-                      <span className="text-indigo-400 flex items-center gap-1 hover:underline">View <Eye size={11} /></span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {talent.portfolio.slice(0, 2).map((item) => (
-                        <div key={item.id} className="relative h-20 rounded-lg overflow-hidden group/img">
-                          <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform" />
-                          <div className="absolute inset-0 bg-black/40 flex items-end p-1.5 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                            <span className="text-[10px] text-white font-medium truncate">{item.title}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
 
               {/* Footer Pricing & Actions */}
               <div className="flex items-center justify-between pt-3 border-t border-slate-800">

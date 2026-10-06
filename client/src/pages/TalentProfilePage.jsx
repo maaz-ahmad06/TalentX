@@ -418,8 +418,8 @@ export const TalentProfilePage = ({
               </div>
             ) : (
               <div className="space-y-4">
-                {reviewsList.map((rev) => (
-                  <div key={rev.id || rev._id} className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700/60 space-y-3 hover:border-indigo-500/40 transition-all shadow-md">
+                {reviewsList.map((rev, idx) => (
+                  <div key={rev._id || rev.id || `rev_${idx}`} className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700/60 space-y-3 hover:border-indigo-500/40 transition-all shadow-md">
                     {/* Header: Client & Rating */}
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -522,8 +522,8 @@ export const TalentProfilePage = ({
             </div>
 
             <div className="space-y-6">
-              {(talent.portfolio || []).map((item) => (
-                <div key={item.id} className="rounded-2xl bg-slate-800/40 border border-slate-700/60 overflow-hidden shadow-lg space-y-3">
+              {(talent.portfolio || []).map((item, idx) => (
+                <div key={item._id || item.id || `port_${idx}`} className="rounded-2xl bg-slate-800/40 border border-slate-700/60 overflow-hidden shadow-lg space-y-3">
                   <div className="relative h-60 sm:h-72 overflow-hidden">
                     <img src={item.image} alt={item.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                     <span className="absolute top-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-semibold">

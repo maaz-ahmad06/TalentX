@@ -357,49 +357,52 @@ export const HomePage = ({ talents = [], jobs = [], onOpenAuth }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {talents.slice(0, 3).map((talent) => (
-              <div key={talent.id} className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-indigo-500/40 backdrop-blur-xl shadow-lg transition-all flex flex-col justify-between space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <img src={talent.avatar} alt={talent.name} className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-800" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm text-white truncate">{talent.name}</h3>
-                        <div className="flex items-center gap-1 text-xs text-amber-400 font-bold">
-                          <Star size={12} className="fill-amber-400" />
-                          <span>{talent.rating}</span>
+            {talents.slice(0, 3).map((talent, idx) => {
+              const talentKey = talent._id || talent.id || talent.userId || `talent_${idx}`;
+              return (
+                <div key={talentKey} className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-indigo-500/40 backdrop-blur-xl shadow-lg transition-all flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <img src={talent.avatar} alt={talent.name} className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-800" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-bold text-sm text-white truncate">{talent.name}</h3>
+                          <div className="flex items-center gap-1 text-xs text-amber-400 font-bold">
+                            <Star size={12} className="fill-amber-400" />
+                            <span>{talent.rating}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
+                          <MapPin size={12} />
+                          <span>{talent.city} &bull; {talent.area}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
-                        <MapPin size={12} />
-                        <span>{talent.city} &bull; {talent.area}</span>
-                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{talent.headline}</p>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {(talent.skills || []).slice(0, 3).map((skill, sIdx) => (
+                        <span key={`${talentKey}-sk-${skill || sIdx}`} className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
+                          {skill}
+                        </span>
+                      ))}
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{talent.headline}</p>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {talent.skills.slice(0, 3).map(skill => (
-                      <span key={skill} className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
-                        {skill}
-                      </span>
-                    ))}
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                    <div>
+                      <div className="text-sm font-black text-emerald-400">PKR {Number(talent.hourlyRate || 0).toLocaleString()} <span className="text-[10px] text-slate-400 font-normal">/ hr</span></div>
+                      <div className="text-[10px] text-slate-500">{talent.workMode}</div>
+                    </div>
+                    <Link to={`/profile/${talent._id || talent.id || talent.userId || ''}`} className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors">
+                      <span>Profile</span>
+                      <ArrowRight size={13} />
+                    </Link>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                  <div>
-                    <div className="text-sm font-black text-emerald-400">PKR {talent.hourlyRate.toLocaleString()} <span className="text-[10px] text-slate-400 font-normal">/ hr</span></div>
-                    <div className="text-[10px] text-slate-500">{talent.workMode}</div>
-                  </div>
-                  <Link to={`/profile/${talent.id}`} className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors">
-                    <span>Profile</span>
-                    <ArrowRight size={13} />
-                  </Link>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
