@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { CATEGORIES, CITIES } from '../data/mockData';
 
-export const HomePage = ({ talents, jobs, onOpenAuth }) => {
+export const HomePage = ({ talents = [], jobs = [], onOpenAuth }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('All Cities');
   const navigate = useNavigate();
@@ -33,12 +33,71 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
     navigate(`/talents?search=${encodeURIComponent(searchQuery)}&city=${encodeURIComponent(selectedCity)}`);
   };
 
+  // Dynamically compute real counts for each category from registered talents array
+  const getTalentCount = (catName, keywords = []) => {
+    if (!Array.isArray(talents) || talents.length === 0) return 0;
+    return talents.filter(t => {
+      const cat = (t.category || '').toLowerCase();
+      const head = (t.headline || '').toLowerCase();
+      const skillsStr = Array.isArray(t.skills) ? t.skills.map(s => String(s).toLowerCase()).join(' ') : '';
+      const bio = (t.bio || '').toLowerCase();
+      
+      const targetCat = catName.toLowerCase();
+      const isCatMatch = cat === targetCat || cat.includes(targetCat);
+      const isKeywordMatch = keywords.some(k => {
+        const lowerK = k.toLowerCase();
+        return head.includes(lowerK) || skillsStr.includes(lowerK) || bio.includes(lowerK);
+      });
+
+      return isCatMatch || isKeywordMatch;
+    }).length;
+  };
+
+  const photoCount = getTalentCount('Photography', ['photo', 'camera', 'shoot', 'fashion']);
+  const devCount = getTalentCount('Web Development', ['web', 'mern', 'react', 'node', 'developer', 'javascript', 'frontend', 'backend']);
+  const designCount = getTalentCount('UI/UX Design', ['ui', 'ux', 'figma', 'design', 'mobile app', 'flutter', 'app']);
+  const videoCount = getTalentCount('Photography', ['video', 'editing', 'film', 'tiktok', 'reels', 'premiere']);
+
+  const formatCountLabel = (count, singularWord, pluralWord) => {
+    if (count === 0) return '0 Pros Available';
+    if (count === 1) return `1 ${singularWord}`;
+    return `${count}+ ${pluralWord}`;
+  };
+
   const categoryHighlights = [
-    { title: 'Fashion & Commercial Photography', icon: Camera, count: '140+ Photographers', cat: 'Photography', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80' },
-    { title: 'Full-Stack MERN & Next.js Web Dev', icon: Code, count: '210+ Developers', cat: 'Web Development', img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80' },
-    { title: 'Figma UI/UX & Mobile App Design', icon: Palette, count: '95+ Designers', cat: 'UI/UX Design', img: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&q=80' },
-    { title: 'TikTok Ads & 4K Video Editing', icon: Film, count: '115+ Video Editors', cat: 'Photography', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80' }
+    { 
+      title: 'Fashion & Commercial Photography', 
+      icon: Camera, 
+      count: formatCountLabel(photoCount, 'Photographer', 'Photographers'), 
+      cat: 'Photography', 
+      img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80' 
+    },
+    { 
+      title: 'Full-Stack MERN & Next.js Web Dev', 
+      icon: Code, 
+      count: formatCountLabel(devCount, 'Developer', 'Developers'), 
+      cat: 'Web Development', 
+      img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80' 
+    },
+    { 
+      title: 'Figma UI/UX & Mobile App Design', 
+      icon: Palette, 
+      count: formatCountLabel(designCount, 'Designer', 'Designers'), 
+      cat: 'UI/UX Design', 
+      img: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&q=80' 
+    },
+    { 
+      title: 'TikTok Ads & 4K Video Editing', 
+      icon: Film, 
+      count: formatCountLabel(videoCount, 'Video Editor', 'Video Editors'), 
+      cat: 'Photography', 
+      img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80' 
+    }
   ];
+
+  // Dynamic Overall Rating Calculation
+  const totalTalentRating = talents.reduce((sum, t) => sum + Number(t.rating || 5.0), 0);
+  const avgClientRating = talents.length > 0 ? (Math.round((totalTalentRating / talents.length) * 10) / 10).toFixed(1) : '5.0';
 
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen">
@@ -118,18 +177,18 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
                 <ShieldCheck size={20} />
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-white">550+</div>
-                <div className="text-xs text-slate-400">Verified Pros</div>
+                <div className="text-lg sm:text-xl font-black text-white">{talents.length} {talents.length === 1 ? 'Pro' : 'Pros'}</div>
+                <div className="text-xs text-slate-400">Verified Talent</div>
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl flex items-center gap-3.5 text-left">
               <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                <Zap size={20} />
+                <Briefcase size={20} />
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-white">98.4%</div>
-                <div className="text-xs text-slate-400">AI Match Accuracy</div>
+                <div className="text-lg sm:text-xl font-black text-white">{jobs.length} {jobs.length === 1 ? 'Gig' : 'Gigs'}</div>
+                <div className="text-xs text-slate-400">Active Project Listings</div>
               </div>
             </div>
 
@@ -138,8 +197,8 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
                 <TrendingUp size={20} />
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-white">PKR 18.5M+</div>
-                <div className="text-xs text-slate-400">Paid in Escrow</div>
+                <div className="text-lg sm:text-xl font-black text-white">100% Secure</div>
+                <div className="text-xs text-slate-400">JazzCash & Bank Escrow</div>
               </div>
             </div>
 
@@ -148,8 +207,8 @@ export const HomePage = ({ talents, jobs, onOpenAuth }) => {
                 <Star size={20} />
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-white">4.9 / 5.0</div>
-                <div className="text-xs text-slate-400">Client Rating</div>
+                <div className="text-lg sm:text-xl font-black text-white">{avgClientRating} / 5.0</div>
+                <div className="text-xs text-slate-400">Average Pro Rating</div>
               </div>
             </div>
           </div>
