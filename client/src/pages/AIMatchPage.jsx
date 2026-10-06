@@ -98,7 +98,7 @@ export const AIMatchPage = ({
           AI Candidate <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">Match Studio</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 max-w-2xl mx-auto">
-          Our algorithm multi-factor ranks 550+ verified local professionals across <strong>Skill Vector Overlap (40%)</strong>, <strong>City Proximity (25%)</strong>, <strong>Budget Alignment (15%)</strong> & <strong>Rating (20%)</strong>.
+          Our algorithm multi-factor ranks {talents.length} verified local {talents.length === 1 ? 'professional' : 'professionals'} across <strong>Skill Vector Overlap (40%)</strong>, <strong>City Proximity (25%)</strong>, <strong>Budget Alignment (15%)</strong> & <strong>Rating (20%)</strong>.
         </p>
       </div>
 
