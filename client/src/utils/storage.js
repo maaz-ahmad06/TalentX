@@ -19,7 +19,8 @@ const KEYS = {
   PLATFORM_SETTINGS: 'talentx_platform_settings',
   DISPUTES: 'talentx_disputes_v1',
   VERIFICATIONS: 'talentx_verifications_v1',
-  WORK_LOGS: 'talentx_work_logs_v1'
+  WORK_LOGS: 'talentx_work_logs_v1',
+  REVIEWS: 'talentx_reviews_v1'
 };
 
 const DEFAULT_SETTINGS = {
@@ -479,6 +480,39 @@ export const updateWorkLogInStorage = (updatedLog) => {
   const updated = list.map(w => (String(w.id || w._id) === targetId ? { ...w, ...updatedLog } : w));
   saveWorkLogs(updated);
   return updatedLog;
+};
+
+// -------------------------------------------------------------
+// REVIEWS & RATINGS (Storage Fallback & Cache)
+// -------------------------------------------------------------
+export const getReviews = (talentId) => {
+  if (typeof window === 'undefined' || !window.localStorage) return [];
+  const stored = localStorage.getItem(KEYS.REVIEWS);
+  if (!stored) return [];
+  try {
+    const all = JSON.parse(stored);
+    if (!talentId) return all;
+    return all.filter(r => String(r.talentId) === String(talentId));
+  } catch (e) {
+    return [];
+  }
+};
+
+export const saveReviews = (reviews) => {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  localStorage.setItem(KEYS.REVIEWS, JSON.stringify(reviews));
+};
+
+export const addReview = (reviewData) => {
+  const list = getReviews();
+  const newReview = {
+    ...reviewData,
+    id: reviewData.id || reviewData._id || `rev_${Date.now()}`,
+    createdAt: new Date().toISOString()
+  };
+  const updated = [newReview, ...list];
+  saveReviews(updated);
+  return newReview;
 };
 
 // Wipes all data to fresh empty state for real testing

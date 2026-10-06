@@ -53,7 +53,8 @@ import { CnicVerificationModal } from '../components/CnicVerificationModal';
 import { SkillAssessmentModal } from '../components/SkillAssessmentModal';
 import { VerificationBadge } from '../components/VerificationBadge';
 import { ContractWorkspaceModal } from '../components/ContractWorkspaceModal';
-import { apiSubmitMilestoneWork, apiRequestWithdrawal } from '../services/api';
+import { apiSubmitMilestoneWork, apiRequestWithdrawal, apiGetTalentReviews } from '../services/api';
+import { getReviews } from '../utils/storage';
 
 const SAMPLE_PORTFOLIO_ITEMS = [
   {
@@ -217,6 +218,93 @@ export const FreelancerDashboardPage = ({
       avatar: src.avatar || ''
     };
   });
+
+  // Client Reviews & Multi-Criteria Ratings State (Point 7)
+  const [reviewsList, setReviewsList] = useState([]);
+  const [reviewsStats, setReviewsStats] = useState({
+    avgRating: Number(currentUser?.rating || myTalentProfile?.rating || 5.0),
+    totalReviews: 0,
+    criteriaAverages: { quality: 5.0, communication: 5.0, timeliness: 5.0, value: 5.0 },
+    distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    allTags: []
+  });
+
+  useEffect(() => {
+    const fetchFreelancerReviews = async () => {
+      const talentIdStr = String(currentUser?.id || currentUser?._id || myTalentProfile?.id || myTalentProfile?._id || '');
+      if (!talentIdStr) return;
+
+      let fetched = [];
+      let backendStats = null;
+      try {
+        const res = await apiGetTalentReviews(talentIdStr);
+        if (res && res.reviews) {
+          fetched = res.reviews;
+          backendStats = res.stats;
+        }
+      } catch (err) {
+        console.warn('Freelancer reviews sync notice:', err.message);
+      }
+
+      const localReviews = getReviews().filter(r => 
+        String(r.talentId) === talentIdStr || String(r.talent) === talentIdStr
+      );
+
+      const existingIds = new Set(fetched.map(r => String(r.id || r._id)));
+      localReviews.forEach(r => {
+        if (!existingIds.has(String(r.id || r._id))) {
+          fetched.push(r);
+          existingIds.add(String(r.id || r._id));
+        }
+      });
+
+      if (fetched.length === 0 && Array.isArray(myTalentProfile?.reviews) && myTalentProfile.reviews.length > 0) {
+        fetched = myTalentProfile.reviews.map((r, idx) => ({
+          id: r.id || `fl_mock_${idx}`,
+          overallRating: r.rating || 5,
+          ratings: { quality: 5, communication: 5, timeliness: 5, value: 5 },
+          comment: r.comment || '',
+          clientName: r.client || 'Client Employer',
+          clientCompany: 'Enterprise Brand',
+          isVerifiedHire: true,
+          tags: ['Pixel Perfect UI', 'Clean Code & MERN'],
+          createdAt: r.date || 'Recent'
+        }));
+      }
+
+      let totalQuality = 0, totalComm = 0, totalTime = 0, totalVal = 0, totalScore = 0;
+      const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      const tagSet = new Set();
+
+      fetched.forEach(rev => {
+        const score = Math.round(Number(rev.overallRating || 5));
+        dist[score] = (dist[score] || 0) + 1;
+        totalScore += Number(rev.overallRating || 5);
+        totalQuality += Number(rev.ratings?.quality || rev.overallRating || 5);
+        totalComm += Number(rev.ratings?.communication || rev.overallRating || 5);
+        totalTime += Number(rev.ratings?.timeliness || rev.overallRating || 5);
+        totalVal += Number(rev.ratings?.value || rev.overallRating || 5);
+        if (Array.isArray(rev.tags)) rev.tags.forEach(t => tagSet.add(t));
+      });
+
+      const count = fetched.length || 1;
+      setReviewsList(fetched);
+      setReviewsStats({
+        avgRating: backendStats?.avgRating || (fetched.length > 0 ? Math.round((totalScore / count) * 10) / 10 : Number(currentUser?.rating || myTalentProfile?.rating || 5.0)),
+        totalReviews: fetched.length,
+        criteriaAverages: backendStats?.criteriaAverages || {
+          quality: Math.round((totalQuality / count) * 10) / 10,
+          communication: Math.round((totalComm / count) * 10) / 10,
+          timeliness: Math.round((totalTime / count) * 10) / 10,
+          value: Math.round((totalVal / count) * 10) / 10
+        },
+        distribution: backendStats?.distribution || dist,
+        allTags: Array.from(tagSet)
+      });
+    };
+
+    fetchFreelancerReviews();
+  }, [currentUser?.id, currentUser?._id, myTalentProfile?.id, myTalentProfile?._id]);
 
   // Keep form in sync when currentUser or talents update
   useEffect(() => {
@@ -1458,6 +1546,120 @@ export const FreelancerDashboardPage = ({
                   </button>
                 </div>
               </form>
+
+              {/* Point 7: Freelancer Reputation & Client Ratings Breakdown */}
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-white/10 backdrop-blur-xl shadow-xl space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/5">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                      <Star size={13} className="fill-amber-400 text-amber-400" /> Client Reviews & Reputation
+                    </div>
+                    <h3 className="text-xl font-bold text-white">4-Criteria Performance Ratings</h3>
+                    <p className="text-xs text-slate-400">Calculated automatically from verified completed escrow contracts</p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-2xl font-black text-amber-300 font-display flex items-center justify-end gap-1">
+                        <Star size={20} className="fill-amber-400 text-amber-400" />
+                        <span>{reviewsStats.avgRating}</span>
+                        <span className="text-xs text-slate-400 font-normal">/ 5.0</span>
+                      </div>
+                      <div className="text-[11px] text-slate-400">{reviewsStats.totalReviews} Verified Client Reviews</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4 Performance Bars */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="p-4 bg-slate-950/60 rounded-2xl border border-white/5 space-y-2">
+                    <div className="flex justify-between font-semibold">
+                      <span className="text-slate-300 flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-indigo-400" /> Quality of Work
+                      </span>
+                      <span className="text-amber-300 font-bold">{reviewsStats.criteriaAverages.quality}★</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(reviewsStats.criteriaAverages.quality / 5) * 100}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-950/60 rounded-2xl border border-white/5 space-y-2">
+                    <div className="flex justify-between font-semibold">
+                      <span className="text-slate-300 flex items-center gap-1.5">
+                        <MessageSquare size={14} className="text-blue-400" /> Communication & Responsiveness
+                      </span>
+                      <span className="text-amber-300 font-bold">{reviewsStats.criteriaAverages.communication}★</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(reviewsStats.criteriaAverages.communication / 5) * 100}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-950/60 rounded-2xl border border-white/5 space-y-2">
+                    <div className="flex justify-between font-semibold">
+                      <span className="text-slate-300 flex items-center gap-1.5">
+                        <Clock size={14} className="text-emerald-400" /> Timeliness & Deadlines
+                      </span>
+                      <span className="text-amber-300 font-bold">{reviewsStats.criteriaAverages.timeliness}★</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(reviewsStats.criteriaAverages.timeliness / 5) * 100}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-950/60 rounded-2xl border border-white/5 space-y-2">
+                    <div className="flex justify-between font-semibold">
+                      <span className="text-slate-300 flex items-center gap-1.5">
+                        <DollarSign size={14} className="text-amber-400" /> Value for Money (PKR)
+                      </span>
+                      <span className="text-amber-300 font-bold">{reviewsStats.criteriaAverages.value}★</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(reviewsStats.criteriaAverages.value / 5) * 100}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Client Reviews List */}
+                {reviewsList.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Client Testimonials & Feedback:</div>
+                    <div className="space-y-3">
+                      {reviewsList.map((rev) => (
+                        <div key={rev.id || rev._id} className="p-4 rounded-2xl bg-slate-950/50 border border-white/5 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <strong className="text-xs font-bold text-white">{rev.clientName}</strong>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">
+                                Verified Hire
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {[...Array(Math.round(Number(rev.overallRating || 5)))].map((_, i) => (
+                                <Star key={i} size={11} className="text-amber-400 fill-amber-400" />
+                              ))}
+                              <span className="text-[10px] text-slate-500 ml-1">
+                                {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : 'Recent'}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-300 italic">"{rev.comment}"</p>
+                          {Array.isArray(rev.tags) && rev.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {rev.tags.map(t => (
+                                <span key={t} className="text-[9px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300">
+                                  #{t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

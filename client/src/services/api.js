@@ -388,5 +388,26 @@ export const apiDeleteWorkLog = async (id) => {
   });
 };
 
+// -------------------------------------------------------------
+// REVIEWS & CLIENT RATINGS ENGINE (Point 7)
+// -------------------------------------------------------------
+export const apiCreateReview = async (reviewData) => {
+  return await request('/reviews', {
+    method: 'POST',
+    body: JSON.stringify(reviewData)
+  });
+};
+
+export const apiGetTalentReviews = async (talentId) => {
+  const res = await request(`/reviews/talent/${encodeURIComponent(talentId)}`, { method: 'GET' });
+  return res || { reviews: [], breakdown: {}, distribution: {}, avgRating: 5.0 };
+};
+
+export const apiGetAllReviews = async () => {
+  const res = await request('/reviews', { method: 'GET' });
+  return res.reviews || [];
+};
+
+
 
 

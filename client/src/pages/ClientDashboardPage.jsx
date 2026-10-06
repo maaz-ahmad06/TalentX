@@ -37,7 +37,8 @@ import {
   Download,
   FileText,
   Scale,
-  ShieldAlert
+  ShieldAlert,
+  Star
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES } from '../data/mockData';
@@ -47,6 +48,7 @@ import { MediationRoomModal } from '../components/MediationRoomModal';
 import { CnicVerificationModal } from '../components/CnicVerificationModal';
 import { VerificationBadge } from '../components/VerificationBadge';
 import { ContractWorkspaceModal } from '../components/ContractWorkspaceModal';
+import { ReviewModal } from '../components/ReviewModal';
 import { apiReleaseMilestonePayment } from '../services/api';
 
 export const ClientDashboardPage = ({ 
@@ -98,6 +100,9 @@ export const ClientDashboardPage = ({
 
   // Collaboration Workspace & Work Logs (Point 6)
   const [activeWorkspaceContract, setActiveWorkspaceContract] = useState(null);
+
+  // Reviews & Ratings (Point 7)
+  const [reviewingContract, setReviewingContract] = useState(null);
 
   const handleDisputeCreated = (newDispute) => {
     const updated = contracts.map(c => {
@@ -248,12 +253,18 @@ export const ClientDashboardPage = ({
           return m;
         });
         const allDone = updatedMilestones.every(m => m.isPaid);
-        return {
+        const updatedContract = {
           ...c,
           milestones: updatedMilestones,
           status: allDone ? 'Completed' : 'In Progress',
           escrowStatus: allDone ? 'Completed' : 'Funded in Escrow'
         };
+        if (allDone) {
+          setTimeout(() => {
+            setReviewingContract(updatedContract);
+          }, 800);
+        }
+        return updatedContract;
       }
       return c;
     });
@@ -641,6 +652,16 @@ export const ClientDashboardPage = ({
                           <div className="text-xl font-black text-emerald-400 font-display">PKR {Number(contract.amount).toLocaleString()}</div>
                           <div className="text-xs text-slate-500 mt-0.5">Deadline: {contract.deadline || '2026-10-05'}</div>
                           <div className="mt-2.5 flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setReviewingContract(contract)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-bold transition-all cursor-pointer shadow-sm"
+                              title="Give 4-Criteria Rating & Verified Testimonial"
+                            >
+                              <Star size={13} className="fill-amber-400 text-amber-400" />
+                              <span>Rate & Review</span>
+                            </button>
+
                             <button
                               type="button"
                               onClick={() => setActiveWorkspaceContract(contract)}
@@ -1562,6 +1583,39 @@ export const ClientDashboardPage = ({
           onClose={() => setActiveWorkspaceContract(null)}
           contract={activeWorkspaceContract}
           currentUser={currentUser}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Multi-Criteria Review & Rating Modal (Point 7) */}
+      {reviewingContract && (
+        <ReviewModal
+          isOpen={Boolean(reviewingContract)}
+          onClose={() => setReviewingContract(null)}
+          contract={reviewingContract}
+          currentUser={currentUser}
+          onReviewSubmitted={(newReview, avgRating) => {
+            if (showToast) showToast('Review and ratings submitted successfully! Freelancer reputation updated.', 'success');
+            setReviewingContract(null);
+            if (onUpdateTalents) {
+              const targetTalentId = String(reviewingContract.talentId || reviewingContract.talent?._id || reviewingContract.talent?.id || '');
+              if (targetTalentId) {
+                onUpdateTalents(talents.map(t => {
+                  if (String(t.id || t._id) === targetTalentId) {
+                    const currentReviews = Array.isArray(t.reviews) ? t.reviews : [];
+                    const updatedReviews = [newReview, ...currentReviews];
+                    return {
+                      ...t,
+                      rating: avgRating || t.rating,
+                      reviewCount: updatedReviews.length,
+                      reviews: updatedReviews
+                    };
+                  }
+                  return t;
+                }));
+              }
+            }
+          }}
           showToast={showToast}
         />
       )}
