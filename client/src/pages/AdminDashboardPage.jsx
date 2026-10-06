@@ -43,7 +43,8 @@ import {
   Receipt,
   CreditCard,
   Smartphone,
-  Scale
+  Scale,
+  Menu
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
@@ -69,6 +70,7 @@ export const AdminDashboardPage = ({
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('users');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // Search & Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -687,9 +689,203 @@ export const AdminDashboardPage = ({
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row antialiased selection:bg-indigo-500 selection:text-white">
       {/* ============================================================
-          LEFT SIDEBAR NAVIGATION
+          MOBILE DRAWER NAVIGATION BACKDROP & SLIDE-OVER (MOBILE/TABLET)
           ============================================================ */}
-      <aside className="w-full lg:w-72 bg-slate-900/90 backdrop-blur-2xl border-r border-slate-800/80 p-5 flex flex-col justify-between shrink-0 shadow-2xl z-30">
+      {isMobileNavOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" 
+            onClick={() => setIsMobileNavOpen(false)}
+          />
+          <aside className="relative w-72 max-w-[85vw] bg-slate-900 border-r border-slate-800 p-5 flex flex-col justify-between shadow-2xl z-50 overflow-y-auto">
+            <div className="space-y-6">
+              {/* Header with Close */}
+              <div className="flex items-center justify-between">
+                <Link to="/" className="flex items-center gap-3" onClick={() => setIsMobileNavOpen(false)}>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-indigo-500/25">
+                    X
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-300">
+                      TalentX
+                    </span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 w-fit">
+                      ADMIN HUB
+                    </span>
+                  </div>
+                </Link>
+                <button 
+                  onClick={() => setIsMobileNavOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Admin Profile Box */}
+              <div className="flex items-center gap-3.5 p-3 rounded-xl bg-slate-800/50 border border-white/5 shadow-inner">
+                <img 
+                  src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} 
+                  alt="Admin" 
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-rose-500/50"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="font-semibold text-sm text-slate-200 truncate">{currentUser?.name || 'Administrator'}</span>
+                  <span className="text-xs font-medium text-rose-400 flex items-center gap-1">
+                    <ShieldCheck size={12} /> Super Admin
+                  </span>
+                </div>
+              </div>
+
+              {/* Navigation Menu */}
+              <nav className="space-y-1">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 pb-2">
+                  Administration
+                </div>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                    activeTab === 'users' 
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                  onClick={() => { setActiveTab('users'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Users size={18} className={activeTab === 'users' ? 'text-white' : 'text-slate-400'} />
+                    <span>User Management</span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'users' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                    {userList.length}
+                  </span>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                    activeTab === 'jobs' 
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                  onClick={() => { setActiveTab('jobs'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Briefcase size={18} className={activeTab === 'jobs' ? 'text-white' : 'text-slate-400'} />
+                    <span>Job Moderation</span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'jobs' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                    {jobs.length}
+                  </span>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                    activeTab === 'escrow' 
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                  onClick={() => { setActiveTab('escrow'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Lock size={18} className={activeTab === 'escrow' ? 'text-white' : 'text-slate-400'} />
+                    <span>Escrow Ledger</span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'escrow' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                    {contracts.length}
+                  </span>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                    activeTab === 'disputes' 
+                      ? 'bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-lg shadow-rose-500/25 font-semibold' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                  onClick={() => { setActiveTab('disputes'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Scale size={18} className={activeTab === 'disputes' ? 'text-white' : 'text-slate-400'} />
+                    <span>Disputes & Mediation</span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'disputes' ? 'bg-white/20 text-white' : 'bg-rose-500/20 text-rose-300'}`}>
+                    {disputesList.filter(d => !d.status?.startsWith('Resolved')).length || 0}
+                  </span>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                    activeTab === 'verifications' 
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25 font-semibold' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                  onClick={() => { setActiveTab('verifications'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck size={18} className={activeTab === 'verifications' ? 'text-white' : 'text-slate-400'} />
+                    <span>Verification Hub</span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === 'verifications' ? 'bg-white/20 text-white' : 'bg-emerald-500/20 text-emerald-300'}`}>
+                    {verificationsList.filter(v => v.status === 'Pending').length || 0}
+                  </span>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer ${
+                    activeTab === 'settings' 
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 font-semibold' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                  onClick={() => { setActiveTab('settings'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Settings size={18} className={activeTab === 'settings' ? 'text-white' : 'text-slate-400'} />
+                    <span>Governance & Settings</span>
+                  </div>
+                </button>
+              </nav>
+
+              {/* System Health Card */}
+              <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Platform Health</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-white/5">
+                  <span>AI Matcher:</span>
+                  <strong className={aiOnline ? 'text-emerald-400' : 'text-rose-400'}>{aiOnline ? 'Online' : 'Offline'}</strong>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>Commission:</span>
+                  <strong className="text-indigo-400">{commissionPercent}%</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Footer */}
+            <div className="pt-6 border-t border-slate-800 space-y-2 mt-4">
+              <Link 
+                to="/" 
+                className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors"
+                onClick={() => setIsMobileNavOpen(false)}
+              >
+                <ArrowLeft size={16} />
+                <span>Return to Marketplace</span>
+              </Link>
+              <button 
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer" 
+                onClick={onLogout}
+              >
+                <LogOut size={16} />
+                <span>Log Out</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ============================================================
+          DESKTOP LEFT SIDEBAR NAVIGATION (lg:flex)
+          ============================================================ */}
+      <aside className="hidden lg:flex w-72 bg-slate-900/90 backdrop-blur-2xl border-r border-slate-800/80 p-5 flex-col justify-between shrink-0 shadow-2xl z-30 sticky top-0 h-screen overflow-y-auto">
         <div className="space-y-6">
           {/* Brand Section */}
           <div>
@@ -871,24 +1067,35 @@ export const AdminDashboardPage = ({
           ============================================================ */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header Bar */}
-        <header className="h-16 px-6 sm:px-8 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl flex items-center justify-between shrink-0 sticky top-0 z-20">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="text-slate-400">TalentX Admin</span>
-            <span className="text-slate-600">/</span>
-            <span className="text-slate-200 font-semibold">
-              {activeTab === 'users' && 'User & Talent Management'}
-              {activeTab === 'jobs' && 'Job Posts Moderation'}
-              {activeTab === 'escrow' && 'Milestone Escrow Vault'}
-              {activeTab === 'disputes' && 'Disputes & Mediation Center'}
-              {activeTab === 'verifications' && 'Identity & CNIC Verification Hub'}
-              {activeTab === 'settings' && 'Platform Governance & Controls'}
-            </span>
+        <header className="h-16 px-4 sm:px-8 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl flex items-center justify-between shrink-0 sticky top-0 z-20 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile Hamburger Toggle */}
+            <button 
+              onClick={() => setIsMobileNavOpen(true)}
+              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 border border-slate-700/50 transition-colors shrink-0"
+              title="Open Navigation"
+            >
+              <Menu size={20} />
+            </button>
+
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium truncate">
+              <span className="text-slate-400 hidden sm:inline">TalentX Admin</span>
+              <span className="text-slate-600 hidden sm:inline">/</span>
+              <span className="text-slate-200 font-semibold truncate">
+                {activeTab === 'users' && 'User & Talent Management'}
+                {activeTab === 'jobs' && 'Job Posts Moderation'}
+                {activeTab === 'escrow' && 'Milestone Escrow Vault'}
+                {activeTab === 'disputes' && 'Disputes & Mediation Center'}
+                {activeTab === 'verifications' && 'Identity & CNIC Verification Hub'}
+                {activeTab === 'settings' && 'Platform Governance & Controls'}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {activeTab === 'disputes' ? (
               <button 
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-rose-600 via-amber-600 to-rose-700 hover:opacity-95 shadow-md shadow-rose-500/20 active:scale-95 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-rose-600 via-amber-600 to-rose-700 hover:opacity-95 shadow-md shadow-rose-500/20 active:scale-95 transition-all cursor-pointer"
                 onClick={() => {
                   apiGetDisputes().then(res => {
                     if (Array.isArray(res)) {
@@ -902,12 +1109,13 @@ export const AdminDashboardPage = ({
                   });
                 }}
               >
-                <RefreshCw size={16} />
-                <span>Refresh Disputes</span>
+                <RefreshCw size={15} />
+                <span className="hidden sm:inline">Refresh Disputes</span>
+                <span className="sm:hidden">Refresh</span>
               </button>
             ) : activeTab === 'verifications' ? (
               <button 
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
                 onClick={() => {
                   apiGetVerifications().then(res => {
                     if (res && Array.isArray(res.verifications)) {
@@ -921,31 +1129,33 @@ export const AdminDashboardPage = ({
                   });
                 }}
               >
-                <RefreshCw size={16} />
-                <span>Refresh Queue</span>
+                <RefreshCw size={15} />
+                <span className="hidden sm:inline">Refresh Queue</span>
+                <span className="sm:hidden">Refresh</span>
               </button>
             ) : activeTab === 'settings' ? (
               <button 
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
                 onClick={handleExportDataJSON}
               >
-                <Download size={16} />
-                <span>Export Backup</span>
+                <Download size={15} />
+                <span className="hidden sm:inline">Export Backup</span>
+                <span className="sm:hidden">Backup</span>
               </button>
             ) : (
               <button 
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
                 onClick={() => {
                   if (activeTab === 'users') setIsAddUserModalOpen(true);
                   else if (activeTab === 'jobs') setIsAddJobModalOpen(true);
                   else if (activeTab === 'escrow') setIsAddContractModalOpen(true);
                 }}
               >
-                <Plus size={16} />
+                <Plus size={15} />
                 <span>
-                  {activeTab === 'users' && 'Add New Talent'}
-                  {activeTab === 'jobs' && 'Post Job as Admin'}
-                  {activeTab === 'escrow' && 'New Escrow Contract'}
+                  {activeTab === 'users' && 'Add Talent'}
+                  {activeTab === 'jobs' && 'Post Job'}
+                  {activeTab === 'escrow' && 'New Escrow'}
                 </span>
               </button>
             )}
@@ -954,7 +1164,7 @@ export const AdminDashboardPage = ({
 
         {/* Global Announcement Alert (If Active) */}
         {isAnnounceActive && announcementText && (
-          <div className="px-6 py-2.5 bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-indigo-950/80 border-b border-indigo-500/30 flex items-center justify-between text-xs sm:text-sm text-indigo-200 shadow-md">
+          <div className="px-4 sm:px-6 py-2.5 bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-indigo-950/80 border-b border-indigo-500/30 flex items-center justify-between text-xs sm:text-sm text-indigo-200 shadow-md">
             <div className="flex items-center gap-2.5 min-w-0">
               <Megaphone size={16} className="text-indigo-400 shrink-0" />
               <div className="truncate">
@@ -962,7 +1172,7 @@ export const AdminDashboardPage = ({
               </div>
             </div>
             <button 
-              className="p-1 hover:bg-white/10 rounded-lg text-indigo-300 hover:text-white transition-colors cursor-pointer"
+              className="p-1 hover:bg-white/10 rounded-lg text-indigo-300 hover:text-white transition-colors cursor-pointer shrink-0"
               onClick={() => setIsAnnounceActive(false)}
               title="Dismiss"
             >
@@ -972,7 +1182,7 @@ export const AdminDashboardPage = ({
         )}
 
         {/* Body Content */}
-        <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl w-full mx-auto">
           {/* KPI Stats Overview Cards (Authoritative Real Metrics) */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {/* Stat 1: Real GMV */}

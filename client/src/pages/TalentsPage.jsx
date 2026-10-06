@@ -35,6 +35,7 @@ export const TalentsPage = ({
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [maxPrice, setMaxPrice] = useState(15000);
   const [workModeFilter, setWorkModeFilter] = useState('all');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('cat')) setSelectedCategory(searchParams.get('cat'));
@@ -99,10 +100,25 @@ export const TalentsPage = ({
         </div>
       </div>
 
+      {/* Mobile Filter Toggle Button */}
+      <div className="lg:hidden flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl">
+        <div className="text-xs text-slate-300 font-semibold">
+          <span className="text-indigo-400 font-bold">{filteredTalents.length}</span> Professionals Found
+        </div>
+        <button 
+          type="button"
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all cursor-pointer"
+        >
+          <SlidersHorizontal size={14} />
+          <span>{showMobileFilters ? 'Hide Filters' : 'Filter & Search'}</span>
+        </button>
+      </div>
+
       {/* Main Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Filter Sidebar */}
-        <aside className="lg:col-span-3 p-5 rounded-3xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-5 sticky top-20">
+        <aside className={`lg:col-span-3 p-5 rounded-3xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-5 sticky top-20 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
               <Filter size={15} className="text-indigo-400" />

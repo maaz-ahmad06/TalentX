@@ -42,7 +42,8 @@ import {
   Code2,
   Server,
   Cpu,
-  Palette
+  Palette,
+  Menu
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CITIES, CATEGORIES } from '../data/mockData';
@@ -175,6 +176,9 @@ export const FreelancerDashboardPage = ({
 
   // Collaboration Workspace & Work Logs (Point 6)
   const [activeWorkspaceContract, setActiveWorkspaceContract] = useState(null);
+
+  // Mobile Navigation Drawer
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const handleDisputeCreated = (newDispute) => {
     setActiveMediationDispute(newDispute);
@@ -659,9 +663,9 @@ export const FreelancerDashboardPage = ({
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans w-full">
       {/* ============================================================
-          LEFT SIDEBAR NAVIGATION (Tailwind CSS)
+          LEFT SIDEBAR NAVIGATION (Desktop: lg:flex)
           ============================================================ */}
-      <aside className="w-72 bg-slate-900/90 border-r border-white/10 p-6 flex flex-col justify-between sticky top-0 h-screen overflow-y-auto backdrop-blur-2xl flex-shrink-0 z-30">
+      <aside className="hidden lg:flex w-72 bg-slate-900/90 border-r border-white/10 p-6 flex-col justify-between sticky top-0 h-screen overflow-y-auto backdrop-blur-2xl flex-shrink-0 z-30">
         <div className="space-y-6">
           {/* Brand Section */}
           <div className="pb-4 border-b border-white/5">
@@ -819,38 +823,187 @@ export const FreelancerDashboardPage = ({
       </aside>
 
       {/* ============================================================
+          MOBILE SLIDING DRAWER (Mobile / Tablet)
+          ============================================================ */}
+      {isMobileNavOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex" onClick={() => setIsMobileNavOpen(false)}>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md"></div>
+          <aside 
+            className="relative w-80 max-w-[85vw] bg-slate-900 border-r border-white/10 p-6 flex flex-col justify-between h-full overflow-y-auto z-10 shadow-2xl animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                <Link to="/" className="flex items-center gap-2.5 no-underline" onClick={() => setIsMobileNavOpen(false)}>
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-pink-500 flex items-center justify-center font-black text-white text-lg">
+                    X
+                  </div>
+                  <span className="font-extrabold text-lg text-white">Talent Workspace</span>
+                </Link>
+                <button
+                  type="button"
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white"
+                  onClick={() => setIsMobileNavOpen(false)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Navigation Menu */}
+              <nav className="space-y-1.5">
+                <button 
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm ${
+                    activeSubTab === 'contracts' ? 'bg-indigo-600/25 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:bg-white/5'
+                  }`}
+                  onClick={() => { setActiveSubTab('contracts'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Briefcase size={18} />
+                    <span>Active Contracts</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{contracts.length}</span>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm ${
+                    activeSubTab === 'proposals' ? 'bg-indigo-600/25 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:bg-white/5'
+                  }`}
+                  onClick={() => { setActiveSubTab('proposals'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Layers size={18} />
+                    <span>Submitted Bids</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{proposals.length}</span>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm ${
+                    activeSubTab === 'portfolio' ? 'bg-indigo-600/25 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:bg-white/5'
+                  }`}
+                  onClick={() => { setActiveSubTab('portfolio'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Award size={18} />
+                    <span>Showcase Portfolio</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{currentPortfolio.length}</span>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm ${
+                    activeSubTab === 'profile-settings' ? 'bg-indigo-600/25 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:bg-white/5'
+                  }`}
+                  onClick={() => { setActiveSubTab('profile-settings'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <User size={18} />
+                    <span>Profile & Skills</span>
+                  </div>
+                </button>
+
+                <button 
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm ${
+                    activeSubTab === 'verification' ? 'bg-gradient-to-r from-emerald-600/25 to-teal-600/25 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:bg-white/5'
+                  }`}
+                  onClick={() => { setActiveSubTab('verification'); setIsMobileNavOpen(false); }}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck size={18} className="text-emerald-400" />
+                    <span>ID & Skill Badges</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-300">
+                    {currentUser?.isIdVerified ? 'Verified' : 'Get Verified'}
+                  </span>
+                </button>
+
+                <Link 
+                  to="/messages" 
+                  onClick={() => setIsMobileNavOpen(false)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:bg-white/5"
+                >
+                  <div className="flex items-center gap-3">
+                    <MessageSquare size={18} />
+                    <span>Messages & Chat</span>
+                  </div>
+                  {unreadCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-black">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+              </nav>
+            </div>
+
+            <div className="pt-6 border-t border-white/5 space-y-2">
+              <Link 
+                to="/" 
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white/5 text-slate-300 text-xs font-semibold"
+                onClick={() => setIsMobileNavOpen(false)}
+              >
+                <ArrowLeft size={16} />
+                <span>Return to Marketplace</span>
+              </Link>
+              {onLogout && (
+                <button 
+                  type="button"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 text-xs font-semibold" 
+                  onClick={onLogout}
+                >
+                  <LogOut size={16} />
+                  <span>Log Out</span>
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ============================================================
           MAIN CONTENT AREA (RIGHT SIDE)
           ============================================================ */}
       <div className="flex-1 min-w-0 flex flex-col bg-slate-950">
         {/* Topbar */}
-        <header className="sticky top-0 z-20 h-20 bg-slate-950/80 backdrop-blur-xl border-b border-white/10 px-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 text-sm">
-            <span className="text-slate-500 font-medium">Talent Workspace</span>
-            <span className="text-slate-700">/</span>
-            <span className="font-bold text-white">
-              {activeSubTab === 'contracts' && 'Client Contracts & Milestone Escrow'}
-              {activeSubTab === 'proposals' && 'My Active Proposals & Bids'}
-              {activeSubTab === 'portfolio' && 'Featured Portfolio Showcase'}
-              {activeSubTab === 'profile-settings' && 'Manage Profile, Skills & Rates'}
-              {activeSubTab === 'verification' && 'Pakistani ID & Skill Assessment Badges'}
-            </span>
+        <header className="sticky top-0 z-20 h-16 sm:h-20 bg-slate-950/80 backdrop-blur-xl border-b border-white/10 px-4 sm:px-8 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              className="lg:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0"
+              onClick={() => setIsMobileNavOpen(true)}
+              aria-label="Open Sidebar Navigation"
+            >
+              <Menu size={18} />
+            </button>
+
+            <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0 truncate">
+              <span className="text-slate-500 font-medium hidden md:inline shrink-0">Talent Workspace</span>
+              <span className="text-slate-700 hidden md:inline">/</span>
+              <span className="font-bold text-white truncate">
+                {activeSubTab === 'contracts' && 'Client Contracts & Milestone Escrow'}
+                {activeSubTab === 'proposals' && 'My Active Proposals & Bids'}
+                {activeSubTab === 'portfolio' && 'Featured Portfolio Showcase'}
+                {activeSubTab === 'profile-settings' && 'Manage Profile, Skills & Rates'}
+                {activeSubTab === 'verification' && 'Pakistani ID & Skill Badges'}
+              </span>
+            </div>
           </div>
 
           <Link 
             to="/jobs" 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-purple-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-purple-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 shrink-0"
           >
-            <Briefcase size={15} />
-            <span>Browse Marketplace Jobs</span>
+            <Briefcase size={14} />
+            <span className="hidden xs:inline sm:inline">Browse Jobs</span>
+            <span className="xs:hidden sm:hidden">Jobs</span>
           </Link>
         </header>
 
         {/* Content Body */}
-        <div className="p-8 max-w-7xl w-full mx-auto space-y-8">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
           {/* 4 Stats Cards */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Card 1: In Escrow Vault */}
-            <div className="bg-slate-900/70 border border-emerald-500/30 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-emerald-500/50 hover:-translate-y-1 transition-all relative overflow-hidden group">
+            <div className="bg-slate-900/70 border border-emerald-500/30 rounded-2xl p-5 sm:p-6 backdrop-blur-xl shadow-xl hover:border-emerald-500/50 hover:-translate-y-1 transition-all relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">In Escrow Vault</span>

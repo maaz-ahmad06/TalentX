@@ -21,7 +21,8 @@ import {
   UserPlus,
   X,
   ChevronRight,
-  Plus
+  Plus,
+  Menu
 } from 'lucide-react';
 import { emitTyping, emitStopTyping, getSocket } from '../services/socket';
 
@@ -91,6 +92,7 @@ export const MessagesPage = ({
 
   // Modal for starting a new chat with any member on the platform
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [newChatSearch, setNewChatSearch] = useState('');
   const [threadSearch, setThreadSearch] = useState('');
   const [inputText, setInputText] = useState('');
@@ -575,13 +577,13 @@ export const MessagesPage = ({
 
   // Helper to render the core chat workspace directly without nested component recreation
   const renderChatWorkspace = () => (
-    <div className="flex h-full w-full rounded-3xl bg-slate-900/80 border border-white/10 overflow-hidden backdrop-blur-2xl shadow-2xl">
-      {/* Left Column: Conversations List */}
-      <div className="w-80 bg-slate-950/60 border-r border-white/10 flex flex-col h-full flex-shrink-0">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
+    <div className="flex h-full w-full rounded-2xl sm:rounded-3xl bg-slate-900/80 border border-white/10 overflow-hidden backdrop-blur-2xl shadow-2xl">
+      {/* Left Column: Conversations List (full width on mobile when no contact selected, hidden on mobile when contact selected) */}
+      <div className={`w-full md:w-80 bg-slate-950/60 border-r border-white/10 flex-col h-full flex-shrink-0 ${selectedContact ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-3.5 sm:p-4 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-white text-sm">Direct Conversations</h3>
-            <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold uppercase tracking-wider">
+            <h3 className="font-bold text-white text-xs sm:text-sm">Direct Conversations</h3>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold uppercase tracking-wider">
               Live
             </span>
           </div>
@@ -599,7 +601,7 @@ export const MessagesPage = ({
           </button>
         </div>
 
-        <div className="p-3 border-b border-white/5">
+        <div className="p-2.5 sm:p-3 border-b border-white/5">
           <div className="relative flex items-center">
             <Search size={14} className="absolute left-3 text-slate-500 pointer-events-none" />
             <input 
@@ -716,54 +718,65 @@ export const MessagesPage = ({
         </div>
       </div>
 
-      {/* Right Column: Active Conversation */}
-      <div className="flex-1 flex flex-col h-full bg-slate-950/80 min-w-0">
+      {/* Right Column: Active Conversation (full width on mobile when contact selected, hidden on mobile when no contact selected) */}
+      <div className={`flex-1 flex-col h-full bg-slate-950/80 min-w-0 ${!selectedContact ? 'hidden md:flex' : 'flex'}`}>
         {selectedContact ? (
           <>
             {/* Top Header */}
-            <div className="p-4 px-6 border-b border-white/10 flex items-center justify-between gap-4 bg-slate-900/50 backdrop-blur-md flex-shrink-0">
-              <div className="flex items-center gap-3">
+            <div className="p-3 sm:p-4 px-4 sm:px-6 border-b border-white/10 flex items-center justify-between gap-3 bg-slate-900/50 backdrop-blur-md flex-shrink-0">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                {/* Back button on mobile to return to conversations */}
+                <button 
+                  type="button" 
+                  onClick={() => selectContact(null)}
+                  className="md:hidden p-1.5 -ml-1 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                  title="Back to Conversations"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+
                 <img 
                   src={selectedContact.avatar || FALLBACK_AVATAR} 
                   alt={selectedContact.name || 'User'} 
-                  className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 shadow-md" 
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-indigo-500 shadow-md shrink-0" 
                 />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-white text-sm">{selectedContact.name || 'TalentX Member'}</h4>
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-bold text-white text-xs sm:text-sm truncate">{selectedContact.name || 'TalentX Member'}</h4>
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold border ${
                       isContactOnline(selectedContact)
                         ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
                         : 'bg-slate-800/60 border-slate-700/60 text-slate-400'
                     }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${isContactOnline(selectedContact) ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
-                      {isContactOnline(selectedContact) ? 'Online Now' : 'Offline'}
+                      {isContactOnline(selectedContact) ? 'Online' : 'Offline'}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold">
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold">
                       <ShieldCheck size={11} /> {selectedContact.role === 'client' ? 'Client' : 'Verified Pro'}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                    <MapPin size={11} /> {selectedContact.city || 'Pakistan'} {Number.isFinite(Number(selectedContact.hourlyRate)) && Number(selectedContact.hourlyRate) > 0 ? `• PKR ${Number(selectedContact.hourlyRate).toLocaleString()}/hr` : ''}
+                  <div className="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
+                    <MapPin size={11} className="shrink-0" /> {selectedContact.city || 'Pakistan'} {Number.isFinite(Number(selectedContact.hourlyRate)) && Number(selectedContact.hourlyRate) > 0 ? `• PKR ${Number(selectedContact.hourlyRate).toLocaleString()}/hr` : ''}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {onHireTalent && selectedContact.role !== 'client' && (
                   <button 
                     type="button"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-500/25 transition-all cursor-pointer"
                     onClick={() => onHireTalent(selectedContact)}
                   >
                     <Sparkles size={13} />
-                    <span>Send Hire Offer</span>
+                    <span className="hidden sm:inline">Send Hire Offer</span>
+                    <span className="sm:hidden">Hire</span>
                   </button>
                 )}
                 {selectedContact.role !== 'client' && (selectedContact._id || selectedContact.id) && (
                   <Link 
                     to={`/profile/${selectedContact._id || selectedContact.id}`} 
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-semibold transition-all"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-semibold transition-all"
                   >
                     <span>View Portfolio</span>
                   </Link>
@@ -775,7 +788,7 @@ export const MessagesPage = ({
             <div 
               ref={chatFeedRef}
               onScroll={handleFeedScroll}
-              className="flex-1 overflow-y-auto p-6 space-y-4"
+              className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4"
             >
               {activeThreadMessages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-6">
@@ -801,7 +814,7 @@ export const MessagesPage = ({
                       key={msg._id || msg.id || `msg_${index}`} 
                       className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[75%] sm:max-w-[65%] shadow-lg ${
+                      <div className={`p-3 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed max-w-[85%] sm:max-w-[70%] shadow-lg ${
                         isSentByMe 
                           ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-br-none shadow-indigo-500/20' 
                           : 'bg-slate-900 border border-white/10 text-slate-200 rounded-bl-none'
@@ -826,7 +839,7 @@ export const MessagesPage = ({
 
             {/* Real-Time Typing Animation Indicator */}
             {selectedContact && Object.keys(typingUsersMap).some(id => selectedContactIds.has(id.toLowerCase())) && (
-              <div className="flex items-center gap-2 text-xs text-indigo-300 font-semibold px-6 py-2 bg-indigo-950/40 border-t border-indigo-500/20 backdrop-blur-sm transition-all animate-pulse">
+              <div className="flex items-center gap-2 text-xs text-indigo-300 font-semibold px-4 sm:px-6 py-2 bg-indigo-950/40 border-t border-indigo-500/20 backdrop-blur-sm transition-all animate-pulse">
                 <span className="flex gap-1 items-center">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce"></span>
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
@@ -837,11 +850,11 @@ export const MessagesPage = ({
             )}
 
             {/* Input Bar — Pure div container, zero form submissions */}
-            <div className="p-4 px-6 bg-slate-900 border-t border-white/10 flex items-center gap-3 flex-shrink-0">
+            <div className="p-3 sm:p-4 px-4 sm:px-6 bg-slate-900 border-t border-white/10 flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <input 
                 ref={chatInputRef}
                 type="text"
-                className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-sm outline-none transition-all"
+                className="flex-1 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-950 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white text-xs sm:text-sm outline-none transition-all"
                 placeholder={`Message ${selectedContact?.name || 'member'}...`}
                 value={inputText}
                 onChange={handleInputChange}
@@ -861,10 +874,10 @@ export const MessagesPage = ({
                   if (e.stopPropagation) e.stopPropagation();
                   handleSend();
                 }}
-                className="w-10 h-10 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 transition-all cursor-pointer flex-shrink-0"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 transition-all cursor-pointer flex-shrink-0"
                 title="Send Message"
               >
-                <Send size={16} />
+                <Send size={15} />
               </button>
             </div>
           </>
@@ -1012,8 +1025,151 @@ export const MessagesPage = ({
 
     return (
       <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans w-full">
-        {/* Left Sticky Sidebar */}
-        <aside className="w-72 bg-slate-900/90 border-r border-white/10 p-6 flex flex-col justify-between sticky top-0 h-screen overflow-y-auto backdrop-blur-2xl flex-shrink-0 z-30">
+        {/* ============================================================
+            MOBILE DRAWER NAVIGATION BACKDROP & SLIDE-OVER (MOBILE/TABLET)
+            ============================================================ */}
+        {isMobileNavOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex">
+            <div 
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" 
+              onClick={() => setIsMobileNavOpen(false)}
+            />
+            <aside className="relative w-72 max-w-[85vw] bg-slate-900 border-r border-slate-800 p-5 flex flex-col justify-between shadow-2xl z-50 overflow-y-auto">
+              <div className="space-y-6">
+                {/* Header with Close */}
+                <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                  <Link to="/" className="flex items-center gap-3 no-underline" onClick={() => setIsMobileNavOpen(false)}>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-indigo-500/30">
+                      <span>X</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-extrabold text-xl tracking-tight text-white">TalentX</span>
+                      <span className={`text-[10px] font-bold tracking-widest uppercase ${isAdmin ? 'text-amber-400' : isClient ? 'text-indigo-400' : 'text-purple-400'}`}>
+                        {isAdmin ? 'ADMIN HUB' : isClient ? 'EMPLOYER HUB' : 'TALENT WORKSPACE'}
+                      </span>
+                    </div>
+                  </Link>
+                  <button 
+                    onClick={() => setIsMobileNavOpen(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* User Profile Card */}
+                <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-2xl">
+                  <img 
+                    src={currentUser?.avatar || FALLBACK_AVATAR} 
+                    alt={currentUser?.name} 
+                    className="w-11 h-11 rounded-full object-cover border-2 border-indigo-500 shadow-md"
+                  />
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="font-bold text-sm text-white truncate">{currentUser?.name || 'User'}</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isAdmin ? 'text-amber-400' : isClient ? 'text-indigo-400' : 'text-purple-400'}`}>
+                      {isAdmin ? 'Super Admin' : isClient ? 'Client Employer' : 'Verified Pro'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Navigation Menu */}
+                <nav className="space-y-1.5">
+                  <div className="text-[10px] font-extrabold tracking-widest text-slate-500 uppercase px-3 mb-2">
+                    {isAdmin ? 'ADMINISTRATION' : isClient ? 'EMPLOYER WORKSPACE' : 'FREELANCER HUB'}
+                  </div>
+
+                  {isAdmin ? (
+                    <>
+                      <Link to="/admin" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <div className="flex items-center gap-3"><Users size={18} /><span>User Management</span></div>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{talents.length}</span>
+                      </Link>
+                      <Link to="/admin" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <div className="flex items-center gap-3"><Briefcase size={18} /><span>Job Moderation</span></div>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{jobs.length}</span>
+                      </Link>
+                      <Link to="/admin" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <div className="flex items-center gap-3"><Lock size={18} /><span>Escrow Ledger</span></div>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{contracts.length}</span>
+                      </Link>
+                      <Link to="/admin" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <Settings size={18} /><span>Governance & Settings</span>
+                      </Link>
+                    </>
+                  ) : isClient ? (
+                    <>
+                      <Link to="/dashboard/client" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <div className="flex items-center gap-3"><Briefcase size={18} /><span>Active Contracts</span></div>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{contracts.length}</span>
+                      </Link>
+                      <Link to="/dashboard/client" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <div className="flex items-center gap-3"><Building2 size={18} /><span>My Posted Jobs</span></div>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{jobs.length}</span>
+                      </Link>
+                      <Link to="/dashboard/client" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <div className="flex items-center gap-3"><Users size={18} /><span>Received Bids</span></div>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{proposals.length}</span>
+                      </Link>
+                      <Link to="/dashboard/client" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <User size={18} /><span>Company Settings</span>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/dashboard/freelancer" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <div className="flex items-center gap-3"><Briefcase size={18} /><span>Active Contracts</span></div>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{contracts.length}</span>
+                      </Link>
+                      <Link to="/dashboard/freelancer" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <div className="flex items-center gap-3"><Layers size={18} /><span>Submitted Bids</span></div>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-bold text-slate-300">{proposals.length}</span>
+                      </Link>
+                      <Link to="/dashboard/freelancer" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <Award size={18} /><span>Showcase Portfolio</span>
+                      </Link>
+                      <Link to="/dashboard/freelancer" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                        <User size={18} /><span>Profile & Skills</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {/* Active Messages Link */}
+                  <Link to="/messages" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10">
+                    <div className="flex items-center gap-3">
+                      <MessageSquare size={18} />
+                      <span>Messages & Chat</span>
+                    </div>
+                    {unreadTotalCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-black shadow-md shadow-indigo-500/30 animate-pulse">
+                        {unreadTotalCount}
+                      </span>
+                    )}
+                  </Link>
+                </nav>
+              </div>
+
+              {/* Mobile Sidebar Footer */}
+              <div className="pt-6 border-t border-white/5 space-y-2 mt-4">
+                <Link to="/" onClick={() => setIsMobileNavOpen(false)} className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all">
+                  <ArrowLeft size={16} />
+                  <span>Return to Marketplace</span>
+                </Link>
+
+                {onLogout && (
+                  <button type="button" className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl hover:bg-rose-500/15 text-rose-400 hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer" onClick={onLogout}>
+                    <LogOut size={16} />
+                    <span>Log Out</span>
+                  </button>
+                )}
+              </div>
+            </aside>
+          </div>
+        )}
+
+        {/* ============================================================
+            DESKTOP STICKY SIDEBAR (lg:flex)
+            ============================================================ */}
+        <aside className="hidden lg:flex w-72 bg-slate-900/90 border-r border-white/10 p-6 flex-col justify-between sticky top-0 h-screen overflow-y-auto backdrop-blur-2xl flex-shrink-0 z-30">
           <div className="space-y-6">
             {/* Brand Section */}
             <div className="pb-4 border-b border-white/5">
@@ -1140,25 +1296,37 @@ export const MessagesPage = ({
         {/* Right Content Area */}
         <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden bg-slate-950">
           {/* Topbar */}
-          <header className="h-20 bg-slate-950/80 backdrop-blur-xl border-b border-white/10 px-8 flex items-center justify-between gap-4 flex-shrink-0">
-            <div className="flex items-center gap-2.5 text-sm">
-              <span className="text-slate-500 font-medium">
-                {isAdmin ? 'Admin Portal' : isClient ? 'Employer Workspace' : 'Talent Workspace'}
-              </span>
-              <span className="text-slate-700">/</span>
-              <span className="font-bold text-white">Live Direct Messages & Chat</span>
+          <header className="h-16 sm:h-20 bg-slate-950/80 backdrop-blur-xl border-b border-white/10 px-4 sm:px-8 flex items-center justify-between gap-3 flex-shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Mobile hamburger button */}
+              <button 
+                onClick={() => setIsMobileNavOpen(true)}
+                className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-white/10 transition-colors shrink-0"
+                title="Open Navigation"
+              >
+                <Menu size={20} />
+              </button>
+
+              <div className="flex items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm min-w-0 truncate">
+                <span className="text-slate-500 font-medium hidden sm:inline">
+                  {isAdmin ? 'Admin Portal' : isClient ? 'Employer Workspace' : 'Talent Workspace'}
+                </span>
+                <span className="text-slate-700 hidden sm:inline">/</span>
+                <span className="font-bold text-white truncate">Direct Messages & Chat</span>
+              </div>
             </div>
 
             <Link 
               to={isClient ? "/dashboard/client" : isAdmin ? "/admin" : "/dashboard/freelancer"} 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold text-xs transition-all"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold text-xs transition-all shrink-0"
             >
-              <span>Back to Dashboard</span>
+              <span className="hidden sm:inline">Back to Dashboard</span>
+              <span className="sm:hidden">Dashboard</span>
             </Link>
           </header>
 
           {/* Chat Container embedded seamlessly in dashboard */}
-          <div className="flex-1 p-6 overflow-hidden">
+          <div className="flex-1 p-2 sm:p-4 lg:p-6 overflow-hidden">
             {renderChatWorkspace()}
           </div>
         </div>
@@ -1168,7 +1336,7 @@ export const MessagesPage = ({
 
   // Fallback for Public / Guest Mode
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-100px)]">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6 h-[calc(100vh-80px)]">
       {renderChatWorkspace()}
     </div>
   );
